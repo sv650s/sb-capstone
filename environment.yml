@@ -1,0 +1,19 @@
+name: capstone
+channels:
+  - defaults
+dependencies:
+  - python=3.7.*
+  - autopep8
+  - pandas
+  - unittest2
+  - jupyter
+  - pandas-datareader
+  - matplotlib
+  - seaborn
+  - keras
+  - scikit-learn
+  - nltk
+  - spacy
+  - pyspark
+prefix: /Users/vinceluk/springboard-projects/capstone
+

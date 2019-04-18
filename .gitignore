@@ -1,0 +1,7 @@
+.vscode
+__pycache__
+.domino*
+.noLock
+.DS_Store
+dataset
+domino*
