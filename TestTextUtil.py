@@ -27,6 +27,12 @@ class TestTextUtil(unittest2.TestCase):
         self.assertEqual(converted, "souhaite",
                          f'{converted} not converted properly')
 
+    def test_remove_newlines(self):
+        text = "a\nb\rc"
+        converted = tu.remove_newlines(text)
+        self.assertEqual(converted, "abc",
+                         f'{converted} contains newlines')
+
 
 if __name__ == '__main__':
     unittest.main()

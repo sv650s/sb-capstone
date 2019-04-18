@@ -8,7 +8,7 @@ import pandas as pd
 import logging
 import sys
 import unittest2
-import yelp_util as yu
+from TextPreprocessor import TextPreprocessor
 
 
 # set up logging
@@ -44,16 +44,26 @@ def main():
     outfile = args.outfile
     assert os.path.isfile(infile), f"{infile} does not exist"
 
-    logger.debug(f'starting to read {infile}')
+    logger.debug(f'loading data frame from {infile}')
     df = pd.read_json(infile, lines=True)
-    logger.debug(f'finished reading {infile}')
+    logger.debug(f'finished loading dataframe {infile}')
 
     if args.convert:
-        yu.convert_to_csv(df, outfile)
+        tp = TextPreprocessor(text_column_name="text")
+        tp.convert_to_csv(df, outfile)
     else:
-        df = yu.process_data(df)
+        tp = TextPreprocessor(text_column_name="text",
+                              columns_to_drop=['cool', 'date',
+                                               'funny', 'useful', 'user_id'],
+                              to_lowercase=True,
+                              remove_newlines=True,
+                              remove_accented_chars=True,
+                              expand_contractions=True,
+                              remove_special_chars=True,
+                              stem_text=True,
+                              remove_stop_words=True)
+        df = tp.preprocess_data(df)
         df.to_csv(outfile, doublequote=True, index=False)
-
 
 
 if __name__ == '__main__':

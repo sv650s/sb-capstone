@@ -31,6 +31,21 @@ def make_lowercase(text: str) -> str:
     return text.lower()
 
 
+def remove_newlines(text: str) -> str:
+    """
+    remove newlines from text. will stirp both unix and windows
+    newline characters
+
+    Returns
+    -------
+    returns string without newlines
+    """
+    # logger.debug(f'pre-stripped: [{text}]')
+    newtext = text.replace('\n', '').replace('\r', '')
+    # logger.debug(f'stripped: [{newtext}]')
+    return newtext
+
+
 def remove_stop_words(text: str) -> str:
     """
     remove stop words from string
@@ -58,7 +73,7 @@ def remove_accented_chars(text: str) -> str:
 # # Remove Special Characters
 def remove_special_chars(text: str) -> str:
     """
-    remove anything that is not characters or numbers
+    remove anything that is not characters or numbers and newlines
     """
     text = re.sub('[^a-zA-Z0-9\s]', '', text, re.I | re.A)
-    return text.replace('\n', '').replace('\r', '')
+    return remove_newlines(text)
