@@ -18,6 +18,7 @@ class TextPreprocessor:
                  columns_to_drop=None,
                  to_lowercase=False,
                  remove_newlines=False,
+                 remove_html_tags=True,
                  remove_accented_chars=False,
                  expand_contractions=False,
                  remove_special_chars=False,
@@ -33,6 +34,7 @@ class TextPreprocessor:
         self.columns_to_drop = columns_to_drop
         self.to_lowercase = to_lowercase
         self.remove_newlines = remove_newlines
+        self.remove_html_tags = remove_newlines
         self.remove_accented_chars = remove_accented_chars
         self.expand_contractions = expand_contractions
         self.remove_special_chars = remove_special_chars
@@ -70,6 +72,8 @@ class TextPreprocessor:
             text = tu.make_lowercase(text)
         if self.remove_newlines:
             text = tu.remove_newlines(text)
+        if self.remove_html_tags:
+            text = tu.remove_html_tags(text)
         if self.remove_accented_chars:
             text = tu.remove_accented_chars(text)
         if self.expand_contractions:

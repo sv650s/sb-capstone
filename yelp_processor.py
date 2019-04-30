@@ -57,6 +57,7 @@ def main():
                                                'funny', 'useful', 'user_id'],
                               to_lowercase=True,
                               remove_newlines=True,
+                              remove_html_tags=True,
                               remove_accented_chars=True,
                               expand_contractions=True,
                               remove_special_chars=True,

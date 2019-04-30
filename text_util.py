@@ -17,6 +17,16 @@ def stem_text(text: str) -> str:
     return text
 
 
+def remove_html_tags(text: str) -> str:
+    """
+    Remove HTML taxs from text usig regex
+    :param text:
+    :return:
+    """
+    # TODO: implement this
+    return text
+
+
 def expand_contractions(text: str) -> str:
     # TODO: implement this
     return text
@@ -26,7 +36,9 @@ def expand_contractions(text: str) -> str:
 
 def make_lowercase(text: str) -> str:
     """
-    make text lower case
+    Make text lower case
+    :param text:
+    :return:
     """
     return text.lower()
 
