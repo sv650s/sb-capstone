@@ -54,7 +54,7 @@ def remove_newlines(text: str) -> str:
     """
     # logger.debug(f'pre-stripped: [{text}]')
     newtext = text.replace('\n', '').replace('\r', '')
-    # logger.debug(f'stripped: [{newtext}]')
+    logger.debug(f'stripped: [{newtext}]')
     return newtext
 
 

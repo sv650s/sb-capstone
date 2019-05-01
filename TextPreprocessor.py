@@ -112,6 +112,5 @@ class TextPreprocessor:
         """
         convert df to cvs
         """
-        df[self.text_column_name] = tu.remove_newlines
-        df.apply(tu.remove_newlines, axis=1)
+        df[self.text_column_name].apply(tu.remove_newlines)
         df.to_csv(outfile, index=False, doublequote=True)
