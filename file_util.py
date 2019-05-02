@@ -39,6 +39,7 @@ if __name__ == '__main__':
     parser.add_argument("infile", help="Input TSV file")
     parser.add_argument("outfile", help="Output CSV file")
     parser.add_argument("-l", "--loglevel", help="log level")
+    parser.add_argument("-f", "--function", help="functions available: tsv_to_csv (default: tsv_to_csv)", default="tsv_to_csv")
     parser.add_argument("-s", "--sampling_rate", help="sampling rate. Max 100. default = 0", type=int, default=0)
     args = parser.parse_args()
 
@@ -53,8 +54,9 @@ if __name__ == '__main__':
     logging.basicConfig(format=LOG_FORMAT, level=loglevel)
 
 
-    if args.sampling_rate is not None:
-        convert_tsv_to_csv(args.infile, args.outfile, args.sampling_rate)
-    else:
-        convert_tsv_to_csv(args.infile, args.outfile)
+    if(args.function == "tsv_to_csv"):
+        if args.sampling_rate is not None:
+            convert_tsv_to_csv(args.infile, args.outfile, args.sampling_rate)
+        else:
+            convert_tsv_to_csv(args.infile, args.outfile)
 

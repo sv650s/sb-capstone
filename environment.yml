@@ -15,5 +15,8 @@ dependencies:
   - nltk
   - spacy
   - pyspark
+  - beautifulsoup4=4.7.1
+  - unittest2=1.1.0
+  - nltk=3.4.1
 prefix: /Users/vinceluk/springboard-projects/capstone
 

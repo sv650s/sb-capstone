@@ -49,10 +49,10 @@ def main():
     logger.debug(f'finished loading dataframe {infile}')
 
     if args.convert:
-        tp = TextPreprocessor(text_column_name="text")
+        tp = TextPreprocessor(text_columns="text")
         tp.convert_to_csv(df, outfile)
     else:
-        tp = TextPreprocessor(text_column_name="text",
+        tp = TextPreprocessor(text_columns="text",
                               columns_to_drop=['cool', 'date',
                                                'funny', 'useful', 'user_id'],
                               to_lowercase=True,
