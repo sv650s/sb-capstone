@@ -3,6 +3,7 @@ from pandas import DataFrame
 from pandas import Series
 import logging
 import text_util as tu
+import df_util as dfu
 
 logger = logging.getLogger(__name__)
 # counter for debugging
@@ -59,13 +60,6 @@ class TextPreprocessor:
         self.remove_stop_words = remove_stop_words
         self.retain_original_columns = create_original_columns
 
-    def drop_columns(self, df: DataFrame) -> DataFrame:
-        """
-        Drops columns specified in columns_to_drop from constructor
-        :param df: original DataFrame
-        :return: DataFrame without the columns specified
-        """
-        return df.drop(self.columns_to_drop, axis=1)
 
     def normalize_text(self, row: Series) -> Series:
         """
@@ -123,27 +117,21 @@ class TextPreprocessor:
             * normalize text
         """
         logger.info("start preprocessing data")
+
+        logger.info(f"column count before dropping columns: {len(df.columns)}")
         if self.columns_to_drop:
-            df = self.drop_columns(df)
+            df = dfu.drop_columns(df, self.columns_to_drop)
+        logger.info(f"column count after dropping columnes: {len(df.columns)}")
 
-        if self.retain_original_columns:
-            for column in self.text_columns:
-                df[f'{column}_orig'] = df[column]
-            new_column_list = []
-            for column in list(df.columns.values):
-                if '_orig' not in column:
-                    if column in self.text_columns:
-                        # add column and the orig
-                        new_column_list.append(f'{column}_orig')
-                        new_column_list.append(column)
-                    else:
-                        # just add the column
-                        new_column_list.append(column)
-            df = df[new_column_list]
-
-        # drop null columns before processing
-        logger.info(f'dropping null rows')
+        # drop null values before processing
+        logger.info(f"original row count: {len(df)}")
         df = df.dropna()
+        logger.info(f"row count after dropping na: {len(df)}")
+
+        logger.info(f"column count before duplicating columns: {len(df.columns)}")
+        if self.retain_original_columns:
+            df = dfu.duplicate_columns(df, self.text_columns, reorder=True)
+        logger.info(f"column count after duplicating columns: {len(df.columns)}")
 
 
         # reset counter
@@ -153,10 +141,7 @@ class TextPreprocessor:
 
         # after normalizing, we are enow seeing some columns with 0 length text - they seem to be legit
         # make sure we remove anything that got stripped completely
-        for column in self.text_columns:
-            df = df[
-                df[column].apply(lambda x: len(x) > 0)
-            ]
+        df = dfu.drop_empty_columns(df, self.text_columns)
 
         logger.info("finished removing leftover rows with 0 data")
         logger.info("finished preprocessing data")
