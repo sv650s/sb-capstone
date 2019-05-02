@@ -43,8 +43,7 @@ def main():
     logger.info(f'finished loading dataframe {infile}')
     logger.info(f'original dataframe length: {len(df)}')
 
-    logger.info(f'dropping null rows')
-    df = df.dropna()
+
 
     tp = TextPreprocessor(text_columns=["product_title", "review_headline", "review_body"],
     # tp = TextPreprocessor(text_columns=["product_title"],

@@ -127,17 +127,29 @@ class TextPreprocessor:
             df = self.drop_columns(df)
 
         if self.retain_original_columns:
-            # TODO: create new columns for original
             for column in self.text_columns:
                 df[f'{column}_orig'] = df[column]
+            new_column_list = []
+            for column in list(df.columns.values):
+                if '_orig' not in column:
+                    if column in self.text_columns:
+                        # add column and the orig
+                        new_column_list.append(f'{column}_orig')
+                        new_column_list.append(column)
+                    else:
+                        # just add the column
+                        new_column_list.append(column)
+            df = df[new_column_list]
 
+        # drop null columns before processing
+        logger.info(f'dropping null rows')
+        df = df.dropna()
 
 
         # reset counter
         global counter
         counter = 0
         df = df.apply(self.normalize_text, axis=1)
-        logger.info("finished normalizing text data")
 
         # after normalizing, we are enow seeing some columns with 0 length text - they seem to be legit
         # make sure we remove anything that got stripped completely
@@ -145,8 +157,8 @@ class TextPreprocessor:
             df = df[
                 df[column].apply(lambda x: len(x) > 0)
             ]
-        logger.info("finished removing leftover rows with 0 data")
 
+        logger.info("finished removing leftover rows with 0 data")
         logger.info("finished preprocessing data")
         logger.info(df.info())
         logger.info(df.head())
