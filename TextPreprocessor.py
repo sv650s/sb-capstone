@@ -73,7 +73,7 @@ class TextPreprocessor:
         global counter
         counter += 1
         if counter % 5000 == 0:
-            logger.info(f'normalizing [{counter}] row: [{row}]')
+            logger.info(f'normalizing row: {counter}')
 
         for column in self.text_columns:
             text = row[column]
@@ -141,9 +141,10 @@ class TextPreprocessor:
 
         # after normalizing, we are enow seeing some columns with 0 length text - they seem to be legit
         # make sure we remove anything that got stripped completely
+        logger.info(f"row count before dropping empty values: {len(df)}")
         df = dfu.drop_empty_columns(df, self.text_columns)
+        logger.info(f"row count after dropping empty values: {len(df)}")
 
-        logger.info("finished removing leftover rows with 0 data")
         logger.info("finished preprocessing data")
         logger.info(df.info())
         logger.info(df.head())
