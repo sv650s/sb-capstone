@@ -22,7 +22,8 @@ class TextPreprocessor:
                  remove_accented_chars=True,
                  expand_contractions=True,
                  remove_special_chars=True,
-                 stem_text=True,
+                 stem_text=False,
+                 lemmatize_text=False,
                  remove_stop_words=True,
                  create_original_columns=False):
         """
@@ -41,6 +42,7 @@ class TextPreprocessor:
         :param create_original_columns:
         """
         assert text_columns is not None, "text_column_name is required"
+        assert stem_text != True and lemmatize_text != True, "cannot stem and lemmatize text"
 
         self.text_columns = text_columns
         self.columns_to_drop = columns_to_drop
@@ -53,10 +55,7 @@ class TextPreprocessor:
         self.remove_special_chars = remove_special_chars
         self.stem_text = stem_text
         # we are either going to stem or lemmatize
-        if not self.stem_text:
-            self.lemmatize_text = False
-        else:
-            self.lemmatize_text = True
+        self.lemmatize_text = lemmatize_text
         self.remove_stop_words = remove_stop_words
         self.retain_original_columns = create_original_columns
 
