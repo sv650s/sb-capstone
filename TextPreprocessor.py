@@ -22,11 +22,12 @@ class TextPreprocessor:
                  expand_contractions=True,
                  remove_special_chars=True,
                  stem_text=True,
-                 lemmatize_text=True,
-                 remove_stop_words=True):
+                 remove_stop_words=True,
+                 create_original_columns=False):
         """
-        :param text_columns: list of column names with text you want to process. required
-        :param columns_to_drop: list of column names to drop
+
+        :param text_columns: list of columns to process. required
+        :param columns_to_drop: list of columns to drop. optional
         :param to_lowercase:
         :param remove_newlines:
         :param remove_amazon_tags:
@@ -34,9 +35,9 @@ class TextPreprocessor:
         :param remove_accented_chars:
         :param expand_contractions:
         :param remove_special_chars:
-        :param stem_text:
-        :param lemmatize_text:
+        :param stem_text: True if stem text, False if lemmatize
         :param remove_stop_words:
+        :param create_original_columns:
         """
         assert text_columns is not None, "text_column_name is required"
 
@@ -50,8 +51,13 @@ class TextPreprocessor:
         self.expand_contractions = expand_contractions
         self.remove_special_chars = remove_special_chars
         self.stem_text = stem_text
-        self.lemmatize_text = lemmatize_text
+        # we are either going to stem or lemmatize
+        if not self.stem_text:
+            self.lemmatize_text = False
+        else:
+            self.lemmatize_text = True
         self.remove_stop_words = remove_stop_words
+        self.retain_original_columns = create_original_columns
 
     def drop_columns(self, df: DataFrame) -> DataFrame:
         """
@@ -71,10 +77,9 @@ class TextPreprocessor:
         assert row is not None, "row is None"
 
         global counter
-
-        if counter % 1000 == 0:
+        counter += 1
+        if counter % 5000 == 0:
             logger.info(f'normalizing [{counter}] row: [{row}]')
-            counter += 1
 
         for column in self.text_columns:
             text = row[column]
@@ -103,6 +108,7 @@ class TextPreprocessor:
                     text = tu.stem_text(text)
                 if self.lemmatize_text:
                     text = tu.lemmatize_text(text)
+                # we have to do this after expanding contractions so it doesn't remove words like don't or shouldn't
                 if self.remove_stop_words:
                     text = tu.remove_stop_words(text)
 
@@ -120,10 +126,26 @@ class TextPreprocessor:
         if self.columns_to_drop:
             df = self.drop_columns(df)
 
+        if self.retain_original_columns:
+            # TODO: create new columns for original
+            for column in self.text_columns:
+                df[f'{column}_orig'] = df[column]
+
+
+
         # reset counter
         global counter
         counter = 0
         df = df.apply(self.normalize_text, axis=1)
+        logger.info("finished normalizing text data")
+
+        # after normalizing, we are enow seeing some columns with 0 length text - they seem to be legit
+        # make sure we remove anything that got stripped completely
+        for column in self.text_columns:
+            df = df[
+                df[column].apply(lambda x: len(x) > 0)
+            ]
+        logger.info("finished removing leftover rows with 0 data")
 
         logger.info("finished preprocessing data")
         logger.info(df.info())

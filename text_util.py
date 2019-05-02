@@ -1,22 +1,34 @@
 import re
 import logging
 import nltk
+from nltk.stem import PorterStemmer
 from bs4 import BeautifulSoup
 import unicodedata
 
-
+# set up logger
 logger = logging.getLogger(__name__)
+
+# global variables
 wpt = nltk.WordPunctTokenizer()
 stop_words = nltk.corpus.stopwords.words('english')
+stop_words.remove('no')
+stop_words.remove('not')
+stop_words.remove('do')
+stop_words.remove('did')
+stop_words.remove('does')
+stop_words.remove('very')
+ps = PorterStemmer()
 
 
 def stem_text(text: str) -> str:
-    # TODO: implement this
-    return text
+    stemmed_words = []
+    for word in text.split():
+        stemmed_words.append(ps.stem(word))
+    return ' '.join(stemmed_words)
 
 def lemmatize_text(text: str) -> str:
-    # TODO: implement this
-    return text
+    # TODO: implement this - currently points to stem_words
+    return stem_text(text)
 
 
 def remove_html_tags(text: str) -> str:
@@ -62,7 +74,6 @@ def remove_stop_words(text: str) -> str:
     :return: string without stop words
     """
     if text is not None and len(text) > 0:
-        wpt = nltk.WordPunctTokenizer()
         tokens = wpt.tokenize(text)
         filtered_tokens = [word for word in tokens if word not in stop_words]
         return ' '.join(filtered_tokens)

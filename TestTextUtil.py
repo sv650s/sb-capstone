@@ -13,7 +13,7 @@ class TestTextUtil(unittest2.TestCase):
     def test_remove_special_chars(self):
         text = "aren't"
         converted = tu.remove_special_chars(text)
-        self.assertEqual(converted, "arent",
+        self.assertEqual(converted, "aren t",
                          f'{converted} should be arent')
         text = "a\nb"
 
@@ -24,7 +24,7 @@ class TestTextUtil(unittest2.TestCase):
         text = "[Apple MFi Certified] Charging Cable for iPhone 5 & 6 by OnyxVolt™ - SmartCharge Technology Accelerates Charging and Syncing Speeds to all Your Latest iPads, iPods, & IOS Devices - (2x 1m / 3.2ft Cord) Comes with OnyxVolt™ Unlimited Lifetime Guarantee!"
         converted = tu.remove_special_chars(text)
         self.assertEqual(converted,
-                         "Apple MFi Certified Charging Cable for iPhone 5 6 by OnyxVolt SmartCharge Technology Accelerates Charging and Syncing Speeds to all Your Latest iPads iPods IOS Devices 2x 1m 32ft Cord Comes with OnyxVolt Unlimited Lifetime Guarantee",
+                         "Apple MFi Certified Charging Cable for iPhone 5 6 by OnyxVolt SmartCharge Technology Accelerates Charging and Syncing Speeds to all Your Latest iPads iPods IOS Devices 2x 1m 3 2ft Cord Comes with OnyxVolt Unlimited Lifetime Guarantee",
                          f'({converted}) contains special characters')
 
     def test_remove_accent_chars(self):
@@ -52,6 +52,12 @@ class TestTextUtil(unittest2.TestCase):
                          "This is a great little speaker more text",
                          f'{converted} contains amazon tags')
 
+    def test_stem_words(self):
+        text = "hello running man give sadly"
+        converted = tu.stem_text(text)
+        self.assertEqual(converted,
+                         "hello run man give sadli",
+                         f'{converted} did not stem correctly')
 
 if __name__ == '__main__':
     unittest.main()

@@ -19,8 +19,9 @@ def main():
     # set up argument parser
     parser = argparse.ArgumentParser()
     parser.add_argument("datafile", help="source data file")
-    parser.add_argument("-0", "--outfile", help="output file", default="outfile.csv")
+    parser.add_argument("-o", "--outfile", help="output file", default="outfile.csv")
     parser.add_argument("-l", "--loglevel", help="log level")
+    parser.add_argument("-r", "--retain", help="log level", action="store_true", default=False)
     parser.add_argument("-c", "--convert", action='store_true',
                     help="convert to csv")
     # get command line arguments
@@ -47,7 +48,7 @@ def main():
 
     tp = TextPreprocessor(text_columns=["product_title", "review_headline", "review_body"],
     # tp = TextPreprocessor(text_columns=["product_title"],
-                          columns_to_drop=['marketplace', 'vine', 'verified_purchase'])
+                          columns_to_drop=['marketplace', 'vine', 'verified_purchase'], create_original_columns=args.retain)
     df = tp.preprocess_data(df)
     logger.info(f'new dataframe length: {len(df)}')
 
