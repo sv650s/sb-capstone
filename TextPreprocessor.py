@@ -1,4 +1,3 @@
-import pandas as pd
 from pandas import DataFrame
 from pandas import Series
 import logging
@@ -37,7 +36,8 @@ class TextPreprocessor:
         :param remove_accented_chars:
         :param expand_contractions:
         :param remove_special_chars:
-        :param stem_text: True if stem text, False if lemmatize
+        :param stem_text:  default = False
+        :param lemmatize_text: default = False
         :param remove_stop_words:
         :param create_original_columns:
         """

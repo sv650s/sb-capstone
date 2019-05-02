@@ -2,6 +2,7 @@ import csv
 import argparse
 import os
 import logging
+from file_samplers import SimpleSampler
 
 
 logger = logging.getLogger(__name__)
@@ -19,13 +20,14 @@ def convert_tsv_to_csv(infile: str, outfile: str, sampling_rate:int = 1):
     logger.debug(f"Converting {infile} to {outfile} with sampling rate of {sampling_rate}")
 
     if os.path.isfile(infile):
+        sampler = SimpleSampler(sample_rate=sampling_rate, has_header=True)
 
         counter = 0
         with open(infile, "r+") as old_f, open(outfile, "w") as new_f:
             writer = csv.writer(new_f)
             for line in old_f:
                 # never sample 0 because that's the header column
-                if counter == 0 or counter % sampling_rate == 0:
+                if sampler.collect(counter):
                     data = line.strip('\n').split('\t')
                     writer.writerow(data)
                 counter += 1

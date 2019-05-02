@@ -28,6 +28,7 @@ def stem_text(text: str) -> str:
 
 def lemmatize_text(text: str) -> str:
     # TODO: implement this - currently points to stem_words
+    assert False, "Not yet implemented"
     return stem_text(text)
 
 
