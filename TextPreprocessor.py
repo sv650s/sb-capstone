@@ -66,7 +66,7 @@ class TextPreprocessor:
         self.custom_postprocessor = custom_postprocessor
 
         if self.stop_word_remove_list:
-            tu.remove_stop_words(self.stop_word_remove_list)
+            tu.remove_stop_words_from_list(self.stop_word_remove_list)
 
 
     def normalize_text(self, row: Series) -> Series:

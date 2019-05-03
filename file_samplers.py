@@ -26,6 +26,8 @@ class SimpleSampler(BaseSampler):
         :return:
         """
         # if file has header and we are at the first line, then keep
+        if self.sample_rate == 0:
+            return True
         if self.has_header and index == 0:
             return True
         if index % self.sample_rate == 0:

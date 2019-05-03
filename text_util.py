@@ -5,6 +5,8 @@ from nltk.stem import PorterStemmer
 from bs4 import BeautifulSoup
 from contraction_map import CONTRACTION_MAP
 import unicodedata
+import sys
+import traceback
 
 # set up logger
 logger = logging.getLogger(__name__)
@@ -12,18 +14,14 @@ logger = logging.getLogger(__name__)
 # global variables
 wpt = nltk.WordPunctTokenizer()
 stop_words = nltk.corpus.stopwords.words('english')
-stop_words.remove('no')
-stop_words.remove('not')
-stop_words.remove('do')
-stop_words.remove('did')
-stop_words.remove('does')
-stop_words.remove('very')
 ps = PorterStemmer()
 
 
-def remove_stop_words(words: list):
+def remove_stop_words_from_list(words: list):
     for word in words:
-        stop_words.remove(word)
+        if word in stop_words:
+            logger.info(f"Removing the following from stop words: {word}")
+            stop_words.remove(word)
 
 
 def stem_text(text: str) -> str:
@@ -95,9 +93,14 @@ def remove_stop_words(text: str) -> str:
     :return: string without stop words
     """
     if text is not None and len(text) > 0:
-        tokens = wpt.tokenize(text)
-        filtered_tokens = [word for word in tokens if word not in stop_words]
-        return ' '.join(filtered_tokens)
+        try:
+            tokens = wpt.tokenize(text)
+            filtered_tokens = [word for word in tokens if word not in stop_words]
+            return ' '.join(filtered_tokens)
+        except:
+            traceback.print_exc()
+            logger.error(f"got error trying to tokenize this string [{text}]")
+            sys.exit(1)
     return text
 
 
