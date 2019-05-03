@@ -6,13 +6,25 @@ import argparse
 import pandas as pd
 import logging
 from TextPreprocessor import TextPreprocessor
+import re
 
 
 # set up logging
 LOG_FORMAT = "%(asctime)-15s %(levelname)-7s %(name)s.%(funcName)s" \
     " [%(lineno)d] - %(message)s"
-logger = None
+logger = logging.getLogger(__name__)
 
+def remove_amazon_tags(text: str) -> str:
+    """
+    removes amazon tags that look like [[VIDEOID:dsfjljs]], [[ASIN:sdjfls]], etc
+    :param text:
+    :return:
+    """
+    logger.debug(f"before amazon tags {text}")
+    text = re.sub('\[\[.*?\]\]', ' ', text, re.I | re.A)
+    text = ' '.join(text.split())
+    logger.debug(f"after processing amazon tags {text}")
+    return text
 
 
 def main():
@@ -47,7 +59,8 @@ def main():
 
     tp = TextPreprocessor(text_columns=["product_title", "review_headline", "review_body"],
     # tp = TextPreprocessor(text_columns=["product_title"],
-                          columns_to_drop=['marketplace', 'vine', 'verified_purchase'], create_original_columns=args.retain)
+                          columns_to_drop=['marketplace', 'vine', 'verified_purchase'], create_original_columns=args.retain,
+                          custom_preprocessor=remove_amazon_tags)
     df = tp.preprocess_data(df)
     logger.info(f'new dataframe length: {len(df)}')
 

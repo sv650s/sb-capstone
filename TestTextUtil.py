@@ -1,5 +1,6 @@
 import unittest2
 import text_util as tu
+import TextPreprocessor as tp
 
 
 class TestTextUtil(unittest2.TestCase):
@@ -41,7 +42,7 @@ class TestTextUtil(unittest2.TestCase):
 
     def test_remove_amazon_tags(self):
         text = "[[VIDEOID:e8181b266aea9bc5006b93fba5078b2c]] This is a great little speaker more text"
-        converted = tu.remove_amazon_tags(text)
+        converted = tp.remove_amazon_tags(text)
         self.assertEqual(converted,
                          "This is a great little speaker more text",
                          f'{converted} contains amazon tags')

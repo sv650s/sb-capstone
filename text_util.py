@@ -105,12 +105,3 @@ def remove_special_chars(text: str) -> str:
     return ' '.join(text.split())
 
 
-def remove_amazon_tags(text: str) -> str:
-    """
-    removes amazon tags that look like [[VIDEOID:dsfjljs]], [[ASIN:sdjfls]], etc
-    :param text:
-    :return:
-    """
-    text = re.sub('\[\[.*?\]\]', ' ', text, re.I | re.A)
-    return ' '.join(text.split())
-

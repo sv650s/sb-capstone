@@ -16,7 +16,6 @@ class TextPreprocessor:
                  columns_to_drop=None,
                  to_lowercase=True,
                  remove_newlines=True,
-                 remove_amazon_tags=True,
                  remove_html_tags=True,
                  remove_accented_chars=True,
                  expand_contractions=True,
@@ -24,14 +23,15 @@ class TextPreprocessor:
                  stem_text=False,
                  lemmatize_text=False,
                  remove_stop_words=True,
-                 create_original_columns=False):
+                 create_original_columns=False,
+                 custom_preprocessor=None,
+                 custom_postprocessor=None):
         """
 
         :param text_columns: list of columns to process. required
         :param columns_to_drop: list of columns to drop. optional
         :param to_lowercase:
         :param remove_newlines:
-        :param remove_amazon_tags:
         :param remove_html_tags:
         :param remove_accented_chars:
         :param expand_contractions:
@@ -40,6 +40,8 @@ class TextPreprocessor:
         :param lemmatize_text: default = False
         :param remove_stop_words:
         :param create_original_columns:
+        :param custom_preprocessor: pass it a custom function to run before any processing
+        :param custom_postprocessor: pass it a custom function to run after processing
         """
         assert text_columns is not None, "text_column_name is required"
         assert stem_text != True and lemmatize_text != True, "cannot stem and lemmatize text"
@@ -48,7 +50,6 @@ class TextPreprocessor:
         self.columns_to_drop = columns_to_drop
         self.to_lowercase = to_lowercase
         self.remove_newlines = remove_newlines
-        self.remove_amazon_tags = remove_amazon_tags
         self.remove_html_tags = remove_html_tags
         self.remove_accented_chars = remove_accented_chars
         self.expand_contractions = expand_contractions
@@ -58,6 +59,8 @@ class TextPreprocessor:
         self.lemmatize_text = lemmatize_text
         self.remove_stop_words = remove_stop_words
         self.retain_original_columns = create_original_columns
+        self.custom_preprocessor = custom_preprocessor
+        self.custom_postprocessor = custom_postprocessor
 
 
     def normalize_text(self, row: Series) -> Series:
@@ -83,12 +86,12 @@ class TextPreprocessor:
             if text is not None and len(text) > 0:
 
                 # use regex to make lower case
+                if self.custom_preprocessor is not None:
+                    text = self.custom_preprocessor(text)
                 if self.to_lowercase:
                     text = tu.make_lowercase(text)
                 if self.remove_newlines:
                     text = tu.remove_newlines(text)
-                if self.remove_amazon_tags:
-                    text = tu.remove_amazon_tags(text)
                 if self.remove_html_tags:
                     text = tu.remove_html_tags(text)
                 if self.remove_accented_chars:
@@ -104,6 +107,8 @@ class TextPreprocessor:
                 # we have to do this after expanding contractions so it doesn't remove words like don't or shouldn't
                 if self.remove_stop_words:
                     text = tu.remove_stop_words(text)
+                if self.custom_postprocessor is not None:
+                    text = self.custom_postprocessor(text)
 
             logger.debug(f'clean text from column [{column}] [{text}]')
             row[column] = text
