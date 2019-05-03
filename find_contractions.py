@@ -7,6 +7,7 @@ import argparse
 import os
 import sys
 import text_util as tu
+import pandas as pd
 
 
 # set up logging
@@ -62,6 +63,10 @@ def main():
 
     con_dict = get_contractions_from_file(args.infile)
     log.info(con_dict)
+
+    df = pd.DataFrame.from_records([con_dict]).reset_index().transpose()
+    log.info(df.info())
+    df.to_csv("contractions.csv")
 
 
 

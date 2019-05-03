@@ -113,16 +113,14 @@ def get_contractions(text: str) -> list:
     :param text:
     :return:
     """
-    text = text.replace('\n',' ').replace('\r', ' ').replace('\t', ' ')
+    text = text.replace('\n',' ').replace('\r', ' ').replace('\t', ' ').replace('’', "'")
     logger.debug(f"looking for contractions [{text}]")
     contraction_list = []
     # this doesn't capture if the word is at the end of the line
-    for (match) in re.findall(r"\s+([a-z]+'[a-z]{1})[\s\t\n]+", text.lower(), re.ASCII | re.IGNORECASE):
-        print(match)
+    for (match) in re.findall(r"\s+([a-z]+'[a-z]{1,2})[\s\t\n]+", text.lower(), re.ASCII | re.IGNORECASE):
         contraction_list.append(match)
     # match if contraction is at the end of the line
     for (match) in re.findall(r"\s+([a-z]+'[a-z]{1,2})$", text.lower(), re.ASCII | re.IGNORECASE):
-        print(match)
         contraction_list.append(match)
 
     logger.debug(f"found the following contractons [{contraction_list}]")
