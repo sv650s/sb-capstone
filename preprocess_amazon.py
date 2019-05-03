@@ -14,6 +14,18 @@ LOG_FORMAT = "%(asctime)-15s %(levelname)-7s %(name)s.%(funcName)s" \
     " [%(lineno)d] - %(message)s"
 logger = logging.getLogger(__name__)
 
+STOP_WORDS_TO_REMOVE=[
+    'no',
+    'not',
+    'do',
+    'does',
+    'did',
+    'does',
+    'should',
+    'very'
+    'will'
+    ]
+
 def remove_amazon_tags(text: str) -> str:
     """
     removes amazon tags that look like [[VIDEOID:dsfjljs]], [[ASIN:sdjfls]], etc
@@ -55,11 +67,10 @@ def main():
     logger.info(f'finished loading dataframe {infile}')
     logger.info(f'original dataframe length: {len(df)}')
 
-
-
     tp = TextPreprocessor(text_columns=["product_title", "review_headline", "review_body"],
-    # tp = TextPreprocessor(text_columns=["product_title"],
-                          columns_to_drop=['marketplace', 'vine', 'verified_purchase'], create_original_columns=args.retain,
+                          columns_to_drop=['marketplace', 'vine', 'verified_purchase'],
+                          stop_word_remove_list=STOP_WORDS_TO_REMOVE,
+                          create_original_columns=args.retain,
                           custom_preprocessor=remove_amazon_tags)
     df = tp.preprocess_data(df)
     logger.info(f'new dataframe length: {len(df)}')

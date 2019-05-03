@@ -14,6 +14,7 @@ class TextPreprocessor:
     def __init__(self,
                  text_columns,
                  columns_to_drop=None,
+                 stop_word_remove_list=None,
                  to_lowercase=True,
                  remove_newlines=True,
                  remove_html_tags=True,
@@ -30,6 +31,7 @@ class TextPreprocessor:
 
         :param text_columns: list of columns to process. required
         :param columns_to_drop: list of columns to drop. optional
+        :param stop_word_remove_list: list of stopwords to remove
         :param to_lowercase:
         :param remove_newlines:
         :param remove_html_tags:
@@ -48,6 +50,7 @@ class TextPreprocessor:
 
         self.text_columns = text_columns
         self.columns_to_drop = columns_to_drop
+        self.stop_word_remove_list = stop_word_remove_list
         self.to_lowercase = to_lowercase
         self.remove_newlines = remove_newlines
         self.remove_html_tags = remove_html_tags
@@ -61,6 +64,9 @@ class TextPreprocessor:
         self.retain_original_columns = create_original_columns
         self.custom_preprocessor = custom_preprocessor
         self.custom_postprocessor = custom_postprocessor
+
+        if self.stop_word_remove_list:
+            tu.remove_stop_words(self.stop_word_remove_list)
 
 
     def normalize_text(self, row: Series) -> Series:
@@ -100,13 +106,13 @@ class TextPreprocessor:
                     text = tu.expand_contractions(text)
                 if self.remove_special_chars:
                     text = tu.remove_special_chars(text)
+                # we have to do this after expanding contractions so it doesn't remove words like don't or shouldn't
+                if self.remove_stop_words:
+                    text = tu.remove_stop_words(text)
                 if self.stem_text:
                     text = tu.stem_text(text)
                 if self.lemmatize_text:
                     text = tu.lemmatize_text(text)
-                # we have to do this after expanding contractions so it doesn't remove words like don't or shouldn't
-                if self.remove_stop_words:
-                    text = tu.remove_stop_words(text)
                 if self.custom_postprocessor is not None:
                     text = self.custom_postprocessor(text)
 
