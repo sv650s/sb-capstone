@@ -20,6 +20,8 @@ stop_words.remove('very')
 ps = PorterStemmer()
 
 
+
+
 def stem_text(text: str) -> str:
     stemmed_words = []
     for word in text.split():
@@ -104,4 +106,25 @@ def remove_special_chars(text: str) -> str:
     text = remove_newlines(text)
     return ' '.join(text.split())
 
+
+def get_contractions(text: str) -> list:
+    """
+    returns a list of contractions from text
+    :param text:
+    :return:
+    """
+    text = text.replace('\n',' ').replace('\r', ' ').replace('\t', ' ')
+    logger.debug(f"looking for contractions [{text}]")
+    contraction_list = []
+    # this doesn't capture if the word is at the end of the line
+    for (match) in re.findall(r"\s+([a-z]+'[a-z]{1})[\s\t\n]+", text.lower(), re.ASCII | re.IGNORECASE):
+        print(match)
+        contraction_list.append(match)
+    # match if contraction is at the end of the line
+    for (match) in re.findall(r"\s+([a-z]+'[a-z]{1,2})$", text.lower(), re.ASCII | re.IGNORECASE):
+        print(match)
+        contraction_list.append(match)
+
+    logger.debug(f"found the following contractons [{contraction_list}]")
+    return contraction_list
 

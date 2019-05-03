@@ -1,4 +1,4 @@
-~/bin/bash
+#!/bin/bash
 
 
 python -m unittest TestTextUtil.py
