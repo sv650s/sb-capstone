@@ -3,7 +3,7 @@ import logging
 import nltk
 from nltk.stem import PorterStemmer
 from bs4 import BeautifulSoup
-from contraction_map import CONTRACTION_MAP
+from .contraction_map import CONTRACTION_MAP
 import unicodedata
 import sys
 import traceback
