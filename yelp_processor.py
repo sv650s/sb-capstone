@@ -7,8 +7,7 @@ import argparse
 import pandas as pd
 import logging
 import sys
-import unittest2
-from TextPreprocessor import TextPreprocessor
+from util.TextPreprocessor import TextPreprocessor
 
 
 # set up logging

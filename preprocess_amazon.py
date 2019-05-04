@@ -5,7 +5,7 @@ import os
 import argparse
 import pandas as pd
 import logging
-from TextPreprocessor import TextPreprocessor
+from util.TextPreprocessor import TextPreprocessor
 import re
 
 

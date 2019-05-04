@@ -1,5 +1,6 @@
 
-class BaseSampler:
+# base class
+class Sampler:
 
     def __init__(self, has_header:bool = True):
         self.has_header = has_header
@@ -10,10 +11,11 @@ class BaseSampler:
         :param index:
         :return:
         """
+        assert False, "do not use base class"
         pass
 
 
-class SimpleSampler(BaseSampler):
+class SimpleSampler(Sampler):
 
     def __init__(self, sample_rate:int, has_header:bool = True):
         super().__init__(has_header)
@@ -35,7 +37,7 @@ class SimpleSampler(BaseSampler):
         return False
 
 
-class RandomSampler(BaseSampler):
+class RandomSampler(Sampler):
     """
     Randomly sample file to create
     """

@@ -6,7 +6,7 @@ import logging
 import argparse
 import os
 import sys
-import text_util as tu
+import util.text_util as tu
 import pandas as pd
 
 

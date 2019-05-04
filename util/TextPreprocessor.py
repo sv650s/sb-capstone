@@ -1,8 +1,8 @@
 from pandas import DataFrame
 from pandas import Series
 import logging
-import text_util as tu
-import df_util as dfu
+from . import text_util as tu
+from . import df_util as dfu
 
 logger = logging.getLogger(__name__)
 # counter for debugging
