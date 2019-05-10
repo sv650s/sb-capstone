@@ -7,3 +7,6 @@ dataset
 domino*
 .idea
 *.swp
+.coverage*
+coverage_html_report
+
