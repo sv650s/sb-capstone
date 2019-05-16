@@ -42,7 +42,7 @@ class TextPreprocessor:
         :param lemmatize_text: default = False
         :param remove_stop_words:
         :param create_original_columns:
-        :param custom_preprocessor: pass it a custom function to run before any processing
+        :param custom_preprocessor: pass it a custom function to run before any processing. this can be a function or a list
         :param custom_postprocessor: pass it a custom function to run after processing
         """
         assert text_columns is not None, "text_column_name is required"
@@ -93,7 +93,11 @@ class TextPreprocessor:
 
                 # use regex to make lower case
                 if self.custom_preprocessor is not None:
-                    text = self.custom_preprocessor(text)
+                    if isinstance(self.custom_preprocessor, list):
+                        for preprocessor in self.custom_preprocessor:
+                            text = preprocessor(text)
+                    else:
+                        text = self.custom_preprocessor(text)
                 if self.to_lowercase:
                     text = tu.make_lowercase(text)
                 if self.remove_newlines:
@@ -114,7 +118,11 @@ class TextPreprocessor:
                 if self.lemmatize_text:
                     text = tu.lemmatize_text(text)
                 if self.custom_postprocessor is not None:
-                    text = self.custom_postprocessor(text)
+                    if isinstance(self.custom_postprocessor, list):
+                        for postprocessor in self.custom_postprocessor:
+                            text = postprocessor(text)
+                    else:
+                        text = self.custom_postprocessor(text)
 
             logger.debug(f'clean text from column [{column}] [{text}]')
             row[column] = text

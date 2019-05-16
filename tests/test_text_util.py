@@ -51,6 +51,27 @@ class TestTextUtil(object):
         assert converted == "This is a great little speaker more text", \
                          f'{converted} contains amazon tags'
 
+
+    def test_remove_http_links(self):
+        text = "vacation to use it.<br /><br />http://www.amazon.com/gp/product/B00SBCWC3C?redirect=true&ref_=cm_cr_ryp_prd_ttl_sol_0"
+        converted = pa.remove_http_links(text)
+        assert converted == "vacation to use it.<br /><br />", \
+                        f'[{converted}] still contains link'
+
+
+        text = "James Fletcher.)<br />http://youtu.be/Z0Lan54TL0A<br /><br />So that's it!"
+        expected = "James Fletcher.)<br /> /><br />So that's it!"
+        converted = pa.remove_http_links(text)
+        assert converted == expected, \
+            f'expected [{expected}] got [{converted}]'
+
+        text = "http://youtu.be/Z0Lan54TL0A<br /><br />So that's it!  It's a pretty good little radio!  I'll try to update in 5 months when it is winter and see how they"
+        expected = " /><br />So that's it!  It's a pretty good little radio!  I'll try to update in 5 months when it is winter and see how they"
+        converted = pa.remove_http_links(text)
+        assert converted == expected, \
+            f'expected [{expected}] got [{converted}]'
+
+
     def test_stem_words(self):
         text = "hello running man give sadly"
         converted = tu.stem_text(text)

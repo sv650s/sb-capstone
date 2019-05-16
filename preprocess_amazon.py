@@ -26,6 +26,7 @@ STOP_WORDS_TO_REMOVE=[
     'will'
     ]
 
+
 def remove_amazon_tags(text: str) -> str:
     """
     removes amazon tags that look like [[VIDEOID:dsfjljs]], [[ASIN:sdjfls]], etc
@@ -36,6 +37,15 @@ def remove_amazon_tags(text: str) -> str:
     text = re.sub('\[\[.*?\]\]', ' ', text, re.I | re.A)
     text = ' '.join(text.split())
     logger.debug(f"after processing amazon tags {text}")
+    return text
+
+def remove_http_links(text: str) -> str:
+    """
+    Amazon reviews sometimes have http tags that link to images. Want to remove these
+    :param text:
+    :return:
+    """
+    text = re.sub(r'(http:\S+)', '', text, re.I | re.A)
     return text
 
 
@@ -71,7 +81,7 @@ def main():
                           columns_to_drop=['marketplace', 'vine', 'verified_purchase'],
                           stop_word_remove_list=STOP_WORDS_TO_REMOVE,
                           create_original_columns=args.retain,
-                          custom_preprocessor=remove_amazon_tags)
+                          custom_preprocessor=[remove_amazon_tags, remove_http_links])
     df = tp.preprocess_data(df)
     logger.info(f'pre-processing finished - new dataframe length: {len(df)}')
 
