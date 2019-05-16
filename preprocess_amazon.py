@@ -45,7 +45,7 @@ def remove_http_links(text: str) -> str:
     :param text:
     :return:
     """
-    text = re.sub(r'(http:\S+)', '', text, re.I | re.A)
+    text = re.sub(r'(http[s]{0,1}:\S+)', '', text, re.I | re.A)
     return text
 
 

@@ -71,6 +71,12 @@ class TestTextUtil(object):
         assert converted == expected, \
             f'expected [{expected}] got [{converted}]'
 
+        text = "James Fletcher.)<br />https://youtu.be/Z0Lan54TL0A<br /><br />So that's it!"
+        expected = "James Fletcher.)<br /> /><br />So that's it!"
+        converted = pa.remove_http_links(text)
+        assert converted == expected, \
+            f'expected [{expected}] got [{converted}]'
+
 
     def test_stem_words(self):
         text = "hello running man give sadly"
