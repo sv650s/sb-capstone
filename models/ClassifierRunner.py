@@ -35,7 +35,7 @@ class Keys(object):
     MODEL_NAME = "model_name"
     MODEL = "model"
     DATASET = "dataset"
-    PARAMETERS = "parameters"
+    PARAMETERS = "param"
     TRAIN_X = "X_train"
     TRAIN_Y = "Y_train"
     TEST_X = "X_test"
@@ -141,6 +141,8 @@ class ClassifierRunner(object):
             log.info(f'End Scoring: {score_time_end.strftime(TIME_FORMAT)}')
 
             # predictions
+            predict_time_start = datetime.now()
+            log.info(f'Start predict: {predict_time_start.strftime(TIME_FORMAT)}')
             y_predict = model.predict(x_test)
             predict_time_end = datetime.now()
             log.info(f'End predict: {predict_time_end.strftime(TIME_FORMAT)}')
