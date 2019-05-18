@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.metrics import classification_report
 from datetime import datetime
 import logging
-from enum import Enum
+import pprint
 
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -55,19 +55,6 @@ class ClassifierRunner(object):
 
 
 
-    # list of dictionaries with the following structure:
-    #   kMODEL_NAME
-    #   kFEATURE_TYPE
-    #   kPARAMETERS
-    #   kMODEL
-    #
-    models = []
-    # write output to csv file
-    write_to_csv = True
-    # output file name
-    outfile = None
-    # DF to hold reports from various runs
-    reports_df = pd.DataFrame()
 
     # expand classification report into dictionary
     # classifcation report is a 2 level dictionary. from documentation, it looks something like this
@@ -97,7 +84,7 @@ class ClassifierRunner(object):
         return target
 
     @staticmethod
-    def interpret_predictions(y_test, y_predict, report=None):
+    def _interpret_predictions(y_test, y_predict, report=None):
         """
         Run metrics on predictions
 
@@ -118,7 +105,12 @@ class ClassifierRunner(object):
         return report
 
     @staticmethod
-    def model_fit_predict(self, model, x_train, y_train, x_test, y_test, report = None) -> (pd.DataFrame, dict):
+    def _model_fit_predict(model:object,
+                           x_train:pd.DataFrame,
+                           y_train:pd.DataFrame,
+                           x_test:pd.DataFrame,
+                           y_test:pd.DataFrame,
+                           report:dict=None) -> (dict, pd.DataFrame):
             """
             Fit the model then run predict on it
 
@@ -134,38 +126,37 @@ class ClassifierRunner(object):
 
             if not report:
                 report = {}
-            y_predict = None
 
             train_time_start = datetime.now()
-            print(f'Start training: {train_time_start.strftime(TIME_FORMAT)}')
+            log.info(f'Start training: {train_time_start.strftime(TIME_FORMAT)}')
             model = model.fit(x_train, y_train)
 
             train_time_end = datetime.now()
-            print(f'End training: {train_time_end.strftime(TIME_FORMAT)}')
+            log.info(f'End training: {train_time_end.strftime(TIME_FORMAT)}')
 
     #         score = result.score(bag_x_test, bag_y_test)
 
             # calculate mean error score
             score_time_end = datetime.now()
-            print(f'End Scoring: {score_time_end.strftime(TIME_FORMAT)}')
+            log.info(f'End Scoring: {score_time_end.strftime(TIME_FORMAT)}')
 
             # predictions
             y_predict = model.predict(x_test)
             predict_time_end = datetime.now()
-            print(f'End predict: {predict_time_end.strftime(TIME_FORMAT)}')
+            log.info(f'End predict: {predict_time_end.strftime(TIME_FORMAT)}')
 
             # calculate times
             train_time = train_time_end - train_time_start
             train_time_min = round(train_time.total_seconds() / 60, 1)
-            print(f'Training time (min): {train_time_min}')
+            log.info(f'Training time (min): {train_time_min}')
 
             score_time = score_time_end - train_time_end
             score_time_min = round(score_time.total_seconds() / 60, 1)
-            print(f'Scoring time (min): {score_time_min}')
+            log.info(f'Scoring time (min): {score_time_min}')
 
             predict_time = predict_time_end - score_time_end
             predict_time_min = round(predict_time.total_seconds() / 60,1 )
-            print(f'Predict time (min): {predict_time_min}')
+            log.info(f'Predict time (min): {predict_time_min}')
 
             train_examples, train_features = x_train.shape
             test_examples, test_features = x_test.shape
@@ -178,7 +169,7 @@ class ClassifierRunner(object):
             report[Keys.SCORE_TIME_MIN] = score_time_min
             report[Keys.PREDICT_TIME_MIN] = predict_time_min
             report[Keys.TOTAL_TIME_MIN] = train_time_min + score_time_min + predict_time_min
-            report = self._interpret_predictions(y_test, y_predict, report)
+            report = ClassifierRunner._interpret_predictions(y_test, y_predict, report)
             report[Keys.STATUS] = Status.SUCCESS
 
             return report, y_predict
@@ -208,6 +199,8 @@ class ClassifierRunner(object):
             self.outfile = outfile
         else:
             self.outfile = f'{datetime.now().strftime("%Y-%m-%d")}-{__name__}-report.csv'
+        self.models = []
+        self.reports_df = pd.DataFrame()
         log.info(f'Initializing {__name__}')
         log.info(f'write to csv: {self.write_to_csv}')
         log.info(f'outfile: {self.outfile}')
@@ -238,14 +231,16 @@ class ClassifierRunner(object):
             Keys.DATASET: dataset,
             Keys.PARAMETERS: parameters
         }
-        print(model_dict)
         if name:
             model_dict[Keys.MODEL_NAME] = name
         else:
             model_dict[Keys.MODEL_NAME] = type(model).__name__
 
-        log.debug(f'adding model [{model_dict}]')
+        log.debug(f'before adding models length: {len(self.models)}')
+        log.debug(f'models : {pprint.pformat(self.models)}')
+        log.debug(f'adding model [{pprint.pformat(model_dict)}]')
         self.models.append(model_dict)
+        log.debug(f'models length: {len(self.models)}')
 
 
     def runModels(self):
@@ -264,7 +259,7 @@ class ClassifierRunner(object):
                     Keys.PARAMETERS: model[Keys.PARAMETERS]
                 }
                 try:
-                    report, _ = self.model_fit_predict(model[Keys.MODEL],
+                    report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
                                                        model[Keys.TRAIN_X],
                                                        model[Keys.TRAIN_Y],
                                                        model[Keys.TEST_X],
