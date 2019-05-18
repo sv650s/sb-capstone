@@ -40,12 +40,14 @@ class TestClassifierRunner(object):
         raise Exception('mock - failed to predict model')
 
 
-    # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
-    # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
-    # def get_rn(self, rn, mock_fit_fail):
-    #     log.info("setting mock rn fit function")
-    #     rn.fit = mock_fit_fail
-    #     return rn
+    # TODO: calling mock_rn_fit doesn't work here
+    @pytest.fixture(scope="module")
+    @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
+    @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
+    def get_rn(self, rn, mock_fit_fail):
+        log.info(f"setting mock rn fit function {mock_fit_fail}")
+        rn.fit = mock_fit_fail
+        return rn
 
 
     # @pytest.fixture(scope="module")
@@ -98,16 +100,16 @@ class TestClassifierRunner(object):
 
 
     # TODO: mocking fit function is not working but it is throwing an excpetion for the test to fail
-    @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
-    @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
-    def test_run_one_model_failed(self, mock_rn, mock_rn_fit, get_train_x, get_train_y):
+    # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
+    # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
+    def test_run_one_model_failed(self, get_rn, get_train_x, get_train_y):
         """
         :return:
         """
-        log.debug(f'mock_rn: {mock_rn}')
-        log.debug(f'mock_rn_fit: {mock_rn_fit}')
-        rn = mock_rn
-        rn.fit = mock_rn_fit
+        # log.debug(f'mock_rn: {mock_rn}')
+        # log.debug(f'mock_rn_fit: {mock_rn_fit}')
+        rn = get_rn
+        # rn.fit = mock_rn_fit
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr = ClassifierRunner(write_to_csv=False)
@@ -122,37 +124,34 @@ class TestClassifierRunner(object):
 
 
     # TODO: mocking fit function is not working but it is throwing an excpetion for the test to fail
-    @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
-    @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
-    def test_run_two_models(self, mock_rn, mock_rn_fit, get_knn, get_train_x, get_train_y):
+    # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
+    # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
+    def test_run_two_models(self, get_rn, get_knn, get_train_x, get_train_y):
         """
         first will pass
         second will fail
         :return:
         """
+        cr = ClassifierRunner(write_to_csv=False)
+        assert len(cr.reports_df) == 0, "clean CR should have 0 length report"
+
         # first test - success
         knn = get_knn
         log.debug(f'test knn? {knn}')
-        cr = ClassifierRunner(write_to_csv=False)
         cr.addModel(knn, get_train_x, get_train_y, get_train_x, get_train_y, name="success case")
-        report_df = cr.runModels()
-
-        assert len(report_df) == 1, "report should have 1 entry"
-        assert report_df.iloc[0][Keys.STATUS] == Status.SUCCESS, "status should be SUCCESS"
 
         # second test - fail
-        rn = mock_rn
-        rn.fit = mock_rn_fit
+        rn = get_rn
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr.addModel(rn, get_train_x, get_train_y, get_train_x, get_train_y, name="failed case")
         report_df = cr.runModels()
 
-        log.info(f'error message: {report_df.iloc[0][Keys.MESSAGE]}')
-
         assert len(report_df) == 2, "report should have 2 entry"
-        assert report_df.iloc[0][Keys.STATUS] == Status.FAILED, "status should be FAILED"
-        assert len(report_df.iloc[0][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
+        assert report_df.iloc[0][Keys.STATUS] == Status.SUCCESS, "status should be SUCCESS"
+
+        assert report_df.iloc[1][Keys.STATUS] == Status.FAILED, "status should be FAILED"
+        assert len(report_df.iloc[1][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
 
     def test_dict_to_dict(self):
         """
