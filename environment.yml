@@ -21,5 +21,6 @@ dependencies:
   - coverage=4.5.3
   - pytest=4.4.1
   - pytest-cov=2.6.1
+  - mock=2.0.0
 prefix: /Users/vinceluk/springboard-projects/capstone
 
