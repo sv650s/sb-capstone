@@ -1,6 +1,5 @@
 import util.text_util as tu
 import preprocess_amazon as pa
-import pytest
 
 
 class TestTextUtil(object):
