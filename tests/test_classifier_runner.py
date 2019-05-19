@@ -66,25 +66,25 @@ class TestClassifierRunner(object):
         cr.addModel(get_knn, train_x, train_y, train_x, train_y)
         models = cr.models
         log.info(f'model length: {len(models)}')
-        log.info(type(models[0][Keys.TRAIN_Y]))
+        log.info(type(models.iloc[0][Keys.TRAIN_Y]))
         assert len(models) == 1, "length of models should be 1"
-        assert models[0][Keys.MODEL], "model is null"
-        assert models[0][Keys.MODEL_NAME], "model name is null"
-        assert isinstance(models[0][Keys.TRAIN_X], DataFrame), "train_x name is null"
-        assert isinstance(models[0][Keys.TRAIN_Y], np.ndarray), "train_y name is null"
-        assert isinstance(models[0][Keys.TEST_X], DataFrame), "test_x name is null"
-        assert isinstance(models[0][Keys.TEST_Y], np.ndarray), "test_y name is null"
+        assert models.iloc[0][Keys.MODEL], "model is null"
+        assert models.iloc[0][Keys.MODEL_NAME], "model name is null"
+        assert isinstance(models.iloc[0][Keys.TRAIN_X], DataFrame), "train_x name is null"
+        assert isinstance(models.iloc[0][Keys.TRAIN_Y], np.ndarray), "train_y name is null"
+        assert isinstance(models.iloc[0][Keys.TEST_X], DataFrame), "test_x name is null"
+        assert isinstance(models.iloc[0][Keys.TEST_Y], np.ndarray), "test_y name is null"
 
         cr.addModel(get_knn, train_x, train_y, train_x, train_y)
         models = cr.models
         log.info(f'model length: {len(models)}')
         assert len(models) == 2, "length of models should be 2"
-        assert models[1][Keys.MODEL], "model is null"
-        assert models[1][Keys.MODEL_NAME], "model name is null"
-        assert isinstance(models[1][Keys.TRAIN_X], DataFrame), "train_x name is null"
-        assert isinstance(models[1][Keys.TRAIN_Y], np.ndarray), "train_y name is null"
-        assert isinstance(models[1][Keys.TEST_X], DataFrame), "test_x name is null"
-        assert isinstance(models[1][Keys.TEST_Y], np.ndarray), "test_y name is null"
+        assert models.iloc[1][Keys.MODEL], "model is null"
+        assert models.iloc[1][Keys.MODEL_NAME], "model name is null"
+        assert isinstance(models.iloc[1][Keys.TRAIN_X], DataFrame), "train_x name is null"
+        assert isinstance(models.iloc[1][Keys.TRAIN_Y], np.ndarray), "train_y name is null"
+        assert isinstance(models.iloc[1][Keys.TEST_X], DataFrame), "test_x name is null"
+        assert isinstance(models.iloc[1][Keys.TEST_Y], np.ndarray), "test_y name is null"
 
 
     def test_run_one_model_success(self, get_train_x, get_train_y, get_knn):
@@ -133,7 +133,7 @@ class TestClassifierRunner(object):
         :return:
         """
         cr = ClassifierRunner(write_to_csv=False)
-        assert len(cr.reports_df) == 0, "clean CR should have 0 length report"
+        assert len(cr.report_df) == 0, "clean CR should have 0 length report"
 
         # first test - success
         knn = get_knn
