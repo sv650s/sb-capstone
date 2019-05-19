@@ -198,7 +198,7 @@ class ClassifierRunner(object):
 
 
     # constructor
-    def __init__(self, write_to_csv = True, outfile = None):
+    def __init__(self, cleanup=True, clean_failures=True, write_to_csv=True, outfile=None):
 
         self.write_to_csv = write_to_csv
         if outfile:
@@ -207,6 +207,8 @@ class ClassifierRunner(object):
             self.outfile = f'{datetime.now().strftime("%Y-%m-%d")}-{__name__}-report.csv'
         self.models = pd.DataFrame()
         self.report_df = pd.DataFrame()
+        self.cleanup = cleanup
+        self.clean_failures = clean_failures
         log.info(f'Initializing {__name__}')
         log.info(f'write to csv: {self.write_to_csv}')
         log.info(f'outfile: {self.outfile}')
@@ -260,6 +262,7 @@ class ClassifierRunner(object):
             report = self._runModel(index, model)
             self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
             self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
+            self._cleanModel(index, report[Keys.STATUS])
         return self.report_df
 
 
@@ -322,9 +325,22 @@ class ClassifierRunner(object):
             report = self._runModel(index, model)
             self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
             self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
+            self._cleanModel(index, report[Keys.STATUS])
+
         return self.report_df
 
 
 
 
+    def _cleanModel(self, index, status) -> pd.DataFrame:
+        """
+        clean up models that were successful
+        :return:
+        """
+        if self.cleanup and status == Status.SUCCESS:
+            self.models.drop(index, axis=0, inplace=True)
+        elif self.cleanup and self.clean_failures and status == Status.FAILED:
+            self.models.drop(index, axis=0, inplace=True)
+
+        return self.models
 
