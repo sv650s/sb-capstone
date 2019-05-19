@@ -36,7 +36,6 @@ class Keys(object):
     MESSAGE = "message"
     MODEL_NAME = "model_name"
     MODEL = "model"
-    MODEL_INDEX = "model_index"
     DATASET = "dataset"
     PARAMETERS = "param"
     TRAIN_X = "X_train"
@@ -273,8 +272,7 @@ class ClassifierRunner(object):
         report = {
             Keys.MODEL_NAME: model[Keys.MODEL_NAME],
             Keys.DATASET: model[Keys.DATASET],
-            Keys.PARAMETERS: model[Keys.PARAMETERS],
-            Keys.MODEL_INDEX: index
+            Keys.PARAMETERS: model[Keys.PARAMETERS]
         }
         try:
             report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
