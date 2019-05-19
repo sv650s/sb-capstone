@@ -34,6 +34,7 @@ class Keys(object):
     MESSAGE = "message"
     MODEL_NAME = "model_name"
     MODEL = "model"
+    MODEL_INDEX = "model_index"
     DATASET = "dataset"
     PARAMETERS = "param"
     TRAIN_X = "X_train"
@@ -66,7 +67,7 @@ class ClassifierRunner(object):
     #   ...
     # }
     @staticmethod
-    def _add_dict_to_dict(target, source):
+    def _add_dict_to_dict(target:dict, source:dict) -> dict:
         """
         target: dictionary to add to
         source: dictionary to add from
@@ -185,9 +186,9 @@ class ClassifierRunner(object):
 
         """
 
-        self.reports_df = self.reports_df.append(report, ignore_index=True)
+        self.report_df = self.report_df.append(report, ignore_index=True)
         if self.write_to_csv:
-            self.reports_df.to_csv(self.outfile, index=False)
+            self.report_df.to_csv(self.outfile, index=False)
 
 
 
@@ -201,8 +202,8 @@ class ClassifierRunner(object):
             self.outfile = outfile
         else:
             self.outfile = f'{datetime.now().strftime("%Y-%m-%d")}-{__name__}-report.csv'
-        self.models = []
-        self.reports_df = pd.DataFrame()
+        self.models = pd.DataFrame()
+        self.report_df = pd.DataFrame()
         log.info(f'Initializing {__name__}')
         log.info(f'write to csv: {self.write_to_csv}')
         log.info(f'outfile: {self.outfile}')
@@ -241,43 +242,43 @@ class ClassifierRunner(object):
         log.debug(f'before adding models length: {len(self.models)}')
         log.debug(f'models : {pprint.pformat(self.models)}')
         log.debug(f'adding model [{pprint.pformat(model_dict)}]')
-        self.models.append(model_dict)
+        self.models = self.models.append(model_dict, ignore_index=True)
         log.debug(f'models length: {len(self.models)}')
 
 
-    def runModels(self):
+    def runModels(self) -> pd.DataFrame:
         """
         Runs all models configured
         :return:
         """
-        if self.models:
-            for model in self.models:
-                log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
-                         f'\twith data: {model[Keys.DATASET]}\n'
-                         f'\tand parameters: {model[Keys.PARAMETERS]}')
-                report = {
-                    Keys.MODEL_NAME: model[Keys.MODEL_NAME],
-                    Keys.DATASET: model[Keys.DATASET],
-                    Keys.PARAMETERS: model[Keys.PARAMETERS]
-                }
-                try:
-                    report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
-                                                       model[Keys.TRAIN_X],
-                                                       model[Keys.TRAIN_Y],
-                                                       model[Keys.TEST_X],
-                                                       model[Keys.TEST_Y],
-                                                       report)
-                    report[Keys.STATUS] = Status.SUCCESS
-                except Exception as e:
-                    log.error(str(e))
-                    report[Keys.STATUS] = Status.FAILED
-                    report[Keys.MESSAGE] = str(e)
-                finally:
-                    self._record_results(report)
-                    log.info(f'Finished running model: {model[Keys.MODEL_NAME]}\n'
-                                f'\twith data: {model[Keys.DATASET]}\n'
-                                f'\tand parameters: {model[Keys.PARAMETERS]}'
-                                f'\tstatus: {report[Keys.STATUS]}')
+        for index, model in self.models.iterrows():
+            log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
+                     f'\twith data: {model[Keys.DATASET]}\n'
+                     f'\tand parameters: {model[Keys.PARAMETERS]}')
+            report = {
+                Keys.MODEL_NAME: model[Keys.MODEL_NAME],
+                Keys.DATASET: model[Keys.DATASET],
+                Keys.PARAMETERS: model[Keys.PARAMETERS],
+                Keys.MODEL_INDEX: index
+            }
+            try:
+                report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
+                                                   model[Keys.TRAIN_X],
+                                                   model[Keys.TRAIN_Y],
+                                                   model[Keys.TEST_X],
+                                                   model[Keys.TEST_Y],
+                                                   report)
+                report[Keys.STATUS] = Status.SUCCESS
+            except Exception as e:
+                log.error(str(e))
+                report[Keys.STATUS] = Status.FAILED
+                report[Keys.MESSAGE] = str(e)
+            finally:
+                self._record_results(report)
+                log.info(f'Finished running model: {model[Keys.MODEL_NAME]}\n'
+                            f'\twith data: {model[Keys.DATASET]}\n'
+                            f'\tand parameters: {model[Keys.PARAMETERS]}'
+                            f'\tstatus: {report[Keys.STATUS]}')
 
-        return self.reports_df
+        return self.report_df
 
