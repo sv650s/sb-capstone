@@ -1,14 +1,11 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import nltk
-from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier, RadiusNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from models.ClassifierRunner import ClassifierRunner
+from datetime import datetime
 import pandas as pd
 import logging
 
@@ -45,18 +42,30 @@ C= [1.0] # default
 
 N_JOBS=6
 LR_ITER=500
-FEATURE_COLUMN = "review_headline"
-ENABLE_KNN = True
-ENABLE_TFIDF = True
+FEATURE_COLUMN = "review_body"
 
 # model flags
-ENABLE_RN = True
-ENABLE_LR = True
-ENABLE_BOW = True
+ENABLE_BOW_KNN = False
+ENABLE_BOW_RN = False
+ENABLE_BOW_LR = False
+
+ENABLE_TFIDF_KNN = False
+ENABLE_TFIDF_RN = False
+ENABLE_TFIDF_LR = False
+
+# settings min_df = 0.5 and max_df = 0.95
+ENABLE_BOW90_KNN = True
+ENABLE_BOW90_RN = True
+ENABLE_BOW90_LR = True
+
+# settings min_df = 0.5 and max_df = 0.95
+ENABLE_TFIDF90_KNN = True
+ENABLE_TFIDF90_RN = True
+ENABLE_TFIDF90_LR = True
 
 
 WRITE_TO_CSV = True
-OUTFILE = "amazon_review_classifier_simple.csv"
+OUTFILE=f'{datetime.now().strftime(TIME_FORMAT)}-amazon_review-{FEATURE_COLUMN}-report.csv'
 
 
 # In[3]:
@@ -124,69 +133,120 @@ bag_pd.head()
 
 
 
-# # Set up BoW models
+# # Set up BOW models
 
 # In[ ]:
 
+start_time = datetime.now()
 
-cr = ClassifierRunner(write_to_csv=WRITE_TO_CSV)
+cr = ClassifierRunner(write_to_csv=WRITE_TO_CSV, outfile=OUTFILE)
 
-if ENABLE_BOW:
-    if ENABLE_KNN:
-        for neighbor in NEIGHBORS:
-            neigh = KNeighborsClassifier(n_neighbors=neighbor, n_jobs=N_JOBS)
-            cr.addModel(neigh,
-                        bag_X_train,
-                        bag_Y_train,
-                        bag_X_test,
-                        bag_Y_test,
-                        name="KNN",
-                        dataset="BoW",
-                        parameters={"n_jobs": N_JOBS,
-                                   "n_neighbors": neighbor})
+if ENABLE_BOW_KNN:
+    for neighbor in NEIGHBORS:
+        neigh = KNeighborsClassifier(n_neighbors=neighbor, n_jobs=N_JOBS)
+        cr.addModel(neigh,
+                    bag_X_train,
+                    bag_Y_train,
+                    bag_X_test,
+                    bag_Y_test,
+                    name="KNN",
+                    dataset="BOW",
+                    parameters={"n_jobs": N_JOBS,
+                               "n_neighbors": neighbor})
 
-    if ENABLE_RN:
-        for radius in RADII:
-            rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=N_JOBS)
-            cr.addModel(neigh,
-                        bag_X_train,
-                        bag_Y_train,
-                        bag_X_test,
-                        bag_Y_test,
-                        name="RN",
-                        dataset="BoW",
-                        parameters={"n_jobs": N_JOBS,
-                                   "radius": radius})
-            
-    if ENABLE_LR:
-        for c in C:
-            lr = LogisticRegression(random_state=0, solver='lbfgs',
-                                    multi_class='auto',
-                                    max_iter=LR_ITER, n_jobs=N_JOBS, C=c)
-            cr.addModel(lr,
-                        bag_X_train,
-                        bag_Y_train,
-                        bag_X_test,
-                        bag_Y_test,
-                        name="LR",
-                        dataset="BoW",
-                        parameters={"n_jobs": N_JOBS,
-                                   "c": c,
-                                   "max_iter": LR_ITER})
+if ENABLE_BOW_RN:
+    for radius in RADII:
+        rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=N_JOBS)
+        cr.addModel(neigh,
+                    bag_X_train,
+                    bag_Y_train,
+                    bag_X_test,
+                    bag_Y_test,
+                    name="RN",
+                    dataset="BOW",
+                    parameters={"n_jobs": N_JOBS,
+                               "radius": radius})
 
+if ENABLE_BOW_LR:
+    for c in C:
+        lr = LogisticRegression(random_state=0, solver='lbfgs',
+                                multi_class='auto',
+                                max_iter=LR_ITER, n_jobs=N_JOBS, C=c)
+        cr.addModel(lr,
+                    bag_X_train,
+                    bag_Y_train,
+                    bag_X_test,
+                    bag_Y_test,
+                    name="LR",
+                    dataset="BOW",
+                    parameters={"n_jobs": N_JOBS,
+                               "c": c,
+                               "max_iter": LR_ITER})
 
-# In[ ]:
-
-
-report_df = cr.runAllModels()
-report_df.head()
+report_df = cr.runNewModels()
 
 
-# # TFIDF - default settings
+# TODO: try different parameters for CountVectorizers?
+cv90 = CountVectorizer(min_df=0.05, max_df=0.95)
+cv90_matrix = cv90.fit_transform(X.array)
+vocab90 = cv90.get_feature_names()
+vocab90_length = len(vocab90)
+log.info(f'vocab90_length: {vocab90_length}')
+# print(f"vocab: {vocab}")
+bag90_pd = pd.DataFrame(cv90_matrix.toarray(), columns=vocab90)
 
-# ### Feature Generation
+# split results into training and test set
+bag90_X_train, bag90_X_test, bag90_Y_train, bag90_Y_test = train_test_split(bag90_pd, Y, random_state=1)
 
-# In[ ]:
+if ENABLE_BOW90_KNN:
+    for neighbor in NEIGHBORS:
+        neigh = KNeighborsClassifier(n_neighbors=neighbor, n_jobs=N_JOBS)
+        cr.addModel(neigh,
+                    bag90_X_train,
+                    bag90_Y_train,
+                    bag90_X_test,
+                    bag90_Y_test,
+                    name="KNN",
+                    dataset="BOW90",
+                    parameters={"n_jobs": N_JOBS,
+                                "n_neighbors": neighbor,
+                                "min_df": 0.05,
+                                "max_df": 0.95})
+
+if ENABLE_BOW90_RN:
+    for radius in RADII:
+        rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=N_JOBS)
+        cr.addModel(neigh,
+                    bag90_X_train,
+                    bag90_Y_train,
+                    bag90_X_test,
+                    bag90_Y_test,
+                    name="RN",
+                    dataset="BOW90",
+                    parameters={"n_jobs": N_JOBS,
+                                "radius": radius,
+                                "min_df": 0.05,
+                                "max_df": 0.95})
+
+if ENABLE_BOW90_LR:
+    for c in C:
+        lr = LogisticRegression(random_state=0, solver='lbfgs',
+                                multi_class='auto',
+                                max_iter=LR_ITER, n_jobs=N_JOBS, C=c)
+        cr.addModel(lr,
+                    bag90_X_train,
+                    bag90_Y_train,
+                    bag90_X_test,
+                    bag90_Y_test,
+                    name="LR",
+                    dataset="BOW90",
+                    parameters={"n_jobs": N_JOBS,
+                                "c": c,
+                                "max_iter": LR_ITER,
+                                "min_df": 0.05,
+                                "max_df": 0.95})
+
+report_df = cr.runNewModels()
 
 
 # TODO: play with min_df and max_df
@@ -208,21 +268,20 @@ print(f"test set size {len(tv_X_test)}")
 # In[ ]:
 
 
-if ENABLE_TFIDF:
-    if ENABLE_KNN:
-        for neighbor in NEIGHBORS:
-            neigh = KNeighborsClassifier(n_neighbors=neighbor, n_jobs=N_JOBS)
-            cr.addModel(neigh,
-                        tv_X_train, 
-                        tv_Y_train, 
-                        tv_X_test, 
-                        tv_Y_test, 
-                        name="KNN", 
-                        dataset="TFIDF", 
-                        parameters={"n_jobs": N_JOBS,
-                                   "n_neighbors": neighbor})
+if ENABLE_TFIDF_KNN:
+    for neighbor in NEIGHBORS:
+        neigh = KNeighborsClassifier(n_neighbors=neighbor, n_jobs=N_JOBS)
+        cr.addModel(neigh,
+                    tv_X_train,
+                    tv_Y_train,
+                    tv_X_test,
+                    tv_Y_test,
+                    name="KNN",
+                    dataset="TFIDF",
+                    parameters={"n_jobs": N_JOBS,
+                               "n_neighbors": neighbor})
 
-if ENABLE_RN:
+if ENABLE_TFIDF_RN:
     for radius in RADII:
         rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=N_JOBS)
         cr.addModel(neigh,
@@ -235,7 +294,7 @@ if ENABLE_RN:
                     parameters={"n_jobs": N_JOBS,
                                "radius": radius})
 
-if ENABLE_LR:
+if ENABLE_TFIDF_LR:
     for c in C:
         lr = LogisticRegression(random_state=0, solver='lbfgs',
                                 multi_class='auto',
@@ -251,9 +310,75 @@ if ENABLE_LR:
                                "c": c,
                                "max_iter": LR_ITER})
 
+
+tv90 = TfidfVectorizer(min_df=0.05, max_df=0.95, ngram_range=(1,3), use_idf=True)
+tv90_matrix = tv90.fit_transform(X.array)
+vocab90 = tv90.get_feature_names()
+vocab90_length = len(vocab)
+tv90_pd = pd.DataFrame(np.round(tv90_matrix.toarray(), 2), columns=vocab90)
+
+# split results into training and test set
+tv90_X_train, tv90_X_test, tv90_Y_train, tv90_Y_test = train_test_split(tv90_pd, Y, random_state=1)
+
+print(f"training set size {len(tv_X_train)}")
+print(f"test set size {len(tv_X_test)}")
+
+if ENABLE_TFIDF90_KNN:
+    for neighbor in NEIGHBORS:
+        neigh = KNeighborsClassifier(n_neighbors=neighbor, n_jobs=N_JOBS)
+        cr.addModel(neigh,
+                    tv90_X_train,
+                    tv90_Y_train,
+                    tv90_X_test,
+                    tv90_Y_test,
+                    name="KNN",
+                    dataset="TFIDF90",
+                    parameters={"n_jobs": N_JOBS,
+                                "n_neighbors": neighbor,
+                                "min_df": 0.05,
+                                "max_df": 0.95})
+
+if ENABLE_TFIDF90_RN:
+    for radius in RADII:
+        rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=N_JOBS)
+        cr.addModel(neigh,
+                    tv90_X_train,
+                    tv90_Y_train,
+                    tv90_X_test,
+                    tv90_Y_test,
+                    name="RN",
+                    dataset="TFIDF90",
+                    parameters={"n_jobs": N_JOBS,
+                                "radius": radius,
+                                "min_df": 0.05,
+                                "max_df": 0.95})
+
+if ENABLE_TFIDF90_LR:
+    for c in C:
+        lr = LogisticRegression(random_state=0, solver='lbfgs',
+                                multi_class='auto',
+                                max_iter=LR_ITER, n_jobs=N_JOBS, C=c)
+        cr.addModel(lr,
+                    tv90_X_train,
+                    tv90_Y_train,
+                    tv90_X_test,
+                    tv90_Y_test,
+                    name="LR",
+                    dataset="TFIDF90",
+                    parameters={"n_jobs": N_JOBS,
+                                "c": c,
+                                "max_iter": LR_ITER,
+                                "min_df": 0.05,
+                                "max_df": 0.95})
+
 report_df = cr.runNewModels()
+
+
+
+
 log.info("Finished running all models")
-report_df.head()
-
-
+end_time = datetime.now()
+total_time = end_time - start_time
+log.info(f'Total time: {total_time.strftime(TIME_FORMAT)}')
+print(report_df.head())
 

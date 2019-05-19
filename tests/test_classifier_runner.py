@@ -26,7 +26,7 @@ class TestClassifierRunner(object):
 
 
     @pytest.fixture(scope="module")
-    def get_success_model(self):
+    def success_model(self):
         return KNeighborsClassifier(n_neighbors=1, n_jobs=1)
 
     # @pytest.fixture(scope="module")
@@ -44,7 +44,7 @@ class TestClassifierRunner(object):
     @pytest.fixture(scope="module")
     @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
     @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
-    def get_fail_model(self, rn, mock_fit_fail):
+    def fail_model(self, rn, mock_fit_fail):
         log.info(f"setting mock rn fit function {mock_fit_fail}")
         rn.fit = mock_fit_fail
         return rn
@@ -68,11 +68,11 @@ class TestClassifierRunner(object):
             f"number of keys should be {key_num}"
 
 
-    def test_add_model(self, train_x, train_y, get_success_model):
+    def test_add_model(self, train_x, train_y, success_model):
         log.info(f'shape of train_y: {train_y.shape}')
 
         cr = ClassifierRunner(write_to_csv=False)
-        cr.addModel(get_success_model, train_x, train_y, train_x, train_y)
+        cr.addModel(success_model, train_x, train_y, train_x, train_y)
         models = cr.models
         log.info(f'model length: {len(models)}')
         log.info(type(models.iloc[0][Keys.TRAIN_Y]))
@@ -84,7 +84,7 @@ class TestClassifierRunner(object):
         assert isinstance(models.iloc[0][Keys.TEST_X], DataFrame), "test_x name is null"
         assert isinstance(models.iloc[0][Keys.TEST_Y], np.ndarray), "test_y name is null"
 
-        cr.addModel(get_success_model, train_x, train_y, train_x, train_y)
+        cr.addModel(success_model, train_x, train_y, train_x, train_y)
         models = cr.models
         log.info(f'model length: {len(models)}')
         assert len(models) == 2, "length of models should be 2"
@@ -96,12 +96,12 @@ class TestClassifierRunner(object):
         assert isinstance(models.iloc[1][Keys.TEST_Y], np.ndarray), "test_y name is null"
 
 
-    def test_run_one_model_success(self, train_x, train_y, get_success_model):
+    def test_run_one_model_success(self, train_x, train_y, success_model):
         """
         :return:
         """
         cr = ClassifierRunner(write_to_csv=False, cleanup=False)
-        cr.addModel(get_success_model, train_x, train_y, train_x, train_y, name="success case")
+        cr.addModel(success_model, train_x, train_y, train_x, train_y, name="success case")
         report_df = cr.runAllModels()
         models = cr.models
 
@@ -114,13 +114,13 @@ class TestClassifierRunner(object):
     # TODO: mocking fit function is not working but it is throwing an excpetion for the test to fail
     # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
     # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
-    def test_run_one_model_failed(self, get_fail_model, train_x, train_y):
+    def test_run_one_model_failed(self, fail_model, train_x, train_y):
         """
         :return:
         """
         # log.debug(f'mock_rn: {mock_rn}')
         # log.debug(f'mock_rn_fit: {mock_rn_fit}')
-        rn = get_fail_model
+        rn = fail_model
         # rn.fit = mock_rn_fit
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
@@ -143,7 +143,7 @@ class TestClassifierRunner(object):
     # TODO: mocking fit function is not working but it is throwing an excpetion for the test to fail
     # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
     # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier')
-    def test_run_two_models(self, get_fail_model, get_success_model, train_x, train_y):
+    def test_run_two_models(self, fail_model, success_model, train_x, train_y):
         """
         first will pass
         second will fail
@@ -153,12 +153,12 @@ class TestClassifierRunner(object):
         assert len(cr.report_df) == 0, "clean CR should have 0 length report"
 
         # first test - success
-        knn = get_success_model
+        knn = success_model
         log.debug(f'test knn? {knn}')
         cr.addModel(knn, train_x, train_y, train_x, train_y, name="success case")
 
         # second test - fail
-        rn = get_fail_model
+        rn = fail_model
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr.addModel(rn, train_x, train_y, train_x, train_y, name="failed case")
@@ -171,7 +171,7 @@ class TestClassifierRunner(object):
         assert len(report_df.iloc[1][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
 
 
-    def test_run_new_models(self, get_fail_model, get_success_model, train_x, train_y):
+    def test_run_new_models(self, fail_model, success_model, train_x, train_y):
         """
         add 1 model
         runAllModels
@@ -189,14 +189,14 @@ class TestClassifierRunner(object):
         assert len(cr.report_df) == 0, "clean CR should have 0 length report"
 
         # first test - success
-        knn = get_success_model
+        knn = success_model
         log.debug(f'test knn? {knn}')
         cr.addModel(knn, train_x, train_y, train_x, train_y, name="success case")
         report_df = cr.runAllModels()
         assert report_df.iloc[0][Keys.STATUS] == Status.SUCCESS, "status should be SUCCESS"
 
         # second test - fail
-        rn = get_fail_model
+        rn = fail_model
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr.addModel(rn, train_x, train_y, train_x, train_y, name="failed case")
@@ -209,7 +209,7 @@ class TestClassifierRunner(object):
 
 
 
-    def test_rerun_failed_models(self, get_fail_model, get_success_model, train_x, train_y):
+    def test_rerun_failed_models(self, fail_model, success_model, train_x, train_y):
         """
         add 1 model
         runAllModels - should fail
@@ -227,14 +227,14 @@ class TestClassifierRunner(object):
         assert len(cr.report_df) == 0, "clean CR should have 0 length report"
 
         # first test - fail
-        knn = get_fail_model
+        knn = fail_model
         log.debug(f'test knn? {knn}')
         cr.addModel(knn, train_x, train_y, train_x, train_y, name="first failed case")
         report_df = cr.runAllModels()
         assert report_df.iloc[0][Keys.STATUS] == Status.FAILED, "status should be FAILED"
 
         # second test - should run both models again
-        rn = get_fail_model
+        rn = fail_model
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr.addModel(rn, train_x, train_y, train_x, train_y, name="second failed case")
@@ -249,9 +249,9 @@ class TestClassifierRunner(object):
         assert len(report_df.iloc[2][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
 
 
-    def test_default_cleanup(self, get_fail_model, get_success_model, train_y, train_x):
+    def test_default_cleanup(self, fail_model, success_model, train_y, train_x):
         cr = ClassifierRunner(write_to_csv=False)
-        cr.addModel(get_success_model, train_x, train_y, train_x, train_y, name="first failed case")
+        cr.addModel(success_model, train_x, train_y, train_x, train_y, name="first failed case")
         report_df = cr.runAllModels()
         models = cr.models
 
@@ -259,7 +259,7 @@ class TestClassifierRunner(object):
         assert len(models) == 0, "should get 0 models back after cleanup"
 
         cr = ClassifierRunner(write_to_csv=False)
-        cr.addModel(get_fail_model, train_x, train_y, train_x, train_y, name="first failed case")
+        cr.addModel(fail_model, train_x, train_y, train_x, train_y, name="first failed case")
         report_df = cr.runAllModels()
         models = cr.models
 
@@ -267,11 +267,42 @@ class TestClassifierRunner(object):
         assert len(models) == 0, "should get 0 models back after cleanup"
 
 
-    def test_cleanup_drop_failures(self, get_fail_model, get_success_model, train_y, train_x):
+
+
+    def test_cleanup_drop_failures(self, fail_model, success_model, train_y, train_x):
         cr = ClassifierRunner(write_to_csv=False, clean_failures=False)
-        cr.addModel(get_fail_model, train_x, train_y, train_x, train_y, name="first failed case")
+        cr.addModel(fail_model, train_x, train_y, train_x, train_y, name="first failed case")
         report_df = cr.runAllModels()
         models = cr.models
 
         assert len(report_df) == 1, "should get 1 report back"
         assert len(models) == 1, "should get 0 models back after cleanup"
+
+
+    def test_runs_with_no_models(self):
+        cr = ClassifierRunner(write_to_csv=False)
+        report_df = cr.runAllModels()
+        assert len(report_df) == 0, "report length should be 0"
+        report_df = cr.runNewModels()
+        assert len(report_df) == 0, "report length should be 0"
+
+
+    def test_multiple_models_with_clean(self, fail_model, success_model, train_x, train_y):
+        cr = ClassifierRunner(write_to_csv=False)
+        cr.addModel(success_model, train_x, train_y, train_x, train_y, name="second failed case")
+        cr.addModel(fail_model, train_x, train_y, train_x, train_y, name="second failed case")
+        cr.addModel(success_model, train_x, train_y, train_x, train_y, name="second failed case")
+        report_df = cr.runAllModels()
+        models = cr.models
+        assert len(report_df) == 3, "should get 3 report back"
+        assert len(models) == 0, "should get 0 models back after cleanup"
+
+
+        cr.addModel(success_model, train_x, train_y, train_x, train_y, name="second failed case")
+        cr.addModel(fail_model, train_x, train_y, train_x, train_y, name="second failed case")
+        cr.addModel(success_model, train_x, train_y, train_x, train_y, name="second failed case")
+        report_df = cr.runNewModels()
+        models = cr.models
+        assert len(report_df) == 6, "should get 3 report back"
+        assert len(models) == 0, "should get 0 models back after cleanup"
+

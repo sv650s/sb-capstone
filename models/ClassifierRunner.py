@@ -258,14 +258,14 @@ class ClassifierRunner(object):
         :return:
         """
         for index, model in self.models.iterrows():
-            report = self._runModel(index, model)
+            report = self._runModel(model)
             self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
             self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
-            self._cleanModel(index, report[Keys.STATUS])
+        self._cleanModels()
         return self.report_df
 
 
-    def _runModel(self, index:int, model:pd.DataFrame) -> pd.DataFrame:
+    def _runModel(self, model:pd.DataFrame) -> pd.DataFrame:
         log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
                  f'\twith data: {model[Keys.DATASET]}\n'
                  f'\tand parameters: {model[Keys.PARAMETERS]}')
@@ -306,39 +306,50 @@ class ClassifierRunner(object):
             log.debug(f'before filtering - model name {row[Keys.MODEL_NAME]} status {row[Keys.STATUS]}')
 
 
-        if rerun_failed:
-            filtered_models = self.models[(self.models[Keys.STATUS] == Status.FAILED) |
-                                       (self.models[Keys.STATUS] == Status.NEW)]
-        else:
-            filtered_models = self.models[self.models[Keys.STATUS] == Status.NEW]
+        if len(self.models) > 0:
+            if rerun_failed:
+                filtered_models = self.models[(self.models[Keys.STATUS] == Status.FAILED) |
+                                           (self.models[Keys.STATUS] == Status.NEW)]
+            else:
+                filtered_models = self.models[self.models[Keys.STATUS] == Status.NEW]
 
-        log.debug(f'filtered model length {len(filtered_models)}')
-        for index, row in filtered_models.iterrows():
-            log.debug(f'after filtering - model name {row[Keys.MODEL_NAME]} status {row[Keys.STATUS]}')
+            # log.debug(f'filtered model length {len(filtered_models)}')
+            # for index, row in filtered_models.iterrows():
+            #     log.debug(f'after filtering - model name {row[Keys.MODEL_NAME]} status {row[Keys.STATUS]}')
 
-        log.debug(f'filtered model count {len(filtered_models)}')
-        log.debug(f'filtered models {filtered_models.head()}')
+            log.debug(f'filtered model count {len(filtered_models)}')
+            # log.debug(f'filtered models {filtered_models.head()}')
 
-        for index, model in filtered_models.iterrows():
-            report = self._runModel(index, model)
-            self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
-            self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
-            self._cleanModel(index, report[Keys.STATUS])
+            for index, model in filtered_models.iterrows():
+                report = self._runModel(model)
+                self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
+                self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
+
+        self._cleanModels()
 
         return self.report_df
 
 
+    def _cleanModels(self):
+        if self.cleanup and len(self.models) > 0:
+            if self.clean_failures:
+                m = self.models[(self.models[Keys.STATUS] == Status.SUCCESS) |
+                                (self.models[Keys.STATUS] == Status.FAILED)]
+            else:
+                m = self.models[(self.models[Keys.STATUS] == Status.SUCCESS)]
+
+            self.models.drop(m.index, inplace=True)
 
 
-    def _cleanModel(self, index, status) -> pd.DataFrame:
-        """
-        clean up models that were successful
-        :return:
-        """
-        if self.cleanup and status == Status.SUCCESS:
-            self.models.drop(index, axis=0, inplace=True)
-        elif self.cleanup and self.clean_failures and status == Status.FAILED:
-            self.models.drop(index, axis=0, inplace=True)
-
-        return self.models
+    # def _cleanModel(self, index) -> pd.DataFrame:
+    #     """
+    #     clean up models that were successful
+    #     :return:
+    #     """
+    #     if self.cleanup and self.models.iloc[index][Keys.STATUS] == Status.SUCCESS:
+    #         self.models.drop(index, axis=0, inplace=True)
+    #     elif self.cleanup and self.clean_failures and self.models.iloc[index][Keys.STATUS] == Status.FAILED:
+    #         self.models.drop(index, axis=0, inplace=True)
+    #
+    #     return self.models
 
