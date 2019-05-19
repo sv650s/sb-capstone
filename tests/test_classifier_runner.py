@@ -55,6 +55,17 @@ class TestClassifierRunner(object):
     #     model = KNeighborsClassifier(n_neighbors=1, n_jobs=1)
     #     model.predict()
 
+    def test_dict_to_dict(self):
+        """
+        Test to see if this flattens a dictionary
+        :return:
+        """
+        target = {"a": 0}
+        source = {"b": 1, "c": {"1": 2, "2": 3}}
+        outcome = ClassifierRunner._add_dict_to_dict(target, source)
+        key_num = 4
+        assert len(outcome.keys()) == key_num, \
+            f"number of keys should be {key_num}"
 
 
     def test_add_model(self, get_train_x, get_train_y, get_knn):
@@ -93,11 +104,14 @@ class TestClassifierRunner(object):
         """
         cr = ClassifierRunner(write_to_csv=False)
         cr.addModel(get_knn, get_train_x, get_train_y, get_train_x, get_train_y, name="success case")
-        report_df = cr.runModels()
+        report_df = cr.runAllModels()
+        models = cr.models
 
         assert len(report_df) == 1, "report should have 1 entry"
         assert report_df.iloc[0][Keys.STATUS] == Status.SUCCESS, "status should be SUCCESS"
-
+        assert models.iloc[0][Keys.STATUS_DATE] is not None, "model status should be set"
+        assert models.iloc[0][Keys.STATUS], "model status should be set"
+        assert models.iloc[0][Keys.STATUS] == Status.SUCCESS, "model status should be SUCCESS"
 
     # TODO: mocking fit function is not working but it is throwing an excpetion for the test to fail
     # @mock.patch('sklearn.neighbors.RadiusNeighborsClassifier.fit', side_effect=mock_rn_fit)
@@ -114,13 +128,18 @@ class TestClassifierRunner(object):
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr = ClassifierRunner(write_to_csv=False)
         cr.addModel(rn, get_train_x, get_train_y, get_train_x, get_train_y, name="failed case")
-        report_df = cr.runModels()
+        report_df = cr.runAllModels()
+        models = cr.models
+        log.info(f'model columns: {models.columns}')
 
         log.info(f'error message: {report_df.iloc[0][Keys.MESSAGE]}')
 
         assert len(report_df) == 1, "report should have 1 entry"
         assert report_df.iloc[0][Keys.STATUS] == Status.FAILED, "status should be FAILED"
         assert len(report_df.iloc[0][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
+        assert models.iloc[0][Keys.STATUS_DATE] is not None, "model status should be set"
+        assert models.iloc[0][Keys.STATUS], "model status should be set"
+        assert models.iloc[0][Keys.STATUS] == Status.FAILED, "model status FAILED"
 
 
     # TODO: mocking fit function is not working but it is throwing an excpetion for the test to fail
@@ -145,7 +164,7 @@ class TestClassifierRunner(object):
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr.addModel(rn, get_train_x, get_train_y, get_train_x, get_train_y, name="failed case")
-        report_df = cr.runModels()
+        report_df = cr.runAllModels()
 
         assert len(report_df) == 2, "report should have 2 entry"
         assert report_df.iloc[0][Keys.STATUS] == Status.SUCCESS, "status should be SUCCESS"
@@ -153,15 +172,77 @@ class TestClassifierRunner(object):
         assert report_df.iloc[1][Keys.STATUS] == Status.FAILED, "status should be FAILED"
         assert len(report_df.iloc[1][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
 
-    def test_dict_to_dict(self):
+
+    def test_run_new_models(self, get_rn, get_knn, get_train_x, get_train_y):
         """
-        Test to see if this flattens a dictionary
+        add 1 model
+        runAllModels
+        add another model
+        runNewModels
+
+        should return 2 in the report
+        :param get_rn:
+        :param get_knn:
+        :param get_train_x:
+        :param get_train_y:
         :return:
         """
-        target = {"a": 0}
-        source = {"b": 1, "c": {"1": 2, "2": 3}}
-        outcome = ClassifierRunner._add_dict_to_dict(target, source)
-        key_num = 4
-        assert len(outcome.keys()) == key_num, \
-            f"number of keys should be {key_num}"
+        cr = ClassifierRunner(write_to_csv=False)
+        assert len(cr.report_df) == 0, "clean CR should have 0 length report"
 
+        # first test - success
+        knn = get_knn
+        log.debug(f'test knn? {knn}')
+        cr.addModel(knn, get_train_x, get_train_y, get_train_x, get_train_y, name="success case")
+        report_df = cr.runAllModels()
+        assert report_df.iloc[0][Keys.STATUS] == Status.SUCCESS, "status should be SUCCESS"
+
+        # second test - fail
+        rn = get_rn
+        log.debug(f'mocked rn? {rn}')
+        log.debug(f'mocked rn.fit? {rn.fit}')
+        cr.addModel(rn, get_train_x, get_train_y, get_train_x, get_train_y, name="failed case")
+        report_df = cr.runNewModels()
+
+        assert len(report_df) == 2, "report should have 2 entry"
+
+        assert report_df.iloc[1][Keys.STATUS] == Status.FAILED, "status should be FAILED"
+        assert len(report_df.iloc[1][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
+
+
+
+    def test_run_new_models_failed(self, get_rn, get_knn, get_train_x, get_train_y):
+        """
+        add 1 model
+        runAllModels - should fail
+        add another model
+        runNewModels
+
+        should return 2 in the report
+        :param get_rn:
+        :param get_knn:
+        :param get_train_x:
+        :param get_train_y:
+        :return:
+        """
+        cr = ClassifierRunner(write_to_csv=False)
+        assert len(cr.report_df) == 0, "clean CR should have 0 length report"
+
+        # first test - fail
+        knn = get_rn
+        log.debug(f'test knn? {knn}')
+        cr.addModel(knn, get_train_x, get_train_y, get_train_x, get_train_y, name="failed case")
+        report_df = cr.runAllModels()
+        assert report_df.iloc[0][Keys.STATUS] == Status.FAILED, "status should be FAILED"
+
+        # second test - should run both models again
+        rn = get_rn
+        log.debug(f'mocked rn? {rn}')
+        log.debug(f'mocked rn.fit? {rn.fit}')
+        cr.addModel(rn, get_train_x, get_train_y, get_train_x, get_train_y, name="failed case")
+        report_df = cr.runNewModels()
+
+        assert len(report_df) == 3, "report should have 2 entry"
+
+        assert report_df.iloc[2][Keys.STATUS] == Status.FAILED, "status should be FAILED"
+        assert len(report_df.iloc[2][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
