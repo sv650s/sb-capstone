@@ -31,6 +31,7 @@ class Keys(object):
     PREDICT_TIME_MIN = "predict_time_min"
     TOTAL_TIME_MIN = "total_time_min"
     STATUS = "status"
+    STATUS_DATE = "status_date"
     MESSAGE = "message"
     MODEL_NAME = "model_name"
     MODEL = "model"
@@ -174,6 +175,7 @@ class ClassifierRunner(object):
             report[Keys.TOTAL_TIME_MIN] = train_time_min + score_time_min + predict_time_min
             report = ClassifierRunner._interpret_predictions(y_test, y_predict, report)
             report[Keys.STATUS] = Status.SUCCESS
+            report[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
 
             return report, y_predict
 
@@ -232,7 +234,9 @@ class ClassifierRunner(object):
             Keys.TEST_X: x_test,
             Keys.TEST_Y: y_test,
             Keys.DATASET: dataset,
-            Keys.PARAMETERS: parameters
+            Keys.PARAMETERS: parameters,
+            Keys.STATUS: None,
+            Keys.STATUS_DATE: None
         }
         if name:
             model_dict[Keys.MODEL_NAME] = name
@@ -246,39 +250,61 @@ class ClassifierRunner(object):
         log.debug(f'models length: {len(self.models)}')
 
 
-    def runModels(self) -> pd.DataFrame:
+    def runAllModels(self) -> pd.DataFrame:
         """
-        Runs all models configured
+        Runs all models configured for this runner
         :return:
         """
         for index, model in self.models.iterrows():
-            log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
-                     f'\twith data: {model[Keys.DATASET]}\n'
-                     f'\tand parameters: {model[Keys.PARAMETERS]}')
-            report = {
-                Keys.MODEL_NAME: model[Keys.MODEL_NAME],
-                Keys.DATASET: model[Keys.DATASET],
-                Keys.PARAMETERS: model[Keys.PARAMETERS],
-                Keys.MODEL_INDEX: index
-            }
-            try:
-                report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
-                                                   model[Keys.TRAIN_X],
-                                                   model[Keys.TRAIN_Y],
-                                                   model[Keys.TEST_X],
-                                                   model[Keys.TEST_Y],
-                                                   report)
-                report[Keys.STATUS] = Status.SUCCESS
-            except Exception as e:
-                log.error(str(e))
-                report[Keys.STATUS] = Status.FAILED
-                report[Keys.MESSAGE] = str(e)
-            finally:
-                self._record_results(report)
-                log.info(f'Finished running model: {model[Keys.MODEL_NAME]}\n'
-                            f'\twith data: {model[Keys.DATASET]}\n'
-                            f'\tand parameters: {model[Keys.PARAMETERS]}'
-                            f'\tstatus: {report[Keys.STATUS]}')
-
+            report = self._runModel(index, model)
+            self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
+            self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
         return self.report_df
+
+
+    def _runModel(self, index:int, model:pd.DataFrame) -> pd.DataFrame:
+        log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
+                 f'\twith data: {model[Keys.DATASET]}\n'
+                 f'\tand parameters: {model[Keys.PARAMETERS]}')
+        report = {
+            Keys.MODEL_NAME: model[Keys.MODEL_NAME],
+            Keys.DATASET: model[Keys.DATASET],
+            Keys.PARAMETERS: model[Keys.PARAMETERS],
+            Keys.MODEL_INDEX: index
+        }
+        try:
+            report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
+                                                            model[Keys.TRAIN_X],
+                                                            model[Keys.TRAIN_Y],
+                                                            model[Keys.TEST_X],
+                                                            model[Keys.TEST_Y],
+                                                            report)
+            report[Keys.STATUS] = Status.SUCCESS
+        except Exception as e:
+            log.error(str(e))
+            report[Keys.STATUS] = Status.FAILED
+            report[Keys.MESSAGE] = str(e)
+        finally:
+            report[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+            self._record_results(report)
+            log.info(f'Finished running model: {model[Keys.MODEL_NAME]}\n'
+                     f'\twith data: {model[Keys.DATASET]}\n'
+                     f'\tand parameters: {model[Keys.PARAMETERS]}'
+                     f'\tstatus: {report[Keys.STATUS]}')
+
+        return report
+
+
+    def runNewModels(self) -> pd.DataFrame:
+        """
+        Run models that we haven't executed yet
+        :return:
+        """
+        for index, model in self.models[self.models[Keys.STATUS] != Status.SUCCESS].iterrows():
+            report = self._runModel(index, model)
+            self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
+            self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
+        return self.report_df
+
+
 
