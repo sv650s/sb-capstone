@@ -19,6 +19,7 @@ DATE_FORMAT = '%Y-%m-%d'
 class Status(object):
     SUCCESS = "success"
     FAILED = "failed"
+    NEW = "new"
 
 
 class Keys(object):
@@ -235,7 +236,7 @@ class ClassifierRunner(object):
             Keys.TEST_Y: y_test,
             Keys.DATASET: dataset,
             Keys.PARAMETERS: parameters,
-            Keys.STATUS: None,
+            Keys.STATUS: Status.NEW,
             Keys.STATUS_DATE: None
         }
         if name:
@@ -295,16 +296,35 @@ class ClassifierRunner(object):
         return report
 
 
-    def runNewModels(self) -> pd.DataFrame:
+    def runNewModels(self, rerun_failed=False) -> pd.DataFrame:
         """
         Run models that we haven't executed yet
         :return:
         """
-        for index, model in self.models[self.models[Keys.STATUS] != Status.SUCCESS].iterrows():
+        for index, row in self.models.iterrows():
+            log.debug(f'before filtering - model name {row[Keys.MODEL_NAME]} status {row[Keys.STATUS]}')
+
+
+        if rerun_failed:
+            filtered_models = self.models[(self.models[Keys.STATUS] == Status.FAILED) |
+                                       (self.models[Keys.STATUS] == Status.NEW)]
+        else:
+            filtered_models = self.models[self.models[Keys.STATUS] == Status.NEW]
+
+        log.debug(f'filtered model length {len(filtered_models)}')
+        for index, row in filtered_models.iterrows():
+            log.debug(f'after filtering - model name {row[Keys.MODEL_NAME]} status {row[Keys.STATUS]}')
+
+        log.debug(f'filtered model count {len(filtered_models)}')
+        log.debug(f'filtered models {filtered_models.head()}')
+
+        for index, model in filtered_models.iterrows():
             report = self._runModel(index, model)
             self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
             self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
         return self.report_df
+
+
 
 
 
