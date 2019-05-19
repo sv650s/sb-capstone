@@ -211,7 +211,7 @@ class TestClassifierRunner(object):
 
 
 
-    def test_run_new_models_failed(self, get_rn, get_knn, get_train_x, get_train_y):
+    def test_rerun_failed_models(self, get_rn, get_knn, get_train_x, get_train_y):
         """
         add 1 model
         runAllModels - should fail
@@ -231,7 +231,7 @@ class TestClassifierRunner(object):
         # first test - fail
         knn = get_rn
         log.debug(f'test knn? {knn}')
-        cr.addModel(knn, get_train_x, get_train_y, get_train_x, get_train_y, name="failed case")
+        cr.addModel(knn, get_train_x, get_train_y, get_train_x, get_train_y, name="first failed case")
         report_df = cr.runAllModels()
         assert report_df.iloc[0][Keys.STATUS] == Status.FAILED, "status should be FAILED"
 
@@ -239,10 +239,13 @@ class TestClassifierRunner(object):
         rn = get_rn
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
-        cr.addModel(rn, get_train_x, get_train_y, get_train_x, get_train_y, name="failed case")
-        report_df = cr.runNewModels()
+        cr.addModel(rn, get_train_x, get_train_y, get_train_x, get_train_y, name="second failed case")
+        report_df = cr.runNewModels(rerun_failed=True)
 
-        assert len(report_df) == 3, "report should have 2 entry"
+        for index, row in report_df.iterrows():
+            log.debug(f'model name in report: {row[Keys.MODEL_NAME]}')
+
+        assert len(report_df) == 3, "report should have 3 entry"
 
         assert report_df.iloc[2][Keys.STATUS] == Status.FAILED, "status should be FAILED"
         assert len(report_df.iloc[2][Keys.MESSAGE]) > 0, "message should be set for FAILED models"
