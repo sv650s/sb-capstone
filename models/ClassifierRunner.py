@@ -258,6 +258,7 @@ class ClassifierRunner(object):
         :return:
         """
         for index, model in self.models.iterrows():
+            log.info(f'Running {index+1} of {len(self.models)} models')
             report = self._runModel(model)
             self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
             self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
@@ -321,6 +322,7 @@ class ClassifierRunner(object):
             # log.debug(f'filtered models {filtered_models.head()}')
 
             for index, model in filtered_models.iterrows():
+                log.info(f'Running {index+1} of {len(self.models)} models')
                 report = self._runModel(model)
                 self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
                 self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
