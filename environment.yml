@@ -22,5 +22,7 @@ dependencies:
   - pytest=4.4.1
   - pytest-cov=2.6.1
   - mock=2.0.0
+  - gensim
+  - pyLDAvis
 prefix: /Users/vinceluk/springboard-projects/capstone
 

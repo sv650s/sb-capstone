@@ -9,15 +9,17 @@ log = logging.getLogger(__name__)
 FILE_DATE_FORMAT = '%Y-%m-%d-%H'
 
 
-def write_to_file(data:pd.DataFrame, feature_column, feature_name):
+def write_to_file(data:pd.DataFrame, feature_column, feature_name, y:pd.Series):
     date_str = datetime.now().strftime(FILE_DATE_FORMAT)
     examples, features = data.shape
-    outfile = f'dataset/feature_files/{date_str}-{feature_column}-{feature_name}-{examples}-{features}.csv'
+    outfile = f'dataset/feature_files/{feature_column}-{feature_name}-{examples}-{features}.csv'
     log.info(f'writing file: {outfile}')
+    data["star_rating"] = y
     data.to_csv(outfile, doublequote=True, index=False)
 
 
 def generate_bow_file(x:pd.DataFrame,
+                      y:pd.Series,
                       feature_column:str,
                       feature_name:str,
                       min_df:float=1,
@@ -34,11 +36,12 @@ def generate_bow_file(x:pd.DataFrame,
     df = pd.DataFrame(cv_matrix.toarray(), columns=vocab)
 
     # get ready to write file
-    write_to_file(df, feature_column, feature_name)
+    write_to_file(df, feature_column, feature_name, y)
     return df
 
 
 def generate_tfidf_file(x:pd.DataFrame,
+                        y:pd.Series,
                         feature_column:str,
                         feature_name:str,
                         min_df:float=1,
@@ -55,7 +58,7 @@ def generate_tfidf_file(x:pd.DataFrame,
     df = pd.DataFrame(np.round(tv_matrix.toarray(), 2), columns=vocab)
 
     # get ready to write file
-    write_to_file(df, feature_column, feature_name)
+    write_to_file(df, feature_column, feature_name, y)
     return df
 
 
