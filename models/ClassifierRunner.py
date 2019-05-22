@@ -8,6 +8,7 @@ from sklearn.metrics import classification_report
 from datetime import datetime
 import logging
 import pprint
+from util.dict_util import add_dict_to_dict
 
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -58,32 +59,7 @@ class ClassifierRunner(object):
 
 
 
-    # expand classification report into dictionary
-    # classifcation report is a 2 level dictionary. from documentation, it looks something like this
-    # {'label 1': {'precision':0.5,
-    #              'recall':1.0,
-    #              'f1-score':0.67,
-    #              'support':1},
-    #  'label 2': { ... },
-    #   ...
-    # }
-    @staticmethod
-    def _add_dict_to_dict(target:dict, source:dict) -> dict:
-        """
-        target: dictionary to add to
-        source: dictionary to add from
-        ------
-        return: dictionary with source added to target
-        """
-        for key, value in source.items():
-            if isinstance(value, dict):
-                # append key to dictionary keys
-                for subkey, subvalue in value.items():
-                    target[f'{key}_{subkey}'] = subvalue
-            else:
-                target[key] = value
 
-        return target
 
     @staticmethod
     def _interpret_predictions(y_test, y_predict, report=None):
@@ -102,7 +78,7 @@ class ClassifierRunner(object):
 
         c_report = classification_report(y_test, y_predict, output_dict = True)
 
-        report = ClassifierRunner._add_dict_to_dict(report, c_report)
+        report = add_dict_to_dict(report, c_report)
 
         return report
 
