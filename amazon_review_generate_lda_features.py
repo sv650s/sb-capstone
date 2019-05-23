@@ -56,7 +56,8 @@ CLASS_COLUMN="star_rating"
 # around 100k entries
 CONFIG_FILE = "2019-05-21-amazon_review_generate_lda_feature_input.csv"
 INFILES = [ "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-10.csv"]
-TOPICS = [ 5, 10, 20 ]
+TOPICS = [ 20 ]
+#TOPICS = [ 5, 10, 20 ]
 
 
 
@@ -239,7 +240,6 @@ if __name__ == "__main__":
     log.debug(config.head())
     for index, row in config.iterrows():
         infile = row["infile"]
-        outfile = row["outfile"]
 
         # infile has a bunch of feature columns, last column is star_rating
         log.info(f'Processing {infile}')
@@ -251,6 +251,8 @@ if __name__ == "__main__":
             log.info("Generating lda features")
             features = generate_lda_feature(X, Y, topics)
             log.info(f"Feature shape: {features.shape}")
+            outfile = f'{infile.split(".")[0]}-lda{topics}.csv'
+            log.info(f"outfile: {outfile}")
 
             # do remove this later
             if args.traindebug:
