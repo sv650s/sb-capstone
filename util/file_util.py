@@ -2,9 +2,10 @@ import csv
 import os
 import logging
 from .file_samplers import Sampler
+import re
 
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 def convert_tsv_to_csv(infile: str, outfile: str, sampler:Sampler = None):
@@ -16,7 +17,7 @@ def convert_tsv_to_csv(infile: str, outfile: str, sampler:Sampler = None):
     :return:
     """
 
-    logger.debug(f"Converting {infile} to {outfile} with sampling {sampler}")
+    log.debug(f"Converting {infile} to {outfile} with sampling {sampler}")
 
     if os.path.isfile(infile):
 
@@ -29,6 +30,19 @@ def convert_tsv_to_csv(infile: str, outfile: str, sampler:Sampler = None):
                     data = line.strip('\n').split('\t')
                     writer.writerow(data)
                 counter += 1
+
+
+def get_report_filename(infile: str, outpath:str="reports/") -> str:
+    """
+    Takes the input file name and construct the output report filename
+    :param infile:
+    :return:
+    """
+    matches = re.findall(r'/([\w-]+)\.csv', infile)
+    outpath = re.sub(f'/$', '', outpath)
+    outfile = f'{outpath}/{matches[0]}-report.csv'
+    log.debug(f'Output filename: {outfile}')
+    return outfile
 
 
 

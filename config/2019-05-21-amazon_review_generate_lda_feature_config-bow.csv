@@ -1,0 +1,7 @@
+infile,outfile,classfile
+dataset/feature_files/review_body-bow-df_90-ngram1-22414-52.csv,dataset/feature_files/review_body-bow-df_90-ngram1-22414-52-lda.csv,dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv
+dataset/feature_files/review_body-bow-df_90-ngram12-22414-56.csv,dataset/feature_files/review_body-bow-df_90-ngram12-22414-56-lda.csv,dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv
+dataset/feature_files/review_body-bow-df_90-ngram13-22414-56.csv,dataset/feature_files/review_body-bow-df_90-ngram13-22414-56-lda.csv,dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv
+dataset/feature_files/review_body-bow-df_90-ngram12-112043-56.csv,dataset/feature_files/review_body-bow-df_90-ngram12-112043-56-lda.csv,dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-small.csv
+dataset/feature_files/review_body-bow-df_90-ngram13-112043-56.csv,dataset/feature_files/review_body-bow-df_90-ngram13-112043-56-lda.csv,dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-small.csv
+dataset/feature_files/review_body-bow-df_90-ngram1-112043-52.csv,dataset/feature_files/review_body-bow-df_90-ngram1-112043-52-lda.csv,dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-small.csv
