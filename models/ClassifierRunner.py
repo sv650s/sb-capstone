@@ -7,6 +7,8 @@ import pandas as pd
 from sklearn.metrics import classification_report
 from datetime import datetime
 import logging
+import traceback2
+import sys
 import pprint
 from util.dict_util import add_dict_to_dict
 
@@ -37,8 +39,8 @@ class Keys(object):
     MESSAGE = "message"
     MODEL_NAME = "model_name"
     MODEL = "model"
-    DATASET = "dataset"
-    PARAMETERS = "param"
+    DESCRIPTION = "description"
+    PARAMETERS = "parm"
     TRAIN_X = "X_train"
     TRAIN_Y = "Y_train"
     TEST_X = "X_test"
@@ -55,9 +57,6 @@ class ClassifierRunner(object):
     """
     Class to help run various models
     """
-
-
-
 
 
 
@@ -175,6 +174,8 @@ class ClassifierRunner(object):
     # constructor
     def __init__(self, cleanup=True, clean_failures=True, write_to_csv=True, outfile=None):
 
+
+
         self.write_to_csv = write_to_csv
         if outfile:
             self.outfile = outfile
@@ -184,14 +185,13 @@ class ClassifierRunner(object):
         self.report_df = pd.DataFrame()
         self.cleanup = cleanup
         self.clean_failures = clean_failures
-        log.info(f'Initializing {__name__}')
-        log.info(f'write to csv: {self.write_to_csv}')
-        log.info(f'outfile: {self.outfile}')
+        log.info(f'Initialized {__name__}\n\tcleanup={cleanup}\n\tclean_failures={clean_failures}'
+                 f'\n\twrite_to_csv={write_to_csv}\n\toutfile={outfile}')
 
 
     def addModel(self, model:object, x_train:pd.DataFrame, y_train:pd.DataFrame,
                  x_test:pd.DataFrame, y_test:pd.DataFrame,
-                 name:str = None, dataset:str = None, parameters:dict = None):
+                 name:str = None, description:str = None, parameters:str = None):
         """
         Add models to be executed
         :param model:
@@ -200,7 +200,7 @@ class ClassifierRunner(object):
         :param x_test:
         :param y_test:
         :param name:
-        :param dataset:
+        :param description:
         :param parameters:
         :return:
         """
@@ -211,7 +211,7 @@ class ClassifierRunner(object):
             Keys.TRAIN_Y: y_train,
             Keys.TEST_X: x_test,
             Keys.TEST_Y: y_test,
-            Keys.DATASET: dataset,
+            Keys.DESCRIPTION: description,
             Keys.PARAMETERS: parameters,
             Keys.STATUS: Status.NEW,
             Keys.STATUS_DATE: None
@@ -222,8 +222,8 @@ class ClassifierRunner(object):
             model_dict[Keys.MODEL_NAME] = type(model).__name__
 
         log.debug(f'before adding models length: {len(self.models)}')
-        log.debug(f'models : {pprint.pformat(self.models)}')
-        log.debug(f'adding model [{pprint.pformat(model_dict)}]')
+        # log.debug(f'models : {pprint.pformat(self.models)}')
+        # log.debug(f'adding model [{pprint.pformat(model_dict)}]')
         self.models = self.models.append(model_dict, ignore_index=True)
         log.debug(f'models length: {len(self.models)}')
 
@@ -244,11 +244,11 @@ class ClassifierRunner(object):
 
     def _runModel(self, model:pd.DataFrame) -> pd.DataFrame:
         log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
-                 f'\twith data: {model[Keys.DATASET]}\n'
-                 f'\tand parameters: {model[Keys.PARAMETERS]}')
+                 f'\twith description: {model[Keys.DESCRIPTION]}'
+                 f'\twith parameters: {model[Keys.PARAMETERS]}')
         report = {
             Keys.MODEL_NAME: model[Keys.MODEL_NAME],
-            Keys.DATASET: model[Keys.DATASET],
+            Keys.DESCRIPTION: model[Keys.DESCRIPTION],
             Keys.PARAMETERS: model[Keys.PARAMETERS]
         }
         try:
@@ -260,6 +260,7 @@ class ClassifierRunner(object):
                                                             report)
             report[Keys.STATUS] = Status.SUCCESS
         except Exception as e:
+            traceback2.print_exc(file=sys.stdout)
             log.error(str(e))
             report[Keys.STATUS] = Status.FAILED
             report[Keys.MESSAGE] = str(e)
@@ -267,8 +268,8 @@ class ClassifierRunner(object):
             report[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
             self._record_results(report)
             log.info(f'Finished running model: {model[Keys.MODEL_NAME]}\n'
-                     f'\twith data: {model[Keys.DATASET]}\n'
-                     f'\tand parameters: {model[Keys.PARAMETERS]}'
+                     f'\twith description: {model[Keys.DESCRIPTION]}\n'
+                     f'\twith parameters: {model[Keys.PARAMETERS]}\n'
                      f'\tstatus: {report[Keys.STATUS]}')
 
         return report

@@ -16,6 +16,10 @@ wpt = nltk.WordPunctTokenizer()
 stop_words = nltk.corpus.stopwords.words('english')
 ps = PorterStemmer()
 
+TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATE_FORMAT = '%Y-%m-%d'
+FILE_DATE_FORMAT = '%Y-%m-%d-%H'
+
 
 def remove_stop_words_from_list(words: list):
     for word in words:
