@@ -1,0 +1,8 @@
+data_dir,data_file,class_column
+dataset/feature_files,review_body-bow-df_90-ngram13-112043-56.csv,star_rating
+dataset/feature_files,review_body-tfidf-df_90-ngram13-112043-56.csv,star_rating
+dataset/feature_files,review_body-bow-df_90-ngram13-112043-56-lda.csv,star_rating
+dataset/feature_files,review_body-tfidf-df_90-ngram13-112043-56-lda.csv,star_rating
+dataset/feature_files,review_body-tfidf-df_default-ngram1-112043-47308-lda.csv,star_rating
+dataset/feature_files,review_body-tfidf-df_default-ngram1-112043-47308.csv,star_rating
+dataset/feature_files,review_body-bow-df_default-ngram1-112043-47308.csv,star_rating

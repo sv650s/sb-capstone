@@ -95,9 +95,13 @@ if __name__ == "__main__":
         data_dir = row["data_dir"]
         data_file = row["data_file"]
         class_column = row["class_column"]
-        description = row["description"]
+        # description = row["description"]
+        description = data_file.split(".")[0]
+        log.debug(f'description {description}')
 
-        X = pd.read_csv(f'{data_dir}/{data_file}')
+        infile = f'{data_dir}/{data_file}'
+        log.info(f"loading file {infile}")
+        X = pd.read_csv(infile)
         Y = X[class_column]
         X.drop(class_column, axis=1)
 

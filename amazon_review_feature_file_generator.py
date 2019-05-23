@@ -1,3 +1,7 @@
+#!/bin/python
+#
+# Generate feature files based on a config
+#
 import argparse
 import pandas as pd
 from nlp.feature_util import generate_bow_file, generate_tfidf_file
@@ -14,10 +18,10 @@ LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(mes
 #     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-small.csv",
 #     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-medium.csv",
 # ]
-INFILES = [
-    "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv",
-    "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-small.csv",
-    ]
+# INFILES = [
+#     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv",
+#     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-small.csv",
+#     ]
 # for debugging
 # INFILES = [
 #      "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-supertiny.csv"
@@ -28,7 +32,7 @@ OUTDIR = "dataset/feature_files"
 FEATURE_COLUMNS = ["review_body"]
 
 # csv that has all the input
-PARAM_INFILE = "amazon_review_feature_generation_input.csv"
+# PARAM_INFILE = "amazon_review_feature_generation_input.csv"
 
 def read_amazon_data(file:str) -> pd.DataFrame:
     df = pd.read_csv(file, parse_dates=["review_date"])
