@@ -39,6 +39,12 @@ def drop_columns(df: pd.DataFrame, columns_to_drop: list) -> pd.DataFrame:
 
 
 def drop_empty_columns(df: pd.DataFrame, columns_to_check) -> pd.DataFrame:
+    """
+    drop any rows where there are empty values in columns specified in columns_to_checks
+    :param df:
+    :param columns_to_check:
+    :return:
+    """
     for column in columns_to_check:
         df = df[
             df[column].apply(lambda x: len(x) > 0)
@@ -60,7 +66,7 @@ def cast_samller_type(df: pd.DataFrame, class_column: str, new_type: str=None) -
         dtype_dict = {a: np.dtype(new_type) for a in df.columns if a not in [class_column]}
         log.debug(pformat(dtype_dict))
         dtype_dict[class_column] = np.int8
-        return df.astype(dtype_dict)
+        return df.astype(dtype_dict, copy=False)
     return df
 
 
@@ -76,5 +82,5 @@ def cast_column_type(df: pd.DataFrame, column_name: str, new_type: str=None) -> 
         log.info(f"Casting column {column_name} to {new_type}")
         dtype_dict = {column_name: np.dtype(new_type)}
         log.debug(pformat(dtype_dict))
-        return df.astype(dtype_dict)
+        return df.astype(dtype_dict, copy=False)
     return df
