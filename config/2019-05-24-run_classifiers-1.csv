@@ -1,0 +1,2 @@
+data_dir,data_file,class_column,dtype
+dataset/feature_files,review_body-bow-df_default-ngram1-112043-47308.csv,star_rating,uint32

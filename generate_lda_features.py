@@ -40,7 +40,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 from util.dict_util import add_dict_to_dict
-from util.df_util import cast_samller_type
+import util.df_util as dfu
+import numpy as np
 import sys
 
 
@@ -123,11 +124,11 @@ if __name__ == "__main__":
 
         # infile has a bunch of feature columns, last column is star_rating
         log.info(f'Reading in {infile}')
-        in_df = pd.read_csv(infile)
-
-        log.info(f'Casting df to smaller type...')
-        if dtype or len(dtype) > 0:
-            in_df = cast_samller_type(in_df, CLASS_COLUMN, dtype)
+        if dtype and len(dtype) > 0:
+            in_df = pd.read_csv(infile, dtype=np.dtype(dtype))
+            in_df = dfu.cast_column_type(in_df, CLASS_COLUMN, "uint8")
+        else:
+            in_df = pd.read_csv(infile)
 
         log.info(f'Cleaning data...')
         Y = in_df[CLASS_COLUMN]
