@@ -10,6 +10,7 @@ import pandas as pd
 import logging
 import argparse
 import util.file_util as fu
+import util.df_util as dfu
 
 # configure logger so we can see output from the classes
 LOG_FORMAT='%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
@@ -85,13 +86,19 @@ if __name__ == "__main__":
         data_dir = row["data_dir"]
         data_file = row["data_file"]
         class_column = row["class_column"]
+        dtype = row["dtype"]
         # description = row["description"]
         description = data_file.split(".")[0]
         log.debug(f'description {description}')
 
         infile = f'{data_dir}/{data_file}'
         log.info(f"loading file {infile}")
-        df = pd.read_csv(infile)
+
+        if dtype and len(dtype) > 0:
+            df = pd.read_csv(infile, dtype=dtype)
+            df = dfu.cast_column_type(df, class_column, "int8")
+        else:
+            df = pd.read_csv(infile)
         X_train, X_test, Y_train, Y_test = create_training_data(df, class_column)
 
         if not args.noknn:
