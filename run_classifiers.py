@@ -10,39 +10,28 @@ import pandas as pd
 import logging
 import argparse
 import util.file_util as fu
-import sys
 
 # configure logger so we can see output from the classes
 LOG_FORMAT='%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
+log = logging.getLogger(__name__)
 
-# set global variables
+def create_training_data(x:pd.DataFrame, class_column:str):
+    """
+    Take dataframe and:
+    1. split between features and predictions
+    2. create test and training sets
+    :param x:
+    :param class_column:
+    :return:
+    """
 
-# I'm finding that running these models on my laptop takes forever and they are not finishing so I'm going to start
-# with a really small file just to validate my code
-#
-# datafile was generated from amazon_review_preprocessing.ipynb - this file has 1k reviews randomly chosen
-# from original file
-# KEEP_COLUMNS = ["product_title", "helpful_votes", "review_headline", "review_body", "star_rating"]
+    y = x[class_column]
+    x.drop(class_column, axis=1, inplace=True)
 
+    log.info(f'shape of x: {x.shape}')
+    log.info(f'shape of y: {y.shape}')
 
-# Configuration
-# DATA_FILES = ["dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-tinyout.csv"]
-# NEIGHBORS = [5] # default
-# NEIGHBORS = [1, 3, 5, 7, 9, 11]
-
-# Radius for RadiusNeighbor
-# RADII = [5.0] # this is the lowest number I tried that was able to find a neighbor for review_headline
-# RADII = [30.0] # this is the lowest number I tried that was able to find a neighbor for review_body
-# RADII = [5.0, 7.0, 9.0, 11.0, 13.0]
-
-# logistic regression settings
-# C= [1.0] # default
-# C = [0.2, 0.4, 0.6, 0.8, 1.0]
-
-# N_JOBS=-1
-# LR_ITER=500
-
-
+    return train_test_split(x, y, random_state=1)
 
 
 
@@ -56,7 +45,7 @@ if __name__ == "__main__":
     parser.add_argument("--norn", help="don't do radius neighbor", action='store_true')
     parser.add_argument("--noreport", help="don't do radius neighbor", action='store_true')
     parser.add_argument("--lr_iter", help="number of iterations for LR", default=300)
-    parser.add_argument("--n_jobs", help="number of iterations for LR", default=-1)
+    parser.add_argument("--n_jobs", help="number of iterations for LR", default=6)
     parser.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
     parser.add_argument("--radius", help="radius for radius neighbor classification", default=30)
     parser.add_argument("--lr_c", help="c parameter for LR", default=1.0)
@@ -81,6 +70,7 @@ if __name__ == "__main__":
     report_file_name = fu.get_report_filename(args.config_file)
     config_length = len(config_df)
 
+    # convert arguments to int
     n_jobs = int(args.n_jobs)
     lr_iter = int(args.lr_iter)
     neighbors = int(args.neighbors)
@@ -101,15 +91,8 @@ if __name__ == "__main__":
 
         infile = f'{data_dir}/{data_file}'
         log.info(f"loading file {infile}")
-        X = pd.read_csv(infile)
-        Y = X[class_column]
-        X.drop(class_column, axis=1)
-
-        log.info(f'shape of X: {X.shape}')
-        log.info(f'shape of Y: {Y.shape}')
-
-
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=1)
+        df = pd.read_csv(infile)
+        X_train, X_test, Y_train, Y_test = create_training_data(df, class_column)
 
         if not args.noknn:
                 neigh = KNeighborsClassifier(n_neighbors=neighbors, n_jobs=n_jobs)
@@ -120,6 +103,7 @@ if __name__ == "__main__":
                             Y_test,
                             name="KNN",
                             description=description,
+                            file=data_file,
                             parameters={"n_jobs": n_jobs,
                                         "n_neighbors": neighbors})
 
@@ -132,6 +116,7 @@ if __name__ == "__main__":
                             Y_test,
                             name="RN",
                             description=description,
+                            file=data_file,
                             parameters={"n_jobs": n_jobs,
                                         "radius": radius} )
 
@@ -146,6 +131,7 @@ if __name__ == "__main__":
                             Y_test,
                             name="LR",
                             description=description,
+                            file=data_file,
                             parameters={"n_jobs": n_jobs,
                                         "c": lr_c,
                                         "max_iter": lr_iter} )

@@ -39,6 +39,7 @@ class Keys(object):
     MESSAGE = "message"
     MODEL_NAME = "model_name"
     MODEL = "model"
+    FILE = "file"
     DESCRIPTION = "description"
     PARAMETERS = "parm"
     TRAIN_X = "X_train"
@@ -191,7 +192,7 @@ class ClassifierRunner(object):
 
     def addModel(self, model:object, x_train:pd.DataFrame, y_train:pd.DataFrame,
                  x_test:pd.DataFrame, y_test:pd.DataFrame,
-                 name:str = None, description:str = None, parameters:str = None):
+                 name:str = None, file:str = None, description:str = None, parameters:str = None):
         """
         Add models to be executed
         :param model:
@@ -211,6 +212,7 @@ class ClassifierRunner(object):
             Keys.TRAIN_Y: y_train,
             Keys.TEST_X: x_test,
             Keys.TEST_Y: y_test,
+            Keys.FILE: file,
             Keys.DESCRIPTION: description,
             Keys.PARAMETERS: parameters,
             Keys.STATUS: Status.NEW,
@@ -244,10 +246,12 @@ class ClassifierRunner(object):
 
     def _runModel(self, model:pd.DataFrame) -> pd.DataFrame:
         log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
+                 f'\twith file: {model[Keys.FILE]}'
                  f'\twith description: {model[Keys.DESCRIPTION]}'
                  f'\twith parameters: {model[Keys.PARAMETERS]}')
         report = {
             Keys.MODEL_NAME: model[Keys.MODEL_NAME],
+            Keys.FILE: model[Keys.FILE],
             Keys.DESCRIPTION: model[Keys.DESCRIPTION],
             Keys.PARAMETERS: model[Keys.PARAMETERS]
         }
@@ -268,6 +272,7 @@ class ClassifierRunner(object):
             report[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
             self._record_results(report)
             log.info(f'Finished running model: {model[Keys.MODEL_NAME]}\n'
+                     f'\twith file: {model[Keys.FILE]}\n'
                      f'\twith description: {model[Keys.DESCRIPTION]}\n'
                      f'\twith parameters: {model[Keys.PARAMETERS]}\n'
                      f'\tstatus: {report[Keys.STATUS]}')

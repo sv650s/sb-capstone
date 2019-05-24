@@ -1,0 +1,3 @@
+data_dir,data_file,class_column
+dataset/feature_files,review_body-tfidf-df_80-ngram13-999-10.csv,star_rating
+dataset/feature_files,review_body-tfidf-df_default-ngram1-999-3323.csv,star_rating

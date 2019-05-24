@@ -83,129 +83,6 @@ def clean_mixed_words(x):
     return x
 
 
-# for file in INFILES:
-
-    # outfile = get_outfile_name(file)
-    # log.info(f'outfile: {outfile}')
-    #
-    # df = pd.read_csv(file, parse_dates=["review_date"])
-    # review_body_df = df[FEATURE_COLUMN]
-    # Y = df[CLASS_COLUMN]
-    #
-    #
-    # review_body_df = review_body_df.apply(clean_mixed_words)
-    # review_body_df.head(10)
-    #
-    #
-    # # In[7]:
-    #
-    #
-    # # create BoW features
-    # vectorizer = CountVectorizer()
-    # feature_matrix = vectorizer.fit_transform(review_body_df)
-    # feature_array = feature_matrix.toarray()
-    # vocab = vectorizer.get_feature_names()
-    #
-    # print(f'feature_array shape: {feature_array.shape}')
-
-
-    # In[8]:
-    #
-    #
-    # print(vocab)
-    #
-    #
-    # # In[9]:
-    #
-    #
-    # dictionary_LDA = dict(enumerate(vocab))
-    # print(dictionary_LDA)
-
-    #
-    # # In[10]:
-    #
-    #
-    # len(dictionary_LDA.keys())
-
-
-    # # Couldn't Quite get gensim to work
-
-    # In[11]:
-
-    #
-    # print("printing feature array")
-    # count = 0
-    # for d, doc in enumerate(feature_array):
-    #     print(f'd: {d} doc: {doc}')
-    #     count += 1
-    #     if count > 6:
-    #         break
-
-
-    # In[12]:
-
-
-    # num_topics = 20
-    # lda_model = models.LdaModel(feature_array,
-    #                             num_topics=num_topics, \
-    # #                                   id2word=dictionary_LDA, \
-    #                                   passes=4)
-
-
-    # # Trying sklearn LatenDirichletAllocation
-
-    # In[13]:
-    #
-    #
-    # for topic in TOPICS:
-    #
-    #     # generating convert to LDA vector
-    #
-    #     lda = LatentDirichletAllocation(n_components=topic, max_iter=10, random_state=0)
-    #     dt_matrix = lda.fit_transform(feature_matrix)
-    #
-    #
-    #     # In[ ]:
-    #
-    #
-    #     features = pd.DataFrame(dt_matrix)
-    #     # features = pd.DataFrame(dt_matrix, columns=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10'])
-    #     features.to_csv(outfile, index=False)
-    #     # features.to_csv('lda_dt-preprocessed.csv', index=False)
-    #
-
-        # In[ ]:
-
-
-        # look at topics > 0.6
-        # tt_matrix = lda.components_
-        # for topic_weights in tt_matrix:
-        #     topic = [(token, weight) for token, weight in zip(vocab, topic_weights)]
-        #     topic = sorted(topic, key=lambda x: -x[1])
-        #     topic = [item for item in topic if item[1] > 0.6]
-        #     print(topic)
-        #     print()
-        # # rename columns to use words
-        # column_mapper = dict(enumerate(vocab))
-        #
-        # tt_df = pd.DataFrame(tt_matrix)
-        #
-        # print(f'converated lda feature shape {tt_df.shape}')
-        # tt_df.rename(mapper=column_mapper, axis=1, inplace=True)
-        # tt_df.to_csv('lda_tt-preprocessed.csv', index=False)
-
-
-
-        # # Let's run KNN
-
-        # In[ ]:
-
-
-
-
-
-
-        # In[ ]:
 
 
 def generate_lda_feature(x, y, topic) -> pd.DataFrame:
@@ -274,8 +151,6 @@ if __name__ == "__main__":
                 report_df.to_csv('lda_knn_report.csv', index=False)
 
             zip_and_save(features, Y, outfile)
-
-
 
 
 

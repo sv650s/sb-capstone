@@ -13,22 +13,7 @@ import datetime
 
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(message)s'
 
-# INFILES = [
-#     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-supertiny.csv",
-#     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv",
-#     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-small.csv",
-#     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-medium.csv",
-# ]
-# INFILES = [
-#     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv",
-#     "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-small.csv",
-#     ]
-# for debugging
-# INFILES = [
-#      "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-supertiny.csv"
-# ]
 KEEP_COLUMNS = ["product_title", "helpful_votes", "review_headline", "review_body", "star_rating"]
-OUTDIR = "dataset/feature_files"
 # FEATURE_COLUMNS = ["review_headline", "review_body"]
 FEATURE_COLUMNS = ["review_body"]
 
@@ -47,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("infile", help="data file to generate features from")
     parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
     parser.add_argument("-c", "--column", help="column to generate features from", default="review_body")
+    parser.add_argument("-o", "--outdir", help="output director", default="dataset/feature_files")
     # get command line arguments
     args = parser.parse_args()
 

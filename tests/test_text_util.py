@@ -1,5 +1,5 @@
 import util.text_util as tu
-import preprocess_amazon as pa
+import amazon_review_preprocessor as pa
 
 
 class TestTextUtil(object):
