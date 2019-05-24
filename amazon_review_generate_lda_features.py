@@ -242,13 +242,14 @@ if __name__ == "__main__":
         infile = row["infile"]
 
         # infile has a bunch of feature columns, last column is star_rating
-        log.info(f'Processing {infile}')
+        log.info(f'Reading in {infile}')
         in_df = pd.read_csv(infile)
+        log.info(f'Cleaning data...')
         Y = in_df[CLASS_COLUMN]
         X = in_df.drop(CLASS_COLUMN, axis=1)
 
         for topics in TOPICS:
-            log.info("Generating lda features")
+            log.info("Begin generating lda features...")
             features = generate_lda_feature(X, Y, topics)
             log.info(f"Feature shape: {features.shape}")
             outfile = f'{infile.split(".")[0]}-lda{topics}.csv'
