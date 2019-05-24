@@ -40,7 +40,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 from util.dict_util import add_dict_to_dict
-
+from util.df_util import cast_samller_type
+import sys
 
 
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(message)s'
@@ -56,7 +57,7 @@ CLASS_COLUMN="star_rating"
 # around 100k entries
 CONFIG_FILE = "2019-05-21-amazon_review_generate_lda_feature_input.csv"
 INFILES = [ "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-10.csv"]
-TOPICS = [ 20 ]
+TOPICS = [ 40, 60 ]
 #TOPICS = [ 5, 10, 20 ]
 
 
@@ -86,6 +87,7 @@ def clean_mixed_words(x):
 
 
 def generate_lda_feature(x, y, topic) -> pd.DataFrame:
+    log.info(f"Generating lda features from x:{x.shape} y:{y.shape} topics:{topic}")
     lda = LatentDirichletAllocation(n_components=topic, max_iter=10, random_state=0)
     dt_matrix = lda.fit_transform(x)
     return pd.DataFrame(dt_matrix)
@@ -117,16 +119,21 @@ if __name__ == "__main__":
     log.debug(config.head())
     for index, row in config.iterrows():
         infile = row["infile"]
+        dtype = row["dtype"]
 
         # infile has a bunch of feature columns, last column is star_rating
         log.info(f'Reading in {infile}')
         in_df = pd.read_csv(infile)
+
+        log.info(f'Casting df to smaller type...')
+        if dtype or len(dtype) > 0:
+            in_df = cast_samller_type(in_df, CLASS_COLUMN, dtype)
+
         log.info(f'Cleaning data...')
         Y = in_df[CLASS_COLUMN]
         X = in_df.drop(CLASS_COLUMN, axis=1)
 
         for topics in TOPICS:
-            log.info("Begin generating lda features...")
             features = generate_lda_feature(X, Y, topics)
             log.info(f"Feature shape: {features.shape}")
             outfile = f'{infile.split(".")[0]}-lda{topics}.csv'
