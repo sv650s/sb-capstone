@@ -150,7 +150,7 @@ if __name__ == "__main__":
                                         "c": lr_c,
                                         "max_iter": lr_iter} )
 
-    report_df = cr.runAllModels()
+        report_df = cr.runNewModels()
     print(report_df.tail())
 
 

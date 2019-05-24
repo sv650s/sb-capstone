@@ -9,6 +9,7 @@ import logging
 import traceback2
 from pprint import pformat
 import numpy as np
+import datetime
 
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(message)s'
 
@@ -45,6 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("config_file", help="file with parameters to drive the permutations")
     parser.add_argument("infile", help="data file to generate features from")
     parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
+    parser.add_argument("-c", "--column", help="column to generate features from", default="review_body")
     # get command line arguments
     args = parser.parse_args()
 
@@ -54,6 +56,7 @@ if __name__ == "__main__":
     logging.basicConfig(format=LOG_FORMAT, level=loglevel)
     log = logging.getLogger(__name__)
 
+    start_time = datetime.now()
     param_df = pd.read_csv(args.config_file, dtype={"min_df":np.float16, "max_df":np.float16})
 
     for column in FEATURE_COLUMNS:
@@ -81,8 +84,11 @@ if __name__ == "__main__":
                 args_dict["x"] = x_df
                 args_dict["y"] = y_df
 
-                #
+                # call function specified by the fn_name column
                 globals()[function](**args_dict)
             except Exception as e:
                 log.error(traceback2.format_exc())
 
+    end_time = datetime.now()
+    total_time_min = end_time - start_time
+    print(f'Finished processing. Total time: {round(total_time_min.total_seconds() / 60, 1)} min')
