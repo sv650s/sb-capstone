@@ -1,6 +1,9 @@
 import pandas as pd
+import numpy as np
+import logging
+from pprint import pformat
 
-
+log = logging.getLogger(__name__)
 
 def duplicate_columns(df:pd.DataFrame, columns:list, reorder:bool = True) -> pd.DataFrame:
     """
@@ -40,4 +43,38 @@ def drop_empty_columns(df: pd.DataFrame, columns_to_check) -> pd.DataFrame:
         df = df[
             df[column].apply(lambda x: len(x) > 0)
         ]
+    return df
+
+
+
+
+def cast_samller_type(df: pd.DataFrame, class_column: str, new_type: str=None) -> pd.DataFrame:
+    """
+    feature files are sparse matrices which doesn't need the memory space of the default np.int64 or np.float64
+    we are going to cast it down to smaller types so it doesn't take up as much memory
+    :param df:
+    :return:
+    """
+    if new_type:
+        log.info(f"Casting down to {new_type}")
+        dtype_dict = {a: np.dtype(new_type) for a in df.columns if a not in [class_column]}
+        log.debug(pformat(dtype_dict))
+        dtype_dict[class_column] = np.int8
+        return df.astype(dtype_dict)
+    return df
+
+
+def cast_column_type(df: pd.DataFrame, column_name: str, new_type: str=None) -> pd.DataFrame:
+    """
+    cast a specific column in df to specific type
+    :param df:
+    :param column_name:
+    :param new_type:
+    :return:
+    """
+    if new_type:
+        log.info(f"Casting column {column_name} to {new_type}")
+        dtype_dict = {column_name: np.dtype(new_type)}
+        log.debug(pformat(dtype_dict))
+        return df.astype(dtype_dict)
     return df

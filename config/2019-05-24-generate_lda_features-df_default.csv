@@ -1,0 +1,3 @@
+infile,dtype
+dataset/feature_files/review_body-bow-df_default-ngram1-112043-47308.csv,uint32
+dataset/feature_files/review_body-tfidf-df_default-ngram1-112043-47308.csv,float32
