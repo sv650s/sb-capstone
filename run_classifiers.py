@@ -93,12 +93,14 @@ if __name__ == "__main__":
 
         infile = f'{data_dir}/{data_file}'
         log.info(f"loading file {infile}")
-
+        load_start_time = datetime.now()
         if dtype and len(dtype) > 0:
             df = pd.read_csv(infile, dtype=dtype)
             df = dfu.cast_column_type(df, class_column, "int8")
         else:
             df = pd.read_csv(infile)
+        load_end_time = datetime.now()
+        load_time_min = round((load_end_time - load_start_time).total_seconds() / 60, 2)
         X_train, X_test, Y_train, Y_test = create_training_data(df, class_column)
 
         if not args.noknn:
@@ -108,6 +110,7 @@ if __name__ == "__main__":
                             Y_train,
                             X_test,
                             Y_test,
+                            file_load_time=load_time_min,
                             name="KNN",
                             description=description,
                             file=data_file,
@@ -121,6 +124,7 @@ if __name__ == "__main__":
                             Y_train,
                             X_test,
                             Y_test,
+                            file_load_time=load_time_min,
                             name="RN",
                             description=description,
                             file=data_file,
@@ -136,6 +140,7 @@ if __name__ == "__main__":
                             Y_train,
                             X_test,
                             Y_test,
+                            file_load_time=load_time_min,
                             name="LR",
                             description=description,
                             file=data_file,

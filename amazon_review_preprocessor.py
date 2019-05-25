@@ -34,7 +34,7 @@ def remove_amazon_tags(text: str) -> str:
     :return:
     """
     logger.debug(f"before amazon tags {text}")
-    text = re.sub('\[\[.*?\]\]', ' ', text, re.I | re.A)
+    text = re.sub(r'\[\[.*?\]\]', ' ', text, re.I | re.A)
     text = ' '.join(text.split())
     logger.debug(f"after processing amazon tags {text}")
     return text
