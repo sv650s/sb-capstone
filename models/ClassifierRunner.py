@@ -33,6 +33,7 @@ class Keys(object):
     TRAIN_TIME_MIN = "train_time_min"
     SCORE_TIME_MIN = "score_time_min"
     PREDICT_TIME_MIN = "predict_time_min"
+    FILE_LOAD_TIME_MIN = "file_load_time_min"
     TOTAL_TIME_MIN = "total_time_min"
     STATUS = "status"
     STATUS_DATE = "status_date"
@@ -127,15 +128,15 @@ class ClassifierRunner(object):
 
             # calculate times
             train_time = train_time_end - train_time_start
-            train_time_min = round(train_time.total_seconds() / 60, 1)
+            train_time_min = round(train_time.total_seconds() / 60, 2)
             log.info(f'Training time (min): {train_time_min}')
 
             score_time = score_time_end - train_time_end
-            score_time_min = round(score_time.total_seconds() / 60, 1)
+            score_time_min = round(score_time.total_seconds() / 60, 2)
             log.info(f'Scoring time (min): {score_time_min}')
 
             predict_time = predict_time_end - score_time_end
-            predict_time_min = round(predict_time.total_seconds() / 60,1 )
+            predict_time_min = round(predict_time.total_seconds() / 60, 2)
             log.info(f'Predict time (min): {predict_time_min}')
 
             train_examples, train_features = x_train.shape
@@ -148,7 +149,11 @@ class ClassifierRunner(object):
             report[Keys.TRAIN_TIME_MIN] = train_time_min
             report[Keys.SCORE_TIME_MIN] = score_time_min
             report[Keys.PREDICT_TIME_MIN] = predict_time_min
-            report[Keys.TOTAL_TIME_MIN] = train_time_min + score_time_min + predict_time_min
+            if Keys.FILE_LOAD_TIME_MIN in report.keys():
+                report[Keys.TOTAL_TIME_MIN] = train_time_min + score_time_min + predict_time_min + \
+                                                report[Keys.FILE_LOAD_TIME_MIN]
+            else:
+                report[Keys.TOTAL_TIME_MIN] = train_time_min + score_time_min + predict_time_min
             report = ClassifierRunner._interpret_predictions(y_test, y_predict, report)
             report[Keys.STATUS] = Status.SUCCESS
             report[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
@@ -192,6 +197,7 @@ class ClassifierRunner(object):
 
     def addModel(self, model:object, x_train:pd.DataFrame, y_train:pd.DataFrame,
                  x_test:pd.DataFrame, y_test:pd.DataFrame,
+                 file_load_time:float = None,
                  name:str = None, file:str = None, description:str = None, parameters:str = None):
         """
         Add models to be executed
@@ -213,11 +219,14 @@ class ClassifierRunner(object):
             Keys.TEST_X: x_test,
             Keys.TEST_Y: y_test,
             Keys.FILE: file,
+            Keys.FILE_LOAD_TIME_MIN: file_load_time,
             Keys.DESCRIPTION: description,
             Keys.PARAMETERS: parameters,
             Keys.STATUS: Status.NEW,
             Keys.STATUS_DATE: None
         }
+        if file_load_time:
+            model_dict[Keys.FILE_LOAD_TIME_MIN] = file_load_time
         if name:
             model_dict[Keys.MODEL_NAME] = name
         else:
@@ -246,15 +255,18 @@ class ClassifierRunner(object):
 
     def _runModel(self, model:pd.DataFrame) -> pd.DataFrame:
         log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
-                 f'\twith file: {model[Keys.FILE]}'
-                 f'\twith description: {model[Keys.DESCRIPTION]}'
-                 f'\twith parameters: {model[Keys.PARAMETERS]}')
+                 f'\twith file: {model[Keys.FILE]}\n'
+                 f'\twith description: {model[Keys.DESCRIPTION]}\n'
+                 f'\twith file load time: {model[Keys.FILE_LOAD_TIME_MIN]}\n'
+                 f'\twith parameters: {model[Keys.PARAMETERS]}\n')
         report = {
             Keys.MODEL_NAME: model[Keys.MODEL_NAME],
             Keys.FILE: model[Keys.FILE],
             Keys.DESCRIPTION: model[Keys.DESCRIPTION],
             Keys.PARAMETERS: model[Keys.PARAMETERS]
         }
+        if model[Keys.FILE_LOAD_TIME_MIN]:
+            report[Keys.FILE_LOAD_TIME_MIN] = model[Keys.FILE_LOAD_TIME_MIN]
         try:
             report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
                                                             model[Keys.TRAIN_X],
@@ -306,8 +318,8 @@ class ClassifierRunner(object):
             for index, model in filtered_models.iterrows():
                 log.info(f'Running {index+1} of {len(self.models)} models')
                 report = self._runModel(model)
-                self.models.iloc[index][Keys.STATUS] = report[Keys.STATUS]
-                self.models.iloc[index][Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
+                self.models.at[index, Keys.STATUS] = report[Keys.STATUS]
+                self.models.at[index, Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
 
         self._cleanModels()
 
