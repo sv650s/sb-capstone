@@ -1,3 +1,0 @@
-infile,dtype
-dataset/feature_files/review_body-bow-df_80-ngram13-999-10.csv,uint32
-dataset/feature_files/review_body-tfidf-df_80-ngram13-999-10.csv,float32

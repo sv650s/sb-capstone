@@ -43,6 +43,8 @@ from util.dict_util import add_dict_to_dict
 import util.df_util as dfu
 import numpy as np
 import sys
+import traceback2
+from datetime import datetime
 
 
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(message)s'
@@ -56,9 +58,9 @@ CLASS_COLUMN="star_rating"
 
 
 # around 100k entries
-CONFIG_FILE = "2019-05-21-amazon_review_generate_lda_feature_input.csv"
-INFILES = [ "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-10.csv"]
-TOPICS = [ 40, 60 ]
+# CONFIG_FILE = "2019-05-21-amazon_review_generate_lda_feature_input.csv"
+# INFILES = [ "dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-10.csv"]
+# TOPICS = [ 20, 40, 60 ]
 #TOPICS = [ 5, 10, 20 ]
 
 
@@ -104,6 +106,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Takes word vector files (ie, BoW and TFIDF and generate feature files based on LDA')
     parser.add_argument("config_file", help="file with parameters to drive the permutations")
     parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
+    parser.add_argument("-o", "--outdir", help="output directory", default="dataset/feature_files")
     parser.add_argument("-t", "--traindebug", help="run data through training models for debugging", action="store_true")
 
     # get command line arguments
@@ -116,50 +119,109 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
 
     # read in configuration
-    config = pd.read_csv(args.config_file)
-    log.debug(config.head())
-    for index, row in config.iterrows():
+    config_df = pd.read_csv(args.config_file)
+    log.debug(config_df.head())
+    for index, row in config_df.iterrows():
         infile = row["infile"]
+        data_dir = row["data_dir"]
         dtype = row["dtype"]
+        topics_str_list = row["topics"].replace(" ", "").split(",")
+        topics = list(map(int, topics_str_list))
 
-        # infile has a bunch of feature columns, last column is star_rating
-        log.info(f'Reading in {infile}')
-        if dtype and len(dtype) > 0:
-            in_df = pd.read_csv(infile, dtype=np.dtype(dtype))
-            in_df = dfu.cast_column_type(in_df, CLASS_COLUMN, "uint8")
-        else:
-            in_df = pd.read_csv(infile)
 
-        log.info(f'Cleaning data...')
-        Y = in_df[CLASS_COLUMN]
-        X = in_df.drop(CLASS_COLUMN, axis=1)
+        read_infile_start = None
+        read_infile_end = None
+        lda_start = None
+        lda_end = None
+        save_start = None
+        save_end = None
 
-        for topics in TOPICS:
-            features = generate_lda_feature(X, Y, topics)
-            log.info(f"Feature shape: {features.shape}")
-            outfile = f'{infile.split(".")[0]}-lda{topics}.csv'
-            log.info(f"outfile: {outfile}")
+        try:
 
-            # do remove this later
-            if args.traindebug:
-                X_train, X_test, y_train, y_test = train_test_split(features, Y)
+            # time reading in file time
+            read_infile_start = datetime.now()
 
-                log.info("Training KNN model")
-                neigh = KNeighborsClassifier(n_jobs=-1)
-                neigh.fit(X_train, y_train)
-                y_predict = neigh.predict(X_test)
+            # infile has a bunch of feature columns, last column is star_rating
+            log.info(f'Reading in {infile}')
+            if dtype and len(dtype) > 0:
+                in_df = pd.read_csv(f'{data_dir}/{infile}', dtype=np.dtype(dtype))
+                in_df = dfu.cast_column_type(in_df, CLASS_COLUMN, "uint8")
+            else:
+                in_df = pd.read_csv(f'{data_dir}/{infile}')
 
-                report = {}
-                log.info("Getting classification report")
-                lda_dict = classification_report(y_test, y_predict, output_dict=True)
-                report = add_dict_to_dict(report, lda_dict)
-                print(type(report))
-                pprint(report)
-                report_df = pd.DataFrame(report, index=[0])
-                report_df.to_csv('lda_knn_report.csv', index=False)
+            read_infile_end = datetime.now()
 
-            zip_and_save(features, Y, outfile)
+            log.info(f'Cleaning data...')
+            Y = in_df[CLASS_COLUMN]
+            X = in_df.drop(CLASS_COLUMN, axis=1)
 
+            for topic in topics:
+                lda = f"lda{topic}"
+
+                try:
+
+                    # time lda start
+                    lda_start = datetime.now()
+                    features = generate_lda_feature(X, Y, topic)
+                    lda_end = datetime.now()
+
+                    log.info(f"Feature shape: {features.shape}")
+                    outfile = f'{args.outdir}/{infile.split(".")[0]}-{lda}.csv'
+                    log.info(f"outfile: {outfile}")
+
+                    # do remove this later
+                    if args.traindebug:
+                        X_train, X_test, y_train, y_test = train_test_split(features, Y)
+
+                        log.info("Training KNN model")
+                        neigh = KNeighborsClassifier(n_jobs=-1)
+                        neigh.fit(X_train, y_train)
+                        y_predict = neigh.predict(X_test)
+
+                        report = {}
+                        log.info("Getting classification report")
+                        lda_dict = classification_report(y_test, y_predict, output_dict=True)
+                        report = add_dict_to_dict(report, lda_dict)
+                        print(type(report))
+                        pprint(report)
+                        report_df = pd.DataFrame(report, index=[0])
+                        report_df.to_csv('lda_knn_report.csv', index=False)
+
+                    # time save time
+                    save_start = datetime.now()
+                    zip_and_save(features, Y, outfile)
+                    save_end = datetime.now()
+                    config_df.loc[index, "status"] = "success"
+
+                finally:
+                    if save_start and save_end:
+                        config_df.loc[index, f"save_time_{lda}"] = \
+                            round((save_end - save_start).total_seconds() / 60, 2)
+                    elif save_start:
+                        config_df.loc[index, f"save_time_{lda}"] = \
+                            round((datetime.now() - save_start).total_seconds() / 60, 2)
+
+                    if lda_start and lda_end:
+                        config_df.loc[index, f"lda_time_{lda}"] = \
+                            round((lda_end - lda_start).total_seconds() / 60, 2)
+                    elif lda_start:
+                        config_df.loc[index, f"lda_time_{lda}"] = \
+                            round((datetime.now() - lda_start).total_seconds() / 60, 2)
+
+        except Exception as e:
+            traceback2.print_exc(file=sys.stderr)
+            config_df.loc[index, "status"] = "failed"
+            config_df.loc[index, "message"] = str(e)
+        finally:
+            if read_infile_start and read_infile_end:
+                config_df.loc[index, "read_time"] = \
+                        round((read_infile_end - read_infile_start).total_seconds() / 60, 2)
+            elif read_infile_start:
+                config_df.loc[index, "read_time"] = \
+                        round((datetime.now() - read_infile_start).total_seconds() / 60, 2)
+
+            # write status of each round
+            config_df.to_csv(args.config_file, index=False)
 
 
 
