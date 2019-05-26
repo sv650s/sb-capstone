@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
     parser.add_argument("--noknn", help="don't do KNN", action='store_true')
     parser.add_argument("--nolr", help="don't do logistic regression", action='store_true')
-    parser.add_argument("--norn", help="don't do radius neighbor", action='store_true')
+    parser.add_argument("--rn", help="run radius neighbor", action='store_true')
     parser.add_argument("--noreport", help="don't do radius neighbor", action='store_true')
     parser.add_argument("--lr_iter", help="number of iterations for LR", default=300)
     parser.add_argument("--n_jobs", help="number of iterations for LR", default=6)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     log.debug(f'noknn={args.noknn}')
     log.debug(f'nolr={args.nolr}')
-    log.debug(f'norn={args.norn}')
+    log.debug(f'rn={args.rn}')
     log.debug(f'noreport={args.noreport}')
 
     # ready in config file
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         data_dir = row["data_dir"]
         data_file = row["data_file"]
         class_column = row["class_column"]
-        dtype = row["dtype"]
+        dtype = np.dtype(row["dtype"])
         # description = row["description"]
         description = data_file.split(".")[0]
         log.debug(f'description {description}')
@@ -117,7 +117,7 @@ if __name__ == "__main__":
                             parameters={"n_jobs": n_jobs,
                                         "n_neighbors": neighbors})
 
-        if not args.norn:
+        if args.rn:
                 rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=n_jobs)
                 cr.addModel(rnc,
                             X_train,
