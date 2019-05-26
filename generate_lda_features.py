@@ -125,7 +125,7 @@ if __name__ == "__main__":
         infile = row["infile"]
         data_dir = row["data_dir"]
         dtype = row["dtype"]
-        topics_str_list = row["topics"].replace(" ", "").split(",")
+        topics_str_list = str(row["topics"]).replace(" ", "").split(",")
         topics = list(map(int, topics_str_list))
 
 

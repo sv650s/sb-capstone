@@ -9,7 +9,7 @@ import logging
 import traceback2
 from pprint import pformat
 import numpy as np
-import datetime
+from datetime import datetime
 
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(message)s'
 
