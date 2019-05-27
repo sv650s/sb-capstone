@@ -36,7 +36,7 @@ def stem_text(text: str) -> str:
 
 def lemmatize_text(text: str) -> str:
     # TODO: implement this - currently points to stem_words
-    assert False, "Not yet implemented"
+    assert False, "Lemmatization is not yet implemented"
     return stem_text(text)
 
 
@@ -127,7 +127,7 @@ def remove_special_chars(text: str) -> str:
     :param text:
     :return:
     """
-    text = re.sub('[^a-zA-Z0-9\s]', ' ', text, re.I | re.A)
+    text = re.sub('[^a-zA-Z0-9\s]', ' ', text, flags=re.I | re.A)
     text = remove_newlines(text)
     return ' '.join(text.split())
 
@@ -142,12 +142,27 @@ def get_contractions(text: str) -> list:
     logger.debug(f"looking for contractions [{text}]")
     contraction_list = []
     # this doesn't capture if the word is at the end of the line
-    for (match) in re.findall(r"\s+([a-z]+'[a-z]{1,2})[\s\t\n]+", text.lower(), re.ASCII | re.IGNORECASE):
+    for (match) in re.findall(r"\s+([a-z]+'[a-z]{1,2})[\s\t\n]+", text.lower(), flags=re.ASCII | re.IGNORECASE):
         contraction_list.append(match)
     # match if contraction is at the end of the line
-    for (match) in re.findall(r"\s+([a-z]+'[a-z]{1,2})$", text.lower(), re.ASCII | re.IGNORECASE):
+    for (match) in re.findall(r"\s+([a-z]+'[a-z]{1,2})$", text.lower(), flags=re.ASCII | re.IGNORECASE):
         contraction_list.append(match)
 
     logger.debug(f"found the following contractons [{contraction_list}]")
     return contraction_list
 
+
+def remove_alphanumeric_words(x):
+    """
+    In amazon reviews especially for wireless categories you have some alpha numeric word
+    which represent model numbers, we want to remove this
+
+    Will also remove words that are basically only numbers
+    :param x:
+    :return:
+    """
+    # remove mixed words
+    x = re.sub(r'\s*([a-z]+[\d]+[\w\d]*|[\d]+[a-z]+[\d\w]*|[\d]{2,})', '', x, flags=re.IGNORECASE)
+    # remove numbers
+    # x = re.sub(r'\s(\d+)', '', x)
+    return ' '.join(x.split())
