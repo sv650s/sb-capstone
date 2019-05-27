@@ -23,8 +23,9 @@ class TextPreprocessor:
                  remove_special_chars=True,
                  stem_text=False,
                  lemmatize_text=False,
+                 remove_alphanumeric_words=True,
                  remove_stop_words=True,
-                 create_original_columns=False,
+                 retain_original_columns=False,
                  custom_preprocessor=None,
                  custom_postprocessor=None):
         """
@@ -41,7 +42,7 @@ class TextPreprocessor:
         :param stem_text:  default = False
         :param lemmatize_text: default = False
         :param remove_stop_words:
-        :param create_original_columns:
+        :param retain_original_columns:
         :param custom_preprocessor: pass it a custom function to run before any processing. this can be a function or a list
         :param custom_postprocessor: pass it a custom function to run after processing
         """
@@ -60,8 +61,10 @@ class TextPreprocessor:
         self.stem_text = stem_text
         # we are either going to stem or lemmatize
         self.lemmatize_text = lemmatize_text
+        self.remove_alphanumeric_words = remove_alphanumeric_words
         self.remove_stop_words = remove_stop_words
-        self.retain_original_columns = create_original_columns
+        # TODO: not yet implemented - specify which columns to keep
+        self.retain_original_columns = retain_original_columns
         self.custom_preprocessor = custom_preprocessor
         self.custom_postprocessor = custom_postprocessor
 
@@ -111,6 +114,8 @@ class TextPreprocessor:
                 if self.remove_special_chars:
                     text = tu.remove_special_chars(text)
                 # we have to do this after expanding contractions so it doesn't remove words like don't or shouldn't
+                if self.remove_alphanumeric_words:
+                    text = tu.remove_alphanumeric_words(text)
                 if self.remove_stop_words:
                     text = tu.remove_stop_words(text)
                 if self.stem_text:

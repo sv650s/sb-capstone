@@ -136,6 +136,51 @@ class TestTextUtil(object):
         assert len(matches) == 5, \
                          f'original [{text}] should find 4 matches: {matches}'
 
+    def test_alphanumerica_words(self):
+        text = "iphone 6s"
+        expected = "iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove last word correctly"
 
-# if __name__ == '__main__':
-#     unittest.main()
+        text = "iphone a6s"
+        expected = "iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove number in middle of word"
+
+        text = "iphone 6a6s"
+        expected = "iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove letter in middle of word"
+
+        text = "iphone a6"
+        expected = "iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove last word correctly"
+
+        text = "iphone s6 6s a6b"
+        expected = "iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove different types of mixed words"
+
+        text = "6s iphone"
+        expected = "iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove first word correctly"
+
+        text = "apple 6s iphone"
+        expected = "apple iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove second word correctly"
+
+        text = "GSM12345 apple 6s iphone zt3500"
+        expected = "apple iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove multiple words correctly"
+
+        # TODO: not sure what to do with these standalone numbers yet
+        text = "GSM12345 apple 6s 5 55 iphone zt3500"
+        expected = "apple 5 iphone"
+        newtext = tu.remove_alphanumeric_words(text)
+        assert newtext == expected, "did not remove first word correctly"
+
+

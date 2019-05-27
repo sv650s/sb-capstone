@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("--rn", help="run radius neighbor", action='store_true')
     parser.add_argument("--noreport", help="don't do radius neighbor", action='store_true')
     parser.add_argument("--lr_iter", help="number of iterations for LR", default=300)
-    parser.add_argument("--n_jobs", help="number of iterations for LR", default=6)
+    parser.add_argument("--n_jobs", help="number of iterations for LR", default=2)
     parser.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
     parser.add_argument("--radius", help="radius for radius neighbor classification", default=30)
     parser.add_argument("--lr_c", help="c parameter for LR", default=1.0)

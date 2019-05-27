@@ -7,6 +7,8 @@ import pandas as pd
 import logging
 from util.TextPreprocessor import TextPreprocessor
 import re
+import util.file_util as fu
+from datetime import datetime
 
 
 # set up logging
@@ -48,14 +50,21 @@ def remove_http_links(text: str) -> str:
     text = re.sub(r'(http[s]{0,1}:\S+)', '', text, re.I | re.A)
     return text
 
+def expand_star_ratings(text: str) -> str:
+    """
+    for reviews we may have people writing things like 1 star or
+    :param text:
+    :return:
+    """
+
 
 def main():
     # set up argument parser
     parser = argparse.ArgumentParser()
     parser.add_argument("datafile", help="source data file")
-    parser.add_argument("-o", "--outfile", help="output file", default="outfile.csv")
+    parser.add_argument("-o", "--outdir", help="output directory", default="dataset/amazon_reviews")
     parser.add_argument("-l", "--loglevel", help="log level", default="INFO")
-    parser.add_argument("-r", "--retain", help="log level", action="store_true", default=False)
+    parser.add_argument("-r", "--retain", help="specifieds which columns to keep - NOT YET IMPLEMENTED", action="store_true", default=False)
     parser.add_argument("-c", "--convert", action='store_true',
                     help="convert to csv")
     # get command line arguments
@@ -67,8 +76,10 @@ def main():
     logging.basicConfig(format=LOG_FORMAT, level=loglevel)
     logger = logging.getLogger(__name__)
 
+    start_time = datetime.now()
     infile = args.datafile
-    outfile = args.outfile
+    _, basename = fu.get_dir_basename(infile)
+    outfile = f'{args.outdir}/{basename}-preprocessed.csv'
     assert os.path.isfile(infile), f"{infile} does not exist"
 
     logger.info(f'loading data frame from {infile}')
@@ -80,13 +91,16 @@ def main():
     tp = TextPreprocessor(text_columns=["product_title", "review_headline", "review_body"],
                           columns_to_drop=['marketplace', 'vine', 'verified_purchase'],
                           stop_word_remove_list=STOP_WORDS_TO_REMOVE,
-                          create_original_columns=args.retain,
+                          retain_original_columns=args.retain,
                           custom_preprocessor=[remove_amazon_tags, remove_http_links])
     df = tp.preprocess_data(df)
     logger.info(f'pre-processing finished - new dataframe length: {len(df)}')
 
     logger.info(f'writing dataframe to {outfile}')
     df.to_csv(outfile, doublequote=True, index=False)
+    end_time = datetime.now()
+    total_time_min = round((end_time - start_time).total_seconds() / 60, 2)
+    logger.info(f"Total time (minutes): {total_time_min}")
 
 
 if __name__ == '__main__':

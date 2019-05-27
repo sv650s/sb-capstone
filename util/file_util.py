@@ -45,6 +45,20 @@ def get_report_filename(infile: str, outpath:str="reports/") -> str:
     return outfile
 
 
+def get_dir_basename(infile:str) -> (str, str):
+    """
+    get the directory and basename of a filename
+    :param infile:
+    :return:
+    """
+    dir_match = re.findall(r'([/\w-]+)/[\w-]+\.[a-zA-Z]+', infile, re.IGNORECASE)
+    file_match = re.findall(r'/*([\w-]+)\.[a-zA-Z]+', infile, re.IGNORECASE)
+    if len(dir_match) > 0:
+        return dir_match[0], file_match[0]
+    return None, file_match[0]
+
+
+
 
 
 
