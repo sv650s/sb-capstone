@@ -1,3 +1,13 @@
-data_dir,data_file,class_column,dtype
-dataset/feature_files,review_body-tfidf-df_80-ngram13-999-10.csv,star_rating,float32
-dataset/feature_files,review_body-bow-df_90-ngram1-999-35.csv,star_rating,uint32
+data_dir,data_file,class_column,dtype,drop_columns,status,status_date
+dataset/feature_files,review_body-bow-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:43:48
+dataset/feature_files,review_body-bow-df_default-ngram11-992-3342-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:44:03
+dataset/feature_files,review_body-bow-df_default-ngram12-992-10000.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:44:47
+dataset/feature_files,review_body-bow-df_default-ngram12-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:45:32
+dataset/feature_files,review_body-bow-df_default-ngram13-992-10000.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:46:16
+dataset/feature_files,review_body-bow-df_default-ngram13-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:47:00
+dataset/feature_files,review_body-tfidf-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:47:15
+dataset/feature_files,review_body-tfidf-df_default-ngram11-992-3342-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:47:30
+dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10000.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:48:18
+dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:02:51
+dataset/feature_files,review_body-tfidf-df_default-ngram13-992-10000.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:03:36
+dataset/feature_files,review_body-tfidf-df_default-ngram13-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-27 22:04:15
