@@ -1,3 +1,3 @@
-description,fn_name,lda_topics,min_df,max_df,min_ngram_range,max_ngram_range,max_features,feature_columns,y,vectorize_time_min,vectorize_file_time_min
-tfidf-df_default-ngram12,generate_tfidf_file,20,,,1,2,10000,review_body,"star_rating, helpful_votes, total_votes",,
-tfidf-df_default-ngram13,generate_tfidf_file,20,,,1,3,10000,review_body,"star_rating, helpful_votes, total_votes",,
+description,fn_name,lda_topics,min_df,max_df,min_ngram_range,max_ngram_range,max_features,feature_columns,y,vectorize_time_min,vectorize_file_time_min,lda_time_min,lda_file_time_min,status
+tfidf-df_default-ngram12,generate_tfidf_file,20,,,1,2,10000,review_body,"star_rating, helpful_votes, total_votes",0.71,17.37,5.95,16.89,success
+tfidf-df_default-ngram13,generate_tfidf_file,20,,,1,3,10000,review_body,"star_rating, helpful_votes, total_votes",0.93,17.59,5.92,16.63,success

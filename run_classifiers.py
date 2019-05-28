@@ -13,6 +13,7 @@ import argparse
 import util.file_util as fu
 import util.df_util as dfu
 import lightgbm as lgb
+import gc
 
 
 # configure logger so we can see output from the classes
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("--rn", help="run radius neighbor", action='store_true')
     parser.add_argument("--noreport", help="don't do radius neighbor", action='store_true')
     parser.add_argument("--lr_iter", help="number of iterations for LR", default=300)
-    parser.add_argument("--n_jobs", help="number of iterations for LR", default=2)
+    parser.add_argument("--n_jobs", help="number of iterations for LR", default=-1)
     parser.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
     parser.add_argument("--radius", help="radius for radius neighbor classification", default=30)
     parser.add_argument("--lr_c", help="c parameter for LR", default=1.0)
@@ -178,7 +179,7 @@ if __name__ == "__main__":
                         X_test,
                         Y_test,
                         file_load_time=load_time_min,
-                        name="LR-B",
+                        name="LRB",
                         description=description,
                         file=data_file,
                         parameters={"n_jobs": n_jobs,
@@ -219,6 +220,9 @@ if __name__ == "__main__":
         config_df.loc[index, "status"] = "success"
         config_df.loc[index, "status_date"] = datetime.now().strftime(TIME_FORMAT)
         config_df.to_csv(args.config_file, index=False)
+
+
+        gc.collect()
     print(report_df.tail())
 
 
