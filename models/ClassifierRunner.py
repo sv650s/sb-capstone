@@ -327,6 +327,10 @@ class ClassifierRunner(object):
 
 
     def _cleanModels(self):
+        """
+        remove references for each model so we can free up memory
+        :return:
+        """
         if self.cleanup and len(self.models) > 0:
             if self.clean_failures:
                 m = self.models[(self.models[Keys.STATUS] == Status.SUCCESS) |
@@ -336,16 +340,4 @@ class ClassifierRunner(object):
 
             self.models.drop(m.index, inplace=True)
 
-
-    # def _cleanModel(self, index) -> pd.DataFrame:
-    #     """
-    #     clean up models that were successful
-    #     :return:
-    #     """
-    #     if self.cleanup and self.models.iloc[index][Keys.STATUS] == Status.SUCCESS:
-    #         self.models.drop(index, axis=0, inplace=True)
-    #     elif self.cleanup and self.clean_failures and self.models.iloc[index][Keys.STATUS] == Status.FAILED:
-    #         self.models.drop(index, axis=0, inplace=True)
-    #
-    #     return self.models
 
