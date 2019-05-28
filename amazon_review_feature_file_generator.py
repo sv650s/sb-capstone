@@ -13,16 +13,13 @@ from datetime import datetime
 
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(message)s'
 
-KEEP_COLUMNS = ["product_title", "helpful_votes", "review_headline", "review_body", "star_rating"]
+# KEEP_COLUMNS = ["product_title", "helpful_votes", "review_headline", "review_body", "star_rating"]
 # FEATURE_COLUMNS = ["review_headline", "review_body"]
-FEATURE_COLUMNS = ["review_body"]
+# FEATURE_COLUMNS = ["review_body"]
 
 # csv that has all the input
 # PARAM_INFILE = "amazon_review_feature_generation_input.csv"
-
-def read_amazon_data(file:str) -> pd.DataFrame:
-    df = pd.read_csv(file, parse_dates=["review_date"])
-    return df[KEEP_COLUMNS]
+TRUE_NAMES = ["yes", "Yes", "True", "true"]
 
 
 # TODO: forgot to add back in the classlification to the feature file (Y)
@@ -43,15 +40,33 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
 
     start_time = datetime.now()
-    param_df = pd.read_csv(args.config_file, dtype={"min_df":np.float16, "max_df":np.float16})
+    config_df = pd.read_csv(args.config_file, dtype={"min_df": np.float16,
+                                                     "max_df": np.float16})
+    config_df = config_df[["description",
+                           "fn_name",
+                           "lda_topics",
+                           "min_df",
+                           "max_df",
+                           "min_ngram_range",
+                           "max_ngram_range",
+                           "max_features",
+                           "feature_columns",
+                           "y"]]
+    df = pd.read_csv(args.infile)
 
-    for column in FEATURE_COLUMNS:
-        df = pd.read_csv(args.infile, parse_dates=["review_date"])
-        x_df = df[column]
-        y_df = df["star_rating"]
+    for index, row in config_df.iterrows():
+        columns = row["feature_columns"].replace(" ", "").split(",")
+        log.info(f'feature columns: {columns}')
 
-        for index, row in param_df.iterrows():
+        y_columns = row["y"].replace(" ", "").split(",")
+        log.info(f'y columns: {y_columns}')
+
+        for column in columns:
+            x_df = df[column]
+            y_df = df[y_columns]
+
             try:
+                # get function name to call
                 function = row.fn_name
 
                 # prepare arguments
@@ -62,7 +77,10 @@ if __name__ == "__main__":
                 # not defined
                 args_pd = row.dropna()
                 args_dict = args_pd.to_dict()
+                # delete columns from config file that doesn't get passed to feature fn
                 del args_dict["fn_name"]
+                del args_dict["feature_columns"]
+                del args_dict["y"]
 
                 args_dict["feature_column"] = column
                 log.info(f'generating features from source file: {args.infile}')
@@ -71,9 +89,19 @@ if __name__ == "__main__":
                 args_dict["y"] = y_df
 
                 # call function specified by the fn_name column
-                globals()[function](**args_dict)
+                _, v_time, vfile_time, lda_time, ldaf_time = globals()[function](**args_dict)
+                config_df.loc[index, "vectorize_time_min"] = v_time
+                config_df.loc[index, "vectorize_file_time_min"] = vfile_time
+                config_df.loc[index, "lda_time_min"] = lda_time
+                config_df.loc[index, "lda_file_time_min"] = ldaf_time
+                config_df.loc[index, "status"] = "success"
             except Exception as e:
                 log.error(traceback2.format_exc())
+                config_df.loc[index, "status"] = "failed"
+                config_df.loc[index, "message"] = str(e)
+            finally:
+                config_df.to_csv(args.config_file, index=False)
+
 
     end_time = datetime.now()
     total_time_min = end_time - start_time
