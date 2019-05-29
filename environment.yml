@@ -26,5 +26,6 @@ dependencies:
   - gensim
   - lightgbm
   - imbalanced-learn=0.4
+  - xgboost
 prefix: /Users/vinceluk/springboard-projects/capstone
 

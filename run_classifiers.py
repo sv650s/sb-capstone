@@ -14,6 +14,7 @@ import util.file_util as fu
 import util.df_util as dfu
 import lightgbm as lgb
 import gc
+from xgboost import XGBClassifier
 
 
 # configure logger so we can see output from the classes
@@ -103,6 +104,7 @@ if __name__ == "__main__":
         run_rf = row["rf"] in TRUE_LIST
         run_gb = row["gb"] in TRUE_LIST
         run_lGBM = row["lGBM"] in TRUE_LIST
+        run_xgb = row["xgb"] in TRUE_LIST
 
         log.info(f'run_lGMB {run_lGBM} from config: {row["lGBM"]}')
 
@@ -230,6 +232,18 @@ if __name__ == "__main__":
                         description=description,
                         file=data_file,
                         parameters={"objective": "multiclass", "num_threads": 2, "seed": 1} )
+        if run_xgb:
+            xgb = XGBClassifier(n_jobs=n_jobs, verbosity=1, seed=1)
+            cr.addModel(xgb,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
+                        file_load_time=load_time_min,
+                        name="XGB",
+                        description=description,
+                        file=data_file,
+                        parameters={"n_jobs": n_jobs, "verbosity": 1, "seed": 1} )
 
 
         report_df = cr.runNewModels()

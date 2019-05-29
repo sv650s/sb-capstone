@@ -1,13 +1,13 @@
-data_dir,data_file,class_column,dtype,drop_columns,knn,rn,lr,lrb,rf,gb,lGBM,status,status_date
-dataset/feature_files,review_body-bow-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:53:51
-dataset/feature_files,review_body-bow-df_default-ngram11-992-3342-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:53:54
-dataset/feature_files,review_body-bow-df_default-ngram12-992-10000.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:54:05
-dataset/feature_files,review_body-bow-df_default-ngram12-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:54:15
-dataset/feature_files,review_body-bow-df_default-ngram13-992-10000.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:54:25
-dataset/feature_files,review_body-bow-df_default-ngram13-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:54:37
-dataset/feature_files,review_body-tfidf-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:54:41
-dataset/feature_files,review_body-tfidf-df_default-ngram11-992-3342-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:54:45
-dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10000.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:54:59
-dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:55:12
-dataset/feature_files,review_body-tfidf-df_default-ngram13-992-10000.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:55:23
-dataset/feature_files,review_body-tfidf-df_default-ngram13-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,success,2019-05-28 21:55:35
+data_dir,data_file,class_column,dtype,drop_columns,knn,rn,lr,lrb,rf,gb,lGBM,xgb,status,status_date
+dataset/feature_files,review_body-bow-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,success,2019-05-28 22:11:48
+dataset/feature_files,review_body-bow-df_default-ngram11-992-3342-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,success,2019-05-28 22:12:07
+dataset/feature_files,review_body-bow-df_default-ngram12-992-10000.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,success,2019-05-28 22:13:00
+dataset/feature_files,review_body-bow-df_default-ngram12-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,success,2019-05-28 22:13:56
+dataset/feature_files,review_body-bow-df_default-ngram13-992-10000.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,success,2019-05-28 22:14:51
+dataset/feature_files,review_body-bow-df_default-ngram13-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,,
+dataset/feature_files,review_body-tfidf-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,,
+dataset/feature_files,review_body-tfidf-df_default-ngram11-992-3342-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,,
+dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10000.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,,
+dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,,
+dataset/feature_files,review_body-tfidf-df_default-ngram13-992-10000.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,,
+dataset/feature_files,review_body-tfidf-df_default-ngram13-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,No,Yes,,
