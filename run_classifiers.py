@@ -15,6 +15,7 @@ import util.df_util as dfu
 import lightgbm as lgb
 import gc
 from xgboost import XGBClassifier
+from catboost import CatBoostClassifier
 
 
 # configure logger so we can see output from the classes
@@ -105,8 +106,7 @@ if __name__ == "__main__":
         run_gb = row["gb"] in TRUE_LIST
         run_lGBM = row["lGBM"] in TRUE_LIST
         run_xgb = row["xgb"] in TRUE_LIST
-
-        log.info(f'run_lGMB {run_lGBM} from config: {row["lGBM"]}')
+        run_cb = row["cb"] in TRUE_LIST
 
         # description = row["description"]
         description = data_file.split(".")[0]
@@ -241,6 +241,19 @@ if __name__ == "__main__":
                         Y_test,
                         file_load_time=load_time_min,
                         name="XGB",
+                        description=description,
+                        file=data_file,
+                        parameters={"n_jobs": n_jobs, "verbosity": 1, "seed": 1} )
+
+        if run_cb:
+            cb = XGBClassifier(n_jobs=n_jobs, verbosity=1, seed=1)
+            cr.addModel(cb,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
+                        file_load_time=load_time_min,
+                        name="CB",
                         description=description,
                         file=data_file,
                         parameters={"n_jobs": n_jobs, "verbosity": 1, "seed": 1} )
