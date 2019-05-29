@@ -27,5 +27,6 @@ dependencies:
   - lightgbm
   - imbalanced-learn=0.4
   - xgboost
+  - catboost
 prefix: /Users/vinceluk/springboard-projects/capstone
 
