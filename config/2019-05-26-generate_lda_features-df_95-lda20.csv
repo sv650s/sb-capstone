@@ -1,0 +1,7 @@
+data_dir,infile,dtype,topics,status,save_time_lda20,lda_time_lda20,read_time
+dataset/feature_files,review_body-bow-df_95-ngram1-112043-147.csv,uint32,20,success,0.06,4.18,0.02
+dataset/feature_files,review_body-bow-df_95-ngram12-112043-157.csv,uint32,20,success,0.06,4.29,0.02
+dataset/feature_files,review_body-bow-df_95-ngram13-112043-157.csv,uint32,20,success,0.06,4.27,0.02
+dataset/feature_files,review_body-tfidf-df_95-ngram11-112043-147.csv,float32,20,success,0.06,2.79,0.03
+dataset/feature_files,review_body-tfidf-df_95-ngram12-112043-157.csv,float32,20,success,0.06,2.82,0.03
+dataset/feature_files,review_body-tfidf-df_95-ngram13-112043-157.csv,float32,20,success,0.06,2.8,0.03
