@@ -68,11 +68,6 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
 
 
-    log.debug(f'noknn={args.noknn}')
-    log.debug(f'nolr={args.nolr}')
-    log.debug(f'rn={args.rn}')
-    log.debug(f'noreport={args.noreport}')
-
     # ready in config file
     # config file has the following format
     config_df = pd.read_csv(args.config_file)
@@ -107,6 +102,9 @@ if __name__ == "__main__":
         run_lrb = row["lrb"] in TRUE_LIST
         run_rf = row["rf"] in TRUE_LIST
         run_gb = row["gb"] in TRUE_LIST
+        run_lGBM = row["lGBM"] in TRUE_LIST
+
+        log.info(f'run_lGMB {run_lGBM} from config: {row["lGBM"]}')
 
         # description = row["description"]
         description = data_file.split(".")[0]
@@ -218,6 +216,20 @@ if __name__ == "__main__":
                         description=description,
                         file=data_file,
                         parameters={"verbose": 1} )
+
+        if run_lGBM:
+            gb = lgb.LGBMClassifier(objective="multiclass", num_threads=2,
+                                    seed=1)
+            cr.addModel(gb,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
+                        file_load_time=load_time_min,
+                        name="lGBM",
+                        description=description,
+                        file=data_file,
+                        parameters={"objective": "multiclass", "num_threads": 2, "seed": 1} )
 
 
         report_df = cr.runNewModels()

@@ -42,13 +42,26 @@ class Keys(object):
     MODEL = "model"
     FILE = "file"
     DESCRIPTION = "description"
-    PARAMETERS = "parm"
+    PARAMETERS = "param"
     TRAIN_X = "X_train"
     TRAIN_Y = "Y_train"
     TEST_X = "X_test"
     TEST_Y = "Y_test"
 
 
+# TODO: finish this and refactor later
+class Reporter(object):
+
+    def __init__(self):
+        self.file_load_start_time = None
+        self.file_load_end_time = None
+        self.train_start_time = None
+        self.train_end_time = None
+        self.score_start_time = None
+        self.score_end_time = None
+        self.predict_start_time = None
+        self.predict_end_time = None
+        self.report = {}
 
 
 # set up logger
