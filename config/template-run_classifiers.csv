@@ -1,13 +1,2 @@
-data_dir,data_file,class_column,dtype,drop_columns,status,status_date
-dataset/feature_files,review_body-bow-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:34:36
-dataset/feature_files,review_body-bow-df_default-ngram11-992-3342-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:34:55
-dataset/feature_files,review_body-bow-df_default-ngram12-992-10000.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:35:46
-dataset/feature_files,review_body-bow-df_default-ngram12-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:36:39
-dataset/feature_files,review_body-bow-df_default-ngram13-992-10000.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:37:33
-dataset/feature_files,review_body-bow-df_default-ngram13-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:38:29
-dataset/feature_files,review_body-tfidf-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:38:47
-dataset/feature_files,review_body-tfidf-df_default-ngram11-992-3342-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:39:05
-dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10000.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:39:58
-dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:40:54
-dataset/feature_files,review_body-tfidf-df_default-ngram13-992-10000.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:41:47
-dataset/feature_files,review_body-tfidf-df_default-ngram13-992-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",success,2019-05-28 07:42:44
+data_dir,data_file,class_column,dtype,drop_columns,knn,rn,lr,lrb,rf,gb,status,status_date
+dataset/feature_files,review_body-bow-df_default-ngram11-992-3322.csv,star_rating,,"helpful_votes, total_votes",Yes,No,Yes,Yes,Yes,Yes,success,2019-05-28 20:22:21

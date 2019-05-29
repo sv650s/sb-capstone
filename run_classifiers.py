@@ -18,7 +18,7 @@ import gc
 
 # configure logger so we can see output from the classes
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-TRUE_LIST = ["yes", "Yes", "y", "True", "true"]
+TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
 LOG_FORMAT='%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
 log = logging.getLogger(__name__)
 
@@ -52,12 +52,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Add a class column ')
     parser.add_argument("config_file", help="file with parameters to drive the permutations")
     parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
-    parser.add_argument("--noknn", help="don't do KNN", action='store_true')
-    parser.add_argument("--nolr", help="don't do logistic regression", action='store_true')
-    parser.add_argument("--norf", help="don't do random forest", action='store_true')
-    parser.add_argument("--nogb", help="dont' run gradient boosting", action='store_true')
-    parser.add_argument("--rn", help="run radius neighbor", action='store_true')
-    parser.add_argument("--noreport", help="don't do radius neighbor", action='store_true')
+    parser.add_argument("--noreport", help="do not generate report", action='store_true')
     parser.add_argument("--lr_iter", help="number of iterations for LR", default=300)
     parser.add_argument("--n_jobs", help="number of iterations for LR", default=-1)
     parser.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
@@ -104,6 +99,15 @@ if __name__ == "__main__":
             dtype = np.dtype(row["dtype"])
         else:
             dtype = None
+
+        # let's get the parameters to figure out which training models we need to run
+        run_knn = row["knn"] in TRUE_LIST
+        run_rn = row["rn"] in TRUE_LIST
+        run_lr = row["lr"] in TRUE_LIST
+        run_lrb = row["lrb"] in TRUE_LIST
+        run_rf = row["rf"] in TRUE_LIST
+        run_gb = row["gb"] in TRUE_LIST
+
         # description = row["description"]
         description = data_file.split(".")[0]
         log.debug(f'description {description}')
@@ -121,7 +125,7 @@ if __name__ == "__main__":
 
         X_train, X_test, Y_train, Y_test = create_training_data(df, class_column, drop_columns)
 
-        if not args.noknn:
+        if run_knn:
             neigh = KNeighborsClassifier(n_neighbors=neighbors, n_jobs=n_jobs)
             cr.addModel(neigh,
                         X_train,
@@ -135,7 +139,7 @@ if __name__ == "__main__":
                         parameters={"n_jobs": n_jobs,
                                     "n_neighbors": neighbors})
 
-        if args.rn:
+        if run_rn:
             rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=n_jobs)
             cr.addModel(rnc,
                         X_train,
@@ -149,7 +153,7 @@ if __name__ == "__main__":
                         parameters={"n_jobs": n_jobs,
                                     "radius": radius} )
 
-        if not args.nolr:
+        if run_lr:
             lr = LogisticRegression(random_state=0, solver='lbfgs',
                                     multi_class='auto',
                                     max_iter=lr_iter, n_jobs=n_jobs, C=lr_c,
@@ -168,6 +172,7 @@ if __name__ == "__main__":
                                     "max_iter": lr_iter,
                                     "verbose": 1} )
 
+        if run_lrb:
             lrb = LogisticRegression(random_state=0, solver='lbfgs',
                                     multi_class='auto',
                                      class_weight='balanced',
@@ -188,7 +193,7 @@ if __name__ == "__main__":
                                     "max_iter": lr_iter,
                                     "verbose": 1} )
 
-        if not args.norf:
+        if run_rf:
             rf = RandomForestClassifier(random_state=1, n_jobs=n_jobs, verbose=1)
             cr.addModel(rf,
                         X_train,
@@ -201,7 +206,7 @@ if __name__ == "__main__":
                         file=data_file,
                         parameters={"n_jobs": n_jobs, "verbose": 1})
 
-        if not args.nogb:
+        if run_gb:
             gb = GradientBoostingClassifier(verbose=1)
             cr.addModel(gb,
                         X_train,
