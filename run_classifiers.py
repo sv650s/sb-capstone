@@ -27,8 +27,8 @@ log = logging.getLogger(__name__)
 def create_training_data(x:pd.DataFrame, class_column:str, drop_columns:str = None):
     """
     Take dataframe and:
-    * drop columns that we don't need
-    * split between features and predictions
+    1. split between features and predictions
+    2. create test and training sets
     :param x:
     :param class_column:
     :return:
@@ -45,7 +45,7 @@ def create_training_data(x:pd.DataFrame, class_column:str, drop_columns:str = No
     log.info(f'shape of x: {x.shape}')
     log.info(f'shape of y: {y.shape}')
 
-    return x, y
+    return train_test_split(x, y, random_state=1)
 
 
 
@@ -55,7 +55,6 @@ if __name__ == "__main__":
     parser.add_argument("config_file", help="file with parameters to drive the permutations")
     parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
     parser.add_argument("--noreport", help="do not generate report", action='store_true')
-    parser.add_argument("--nolda", help="do not use lda", action='store_true')
     parser.add_argument("--lr_iter", help="number of iterations for LR", default=300)
     parser.add_argument("--n_jobs", help="number of iterations for LR", default=-1)
     parser.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
@@ -85,7 +84,7 @@ if __name__ == "__main__":
     lr_c = int(args.lr_c)
 
     start_time = datetime.now()
-    cr = ClassifierRunner(write_to_csv=not args.noreport, outfile=report_file_name, enable_lda=not args.nolda)
+    cr = ClassifierRunner(write_to_csv=not args.noreport, outfile=report_file_name)
     report_df = pd.DataFrame()
     for index, row in config_df.iterrows():
 
@@ -124,13 +123,15 @@ if __name__ == "__main__":
         load_end_time = datetime.now()
         load_time_min = round((load_end_time - load_start_time).total_seconds() / 60, 2)
 
-        x, y = create_training_data(df, class_column, drop_columns)
+        X_train, X_test, Y_train, Y_test = create_training_data(df, class_column, drop_columns)
 
         if run_knn:
             neigh = KNeighborsClassifier(n_neighbors=neighbors, n_jobs=n_jobs)
             cr.addModel(neigh,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="KNN",
                         description=description,
@@ -141,8 +142,10 @@ if __name__ == "__main__":
         if run_rn:
             rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=n_jobs)
             cr.addModel(rnc,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="RN",
                         description=description,
@@ -156,8 +159,10 @@ if __name__ == "__main__":
                                     max_iter=lr_iter, n_jobs=n_jobs, C=lr_c,
                                     verbose=1)
             cr.addModel(lr,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="LR",
                         description=description,
@@ -174,8 +179,10 @@ if __name__ == "__main__":
                                     max_iter=lr_iter, n_jobs=n_jobs, C=lr_c,
                                     verbose=1)
             cr.addModel(lr,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="LRB",
                         description=description,
@@ -189,8 +196,10 @@ if __name__ == "__main__":
         if run_rf:
             rf = RandomForestClassifier(random_state=1, n_jobs=n_jobs, verbose=1)
             cr.addModel(rf,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="RF",
                         description=description,
@@ -200,8 +209,10 @@ if __name__ == "__main__":
         if run_gb:
             gb = GradientBoostingClassifier(verbose=1)
             cr.addModel(gb,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="GB",
                         description=description,
@@ -212,8 +223,10 @@ if __name__ == "__main__":
             gb = lgb.LGBMClassifier(objective="multiclass", num_threads=2,
                                     seed=1)
             cr.addModel(gb,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="lGBM",
                         description=description,
@@ -222,8 +235,10 @@ if __name__ == "__main__":
         if run_xgb:
             xgb = XGBClassifier(n_jobs=n_jobs, verbosity=1, seed=1)
             cr.addModel(xgb,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="XGB",
                         description=description,
@@ -233,8 +248,10 @@ if __name__ == "__main__":
         if run_cb:
             cb = XGBClassifier(n_jobs=n_jobs, verbosity=1, seed=1)
             cr.addModel(cb,
-                        x,
-                        y,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
                         file_load_time=load_time_min,
                         name="CB",
                         description=description,
