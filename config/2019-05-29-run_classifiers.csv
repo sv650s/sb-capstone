@@ -1,0 +1,7 @@
+data_dir,data_file,class_column,dtype,drop_columns,status,status_date,knn,rn,lr,lrb,rf,gb,lGBM,xgb,cb
+dataset/feature_files,review_body-bow-df_default-ngram11-111909-10000.csv,star_rating,,"helpful_votes, total_votes",success,5/28/19 10:11,No,No,No,No,No,No,Yes,Yes,Yes
+dataset/feature_files,review_body-tfidf-df_default-ngram11-111909-10000.csv,star_rating,,"helpful_votes, total_votes",,,Yes,No,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+dataset/feature_files,review_body-bow-df_default-ngram12-111909-10000.csv,star_rating,,"helpful_votes, total_votes",success,5/29/19 7:35,No,No,No,No,No,Yes,Yes,Yes,Yes
+dataset/feature_files,review_body-tfidf-df_default-ngram12-111909-10000.csv,star_rating,,"helpful_votes, total_votes",,,Yes,No,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+dataset/feature_files,review_body-bow-df_default-ngram13-111909-10000.csv,star_rating,,"helpful_votes, total_votes",,,Yes,No,Yes,Yes,Yes,Yes,Yes,Yes,Yes
+dataset/feature_files,review_body-tfidf-df_default-ngram13-111909-10000.csv,star_rating,,"helpful_votes, total_votes",,,Yes,No,Yes,Yes,Yes,Yes,Yes,Yes,Yes

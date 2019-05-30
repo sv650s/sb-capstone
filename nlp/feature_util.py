@@ -19,7 +19,7 @@ def write_to_file(data:pd.DataFrame,
     if include_lda:
         outfile = f'dataset/feature_files/{feature_column}-{description}-{examples}-{features}-lda{lda_topics}.csv'
     else:
-        outfile = f'dataset/feature_files/{feature_column}-{description}-{examples}-{features}.csv'
+        outfile = f'dataset/feature_files/{feature_column}-{description}-{examples}-{features}-nolda.csv'
     log.info(f'writing file: {outfile}')
     data = data.join(y)
     data.to_csv(outfile, doublequote=True, index=False)
