@@ -11,6 +11,8 @@ import traceback2
 import sys
 import pprint
 from util.dict_util import add_dict_to_dict
+from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.model_selection import train_test_split
 
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -43,10 +45,8 @@ class Keys(object):
     FILE = "file"
     DESCRIPTION = "description"
     PARAMETERS = "param"
-    TRAIN_X = "X_train"
-    TRAIN_Y = "Y_train"
-    TEST_X = "X_test"
-    TEST_Y = "Y_test"
+    X = "X"
+    Y = "Y"
 
 
 # TODO: finish this and refactor later
@@ -191,7 +191,7 @@ class ClassifierRunner(object):
 
 
     # constructor
-    def __init__(self, cleanup=True, clean_failures=True, write_to_csv=True, outfile=None):
+    def __init__(self, cleanup=True, clean_failures=True, write_to_csv=True, outfile=None, enable_lda=True):
 
 
 
@@ -204,21 +204,19 @@ class ClassifierRunner(object):
         self.report_df = pd.DataFrame()
         self.cleanup = cleanup
         self.clean_failures = clean_failures
+        self.enable_lda = enable_lda
         log.info(f'Initialized {__name__}\n\tcleanup={cleanup}\n\tclean_failures={clean_failures}'
                  f'\n\twrite_to_csv={write_to_csv}\n\toutfile={outfile}')
 
 
-    def addModel(self, model:object, x_train:pd.DataFrame, y_train:pd.DataFrame,
-                 x_test:pd.DataFrame, y_test:pd.DataFrame,
+    def addModel(self, model:object, x:pd.DataFrame, y:pd.DataFrame,
                  file_load_time:float = None,
                  name:str = None, file:str = None, description:str = None, parameters:str = None):
         """
         Add models to be executed
         :param model:
-        :param x_train:
-        :param y_train:
-        :param x_test:
-        :param y_test:
+        :param x:
+        :param y:
         :param name:
         :param description:
         :param parameters:
@@ -227,10 +225,8 @@ class ClassifierRunner(object):
 
         model_dict = {
             Keys.MODEL: model,
-            Keys.TRAIN_X: x_train,
-            Keys.TRAIN_Y: y_train,
-            Keys.TEST_X: x_test,
-            Keys.TEST_Y: y_test,
+            Keys.X: x,
+            Keys.Y: y,
             Keys.FILE: file,
             Keys.FILE_LOAD_TIME_MIN: file_load_time,
             Keys.DESCRIPTION: description,
@@ -267,40 +263,59 @@ class ClassifierRunner(object):
 
 
     def _runModel(self, model:pd.DataFrame) -> pd.DataFrame:
-        log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
-                 f'\twith file: {model[Keys.FILE]}\n'
-                 f'\twith description: {model[Keys.DESCRIPTION]}\n'
-                 f'\twith file load time: {model[Keys.FILE_LOAD_TIME_MIN]}\n'
-                 f'\twith parameters: {model[Keys.PARAMETERS]}\n')
-        report = {
-            Keys.MODEL_NAME: model[Keys.MODEL_NAME],
-            Keys.FILE: model[Keys.FILE],
-            Keys.DESCRIPTION: model[Keys.DESCRIPTION],
-            Keys.PARAMETERS: model[Keys.PARAMETERS]
-        }
-        if model[Keys.FILE_LOAD_TIME_MIN]:
-            report[Keys.FILE_LOAD_TIME_MIN] = model[Keys.FILE_LOAD_TIME_MIN]
-        try:
-            report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
-                                                            model[Keys.TRAIN_X],
-                                                            model[Keys.TRAIN_Y],
-                                                            model[Keys.TEST_X],
-                                                            model[Keys.TEST_Y],
-                                                            report)
-            report[Keys.STATUS] = Status.SUCCESS
-        except Exception as e:
-            traceback2.print_exc(file=sys.stdout)
-            log.error(str(e))
-            report[Keys.STATUS] = Status.FAILED
-            report[Keys.MESSAGE] = str(e)
-        finally:
-            report[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
-            self._record_results(report)
-            log.info(f'Finished running model: {model[Keys.MODEL_NAME]}\n'
+
+        # TODO: make this more generic later and pass in number of topics
+        if self.enable_lda:
+            modes = ["nolda", "lda20"]
+        else:
+            modes = ["nolda"]
+        for lda_mode in modes:
+            log.info(f'Running model: {model[Keys.MODEL_NAME]}\n'
                      f'\twith file: {model[Keys.FILE]}\n'
-                     f'\twith description: {model[Keys.DESCRIPTION]}\n'
-                     f'\twith parameters: {model[Keys.PARAMETERS]}\n'
-                     f'\tstatus: {report[Keys.STATUS]}')
+                     f'\twith description: {model[Keys.DESCRIPTION]}-{lda_mode}\n'
+                     f'\twith file load time: {model[Keys.FILE_LOAD_TIME_MIN]}\n'
+                     f'\twith parameters: {model[Keys.PARAMETERS]}\n')
+            report = {
+                Keys.MODEL_NAME: model[Keys.MODEL_NAME],
+                Keys.FILE: model[Keys.FILE],
+                Keys.DESCRIPTION: f'{model[Keys.DESCRIPTION]}-{lda_mode}',
+                Keys.PARAMETERS: model[Keys.PARAMETERS]
+            }
+            if model[Keys.FILE_LOAD_TIME_MIN]:
+                report[Keys.FILE_LOAD_TIME_MIN] = model[Keys.FILE_LOAD_TIME_MIN]
+            try:
+                x = model[Keys.X].copy()
+                y = model[Keys.Y]
+
+                if lda_mode == "lda20":
+                    log.info(f"Generating lda features from x:{x.shape} topics:20")
+                    lda = LatentDirichletAllocation(n_components=20, max_iter=10, random_state=0)
+                    dt_matrix = lda.fit_transform(x)
+                    x = x.join(pd.DataFrame(dt_matrix))
+
+                x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
+
+                report, _ = ClassifierRunner._model_fit_predict(model[Keys.MODEL],
+                                                                x_train,
+                                                                y_train,
+                                                                x_test,
+                                                                y_test,
+                                                                report)
+                report[Keys.STATUS] = Status.SUCCESS
+            except Exception as e:
+                traceback2.print_exc(file=sys.stdout)
+                log.error(str(e))
+                report[Keys.STATUS] = Status.FAILED
+                report[Keys.MESSAGE] = str(e)
+            finally:
+                report[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+                self._record_results(report)
+                log.info(f'Finished running model: {model[Keys.MODEL_NAME]}\n'
+                         f'\twith file: {model[Keys.FILE]}\n'
+                         f'\twith description: {model[Keys.DESCRIPTION]}-{lda_mode}\n'
+                         f'\twith parameters: {model[Keys.PARAMETERS]}\n'
+                         f'\tstatus: {report[Keys.STATUS]}')
+
 
         return report
 
