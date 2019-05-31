@@ -125,33 +125,73 @@ if __name__ == "__main__":
 
         X_train, X_test, Y_train, Y_test = create_training_data(df, class_column, drop_columns)
 
-        if run_knn:
-            neigh = KNeighborsClassifier(n_neighbors=neighbors, n_jobs=n_jobs)
-            cr.addModel(neigh,
+        if run_rf:
+            rf = RandomForestClassifier(random_state=1, n_jobs=n_jobs, verbose=1)
+            cr.addModel(rf,
                         X_train,
                         Y_train,
                         X_test,
                         Y_test,
                         file_load_time=load_time_min,
-                        name="KNN",
+                        name="RF",
                         description=description,
                         file=data_file,
-                        parameters={"n_jobs": n_jobs,
-                                    "n_neighbors": neighbors})
+                        parameters={"n_jobs": n_jobs, "verbose": 1})
 
-        if run_rn:
-            rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=n_jobs)
-            cr.addModel(rnc,
+        if run_gb:
+            gb = GradientBoostingClassifier(verbose=1)
+            cr.addModel(gb,
                         X_train,
                         Y_train,
                         X_test,
                         Y_test,
                         file_load_time=load_time_min,
-                        name="RN",
+                        name="GB",
                         description=description,
                         file=data_file,
-                        parameters={"n_jobs": n_jobs,
-                                    "radius": radius} )
+                        parameters={"verbose": 1})
+
+        if run_lGBM:
+            gb = lgb.LGBMClassifier(objective="multiclass", num_threads=2,
+                                    seed=1)
+            cr.addModel(gb,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
+                        file_load_time=load_time_min,
+                        name="lGBM",
+                        description=description,
+                        file=data_file,
+                        parameters={"objective": "multiclass", "num_threads": 2, "seed": 1})
+        if run_xgb:
+            xgb = XGBClassifier(n_jobs=n_jobs, verbosity=1, seed=1)
+            cr.addModel(xgb,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
+                        file_load_time=load_time_min,
+                        name="XGB",
+                        description=description,
+                        file=data_file,
+                        parameters={"n_jobs": n_jobs, "verbosity": 1, "seed": 1})
+
+        if run_cb:
+            cb = CatBoostClassifier(logging_level="Info", random_seed=1)
+            cr.addModel(cb,
+                        X_train,
+                        Y_train,
+                        X_test,
+                        Y_test,
+                        file_load_time=load_time_min,
+                        name="CB",
+                        description=description,
+                        file=data_file,
+                        parameters={"logging_level": "Info", "random_seed": 1})
+
+
+
 
         if run_lr:
             lr = LogisticRegression(random_state=0, solver='lbfgs',
@@ -193,71 +233,33 @@ if __name__ == "__main__":
                                     "max_iter": lr_iter,
                                     "verbose": 1} )
 
-        if run_rf:
-            rf = RandomForestClassifier(random_state=1, n_jobs=n_jobs, verbose=1)
-            cr.addModel(rf,
+        if run_knn:
+            neigh = KNeighborsClassifier(n_neighbors=neighbors, n_jobs=n_jobs)
+            cr.addModel(neigh,
                         X_train,
                         Y_train,
                         X_test,
                         Y_test,
                         file_load_time=load_time_min,
-                        name="RF",
+                        name="KNN",
                         description=description,
                         file=data_file,
-                        parameters={"n_jobs": n_jobs, "verbose": 1})
+                        parameters={"n_jobs": n_jobs,
+                                    "n_neighbors": neighbors})
 
-        if run_gb:
-            gb = GradientBoostingClassifier(verbose=1)
-            cr.addModel(gb,
+        if run_rn:
+            rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=n_jobs)
+            cr.addModel(rnc,
                         X_train,
                         Y_train,
                         X_test,
                         Y_test,
                         file_load_time=load_time_min,
-                        name="GB",
+                        name="RN",
                         description=description,
                         file=data_file,
-                        parameters={"verbose": 1} )
-
-        if run_lGBM:
-            gb = lgb.LGBMClassifier(objective="multiclass", num_threads=2,
-                                    seed=1)
-            cr.addModel(gb,
-                        X_train,
-                        Y_train,
-                        X_test,
-                        Y_test,
-                        file_load_time=load_time_min,
-                        name="lGBM",
-                        description=description,
-                        file=data_file,
-                        parameters={"objective": "multiclass", "num_threads": 2, "seed": 1} )
-        if run_xgb:
-            xgb = XGBClassifier(n_jobs=n_jobs, verbosity=1, seed=1)
-            cr.addModel(xgb,
-                        X_train,
-                        Y_train,
-                        X_test,
-                        Y_test,
-                        file_load_time=load_time_min,
-                        name="XGB",
-                        description=description,
-                        file=data_file,
-                        parameters={"n_jobs": n_jobs, "verbosity": 1, "seed": 1} )
-
-        if run_cb:
-            cb = XGBClassifier(n_jobs=n_jobs, verbosity=1, seed=1)
-            cr.addModel(cb,
-                        X_train,
-                        Y_train,
-                        X_test,
-                        Y_test,
-                        file_load_time=load_time_min,
-                        name="CB",
-                        description=description,
-                        file=data_file,
-                        parameters={"n_jobs": n_jobs, "verbosity": 1, "seed": 1} )
-
+                        parameters={"n_jobs": n_jobs,
+                                    "radius": radius} )
 
         report_df = cr.runNewModels()
 
