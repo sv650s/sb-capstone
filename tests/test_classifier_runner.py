@@ -87,7 +87,7 @@ class TestClassifierRunner(object):
         """
         cr = ClassifierRunner(write_to_csv=False, cleanup=False)
         cr.addModel(success_model, train_x, train_y, train_x, train_y, name="success case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         models = cr.models
 
         assert len(report_df) == 1, "report should have 1 entry"
@@ -111,7 +111,7 @@ class TestClassifierRunner(object):
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr = ClassifierRunner(write_to_csv=False, cleanup=False)
         cr.addModel(rn, train_x, train_y, train_x, train_y, name="failed case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         models = cr.models
         log.info(f'model columns: {models.columns}')
 
@@ -147,7 +147,7 @@ class TestClassifierRunner(object):
         log.debug(f'mocked rn? {rn}')
         log.debug(f'mocked rn.fit? {rn.fit}')
         cr.addModel(rn, train_x, train_y, train_x, train_y, name="failed case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
 
         assert len(report_df) == 2, "report should have 2 entry"
         assert report_df.iloc[0][Keys.STATUS] == Status.SUCCESS, "status should be SUCCESS"
@@ -177,7 +177,7 @@ class TestClassifierRunner(object):
         knn = success_model
         log.debug(f'test knn? {knn}')
         cr.addModel(knn, train_x, train_y, train_x, train_y, name="success case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         assert report_df.iloc[0][Keys.STATUS] == Status.SUCCESS, "status should be SUCCESS"
 
         # second test - fail
@@ -215,7 +215,7 @@ class TestClassifierRunner(object):
         knn = fail_model
         log.debug(f'test knn? {knn}')
         cr.addModel(knn, train_x, train_y, train_x, train_y, name="first failed case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         assert report_df.iloc[0][Keys.STATUS] == Status.FAILED, "status should be FAILED"
 
         # second test - should run both models again
@@ -237,7 +237,7 @@ class TestClassifierRunner(object):
     def test_default_cleanup(self, fail_model, success_model, train_y, train_x):
         cr = ClassifierRunner(write_to_csv=False)
         cr.addModel(success_model, train_x, train_y, train_x, train_y, name="first failed case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         models = cr.models
 
         assert len(report_df) == 1, "should get 1 report back"
@@ -245,7 +245,7 @@ class TestClassifierRunner(object):
 
         cr = ClassifierRunner(write_to_csv=False)
         cr.addModel(fail_model, train_x, train_y, train_x, train_y, name="first failed case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         models = cr.models
 
         assert len(report_df) == 1, "should get 1 report back"
@@ -257,7 +257,7 @@ class TestClassifierRunner(object):
     def test_cleanup_drop_failures(self, fail_model, success_model, train_y, train_x):
         cr = ClassifierRunner(write_to_csv=False, clean_failures=False)
         cr.addModel(fail_model, train_x, train_y, train_x, train_y, name="first failed case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         models = cr.models
 
         assert len(report_df) == 1, "should get 1 report back"
@@ -266,7 +266,7 @@ class TestClassifierRunner(object):
 
     def test_runs_with_no_models(self):
         cr = ClassifierRunner(write_to_csv=False)
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         assert len(report_df) == 0, "report length should be 0"
         report_df = cr.runNewModels()
         assert len(report_df) == 0, "report length should be 0"
@@ -277,7 +277,7 @@ class TestClassifierRunner(object):
         cr.addModel(success_model, train_x, train_y, train_x, train_y, name="second failed case")
         cr.addModel(fail_model, train_x, train_y, train_x, train_y, name="second failed case")
         cr.addModel(success_model, train_x, train_y, train_x, train_y, name="second failed case")
-        report_df = cr.runAllModels()
+        report_df = cr.run_models()
         models = cr.models
         assert len(report_df) == 3, "should get 3 report back"
         assert len(models) == 0, "should get 0 models back after cleanup"

@@ -178,7 +178,7 @@ if ENABLE_BOW_LR:
 # In[ ]:
 
 
-report_df = cr.runAllModels()
+report_df = cr.run_models()
 report_df.head()
 
 
