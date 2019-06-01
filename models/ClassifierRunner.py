@@ -13,6 +13,8 @@ from util.dict_util import add_dict_to_dict
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 DATE_FORMAT = '%Y-%m-%d'
+# set up logger
+log = logging.getLogger(__name__)
 
 
 class Status(object):
@@ -234,8 +236,6 @@ class Model(object):
         return report
 
 
-# set up logger
-log = logging.getLogger(__name__)
 
 
 class ClassifierRunner(object):
@@ -243,103 +243,6 @@ class ClassifierRunner(object):
     Class to help run various models
     """
 
-    # @staticmethod
-    # def _interpret_predictions(y_test, y_predict, report=None):
-    #     """
-    #     Run metrics on predictions
-    #
-    #     y_test: true results
-    #     y_predict: predictions from model
-    #     results: dictionary to append results to
-    #     ------
-    #     return dictionary with report
-    #     """
-    #
-    #     if not report:
-    #         report = {}
-    #
-    #     c_report = classification_report(y_test, y_predict, output_dict = True)
-    #
-    #     report = add_dict_to_dict(report, c_report)
-    #
-    #     return report
-
-    # @staticmethod
-    # def _model_fit_predict(model:object,
-    #                        x_train:pd.DataFrame,
-    #                        y_train:pd.DataFrame,
-    #                        x_test:pd.DataFrame,
-    #                        y_test:pd.DataFrame,
-    #                        report:dict=None) -> (dict, pd.DataFrame):
-    #         """
-    #         Fit the model then run predict on it
-    #
-    #         model: model to train with
-    #         x_test: training input
-    #         y_train: training classes
-    #         x_test: test input
-    #         y_test: result
-    #         report: dict to append results to. Optional - will create this if there isn't one provided
-    #         -----
-    #         return tuple of predictions and dictionary with train time, predict_time total time
-    #         """
-    #
-    #         if not report:
-    #             report = {}
-    #
-    #         train_time_start = datetime.now()
-    #         log.info(f'Start training: {train_time_start.strftime(TIME_FORMAT)}')
-    #         model = model.fit(x_train, y_train)
-    #
-    #         train_time_end = datetime.now()
-    #         log.info(f'End training: {train_time_end.strftime(TIME_FORMAT)}')
-    #
-    # #         score = result.score(bag_x_test, bag_y_test)
-    #
-    #         # calculate mean error score
-    #         score_time_end = datetime.now()
-    #         log.info(f'End Scoring: {score_time_end.strftime(TIME_FORMAT)}')
-    #
-    #         # predictions
-    #         predict_time_start = datetime.now()
-    #         log.info(f'Start predict: {predict_time_start.strftime(TIME_FORMAT)}')
-    #         y_predict = model.predict(x_test)
-    #         predict_time_end = datetime.now()
-    #         log.info(f'End predict: {predict_time_end.strftime(TIME_FORMAT)}')
-    #
-    #         # calculate times
-    #         train_time = train_time_end - train_time_start
-    #         train_time_min = round(train_time.total_seconds() / 60, 2)
-    #         log.info(f'Training time (min): {train_time_min}')
-    #
-    #         score_time = score_time_end - train_time_end
-    #         score_time_min = round(score_time.total_seconds() / 60, 2)
-    #         log.info(f'Scoring time (min): {score_time_min}')
-    #
-    #         predict_time = predict_time_end - score_time_end
-    #         predict_time_min = round(predict_time.total_seconds() / 60, 2)
-    #         log.info(f'Predict time (min): {predict_time_min}')
-    #
-    #         train_examples, train_features = x_train.shape
-    #         test_examples, test_features = x_test.shape
-    #
-    #         report[Keys.TRAIN_EXAMPLES] = train_examples
-    #         report[Keys.TRAIN_FEATURES] = train_features
-    #         report[Keys.TEST_EXAMPLES] = test_examples
-    #         report[Keys.TEST_FEATURES] = test_features
-    #         report[Keys.TRAIN_TIME_MIN] = train_time_min
-    #         report[Keys.SCORE_TIME_MIN] = score_time_min
-    #         report[Keys.PREDICT_TIME_MIN] = predict_time_min
-    #         if Keys.FILE_LOAD_TIME_MIN in report.keys():
-    #             report[Keys.TOTAL_TIME_MIN] = train_time_min + score_time_min + predict_time_min + \
-    #                                             report[Keys.FILE_LOAD_TIME_MIN]
-    #         else:
-    #             report[Keys.TOTAL_TIME_MIN] = train_time_min + score_time_min + predict_time_min
-    #         report = ClassifierRunner._interpret_predictions(y_test, y_predict, report)
-    #         report[Keys.STATUS] = Status.SUCCESS
-    #         report[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
-    #
-    #         return report, y_predict
 
     # Use this method to record results for all test runs
     def _record_results(self, report: dict) -> pd.DataFrame:
@@ -390,50 +293,4 @@ class ClassifierRunner(object):
             self._record_results(report)
         return self.report_df
 
-    # def runNewModels(self, rerun_failed=False) -> pd.DataFrame:
-    #     """
-    #     Run models that we haven't executed yet
-    #     :return:
-    #     """
-    #     for index, row in self.models.iterrows():
-    #         log.debug(f'before filtering - model name {row[Keys.MODEL_NAME]} status {row[Keys.STATUS]}')
-    #
-    #
-    #     if len(self.models) > 0:
-    #         if rerun_failed:
-    #             filtered_models = self.models[(self.models[Keys.STATUS] == Status.FAILED) |
-    #                                        (self.models[Keys.STATUS] == Status.NEW)]
-    #         else:
-    #             filtered_models = self.models[self.models[Keys.STATUS] == Status.NEW]
-    #
-    #         # log.debug(f'filtered model length {len(filtered_models)}')
-    #         # for index, row in filtered_models.iterrows():
-    #         #     log.debug(f'after filtering - model name {row[Keys.MODEL_NAME]} status {row[Keys.STATUS]}')
-    #
-    #         log.debug(f'filtered model count {len(filtered_models)}')
-    #         # log.debug(f'filtered models {filtered_models.head()}')
-    #
-    #         for index, model in filtered_models.iterrows():
-    #             log.info(f'Running {index+1} of {len(self.models)} models')
-    #             report = self._runModel(model)
-    #             self.models.at[index, Keys.STATUS] = report[Keys.STATUS]
-    #             self.models.at[index, Keys.STATUS_DATE] = report[Keys.STATUS_DATE]
-    #
-    #     self._cleanModels()
-    #
-    #     return self.report_df
-    #
-    #
-    # def _cleanModels(self):
-    #     """
-    #     remove references for each model so we can free up memory
-    #     :return:
-    #     """
-    #     if self.cleanup and len(self.models) > 0:
-    #         if self.clean_failures:
-    #             m = self.models[(self.models[Keys.STATUS] == Status.SUCCESS) |
-    #                             (self.models[Keys.STATUS] == Status.FAILED)]
-    #         else:
-    #             m = self.models[(self.models[Keys.STATUS] == Status.SUCCESS)]
-    #
-    #         self.models.drop(m.index, inplace=True)
+

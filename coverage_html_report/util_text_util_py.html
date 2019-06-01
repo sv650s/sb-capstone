@@ -367,7 +367,7 @@
 <p id="t127" class="pln"><span class="str">    :param text:</span><span class="strut">&nbsp;</span></p>
 <p id="t128" class="pln"><span class="str">    :return:</span><span class="strut">&nbsp;</span></p>
 <p id="t129" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
-<p id="t130" class="stm run hide_run">    <span class="nam">text</span> <span class="op">=</span> <span class="nam">re</span><span class="op">.</span><span class="nam">sub</span><span class="op">(</span><span class="str">'[^a-zA-Z0-9\s]'</span><span class="op">,</span> <span class="str">' '</span><span class="op">,</span> <span class="nam">text</span><span class="op">,</span> <span class="nam">re</span><span class="op">.</span><span class="nam">I</span> <span class="op">|</span> <span class="nam">re</span><span class="op">.</span><span class="nam">A</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t130" class="stm run hide_run">    <span class="nam">text</span> <span class="op">=</span> <span class="nam">re</span><span class="op">.</span><span class="nam">sub</span><span class="op">(</span><span class="str">'[^a-zA-Z0-9\s]'</span><span class="op">,</span> <span class="str">' '</span><span class="op">,</span> <span class="nam">text</span><span class="op">,</span> <span class="nam">flags</span><span class="op">=</span><span class="nam">re</span><span class="op">.</span><span class="nam">I</span> <span class="op">|</span> <span class="nam">re</span><span class="op">.</span><span class="nam">A</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t131" class="stm run hide_run">    <span class="nam">text</span> <span class="op">=</span> <span class="nam">remove_newlines</span><span class="op">(</span><span class="nam">text</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t132" class="stm run hide_run">    <span class="key">return</span> <span class="str">' '</span><span class="op">.</span><span class="nam">join</span><span class="op">(</span><span class="nam">text</span><span class="op">.</span><span class="nam">split</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t133" class="pln"><span class="strut">&nbsp;</span></p>
@@ -416,7 +416,7 @@
     <div class="content">
         <p>
             <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.3</a>,
-            created at 2019-05-27 15:01
+            created at 2019-06-01 16:22
         </p>
     </div>
 </div>
