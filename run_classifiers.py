@@ -129,6 +129,8 @@ if __name__ == "__main__":
 
         X_train, X_test, Y_train, Y_test = create_training_data(df, class_column, drop_columns)
 
+        # put these here so our columns are not messed up
+        timer.start_timer(Keys.SMOTE_TIME_MIN)
         if args.smote:
             sm_desc = "smote"
 
@@ -149,9 +151,7 @@ if __name__ == "__main__":
                                                           4: int(round(grouped_df.iloc[3] * 1.67))}
                        )
 
-            timer.start_timer(Keys.SMOTE_TIME_MIN)
             X_train_res, Y_train_res = sm.fit_sample(X_train, Y_train.ravel())
-            timer.end_timer(Keys.SMOTE_TIME_MIN)
 
             X_train = pd.DataFrame(X_train_res, columns=X_train.columns)
             Y_train = pd.DataFrame(Y_train_res, columns=["star_rating"])
@@ -165,6 +165,7 @@ if __name__ == "__main__":
             dist.to_csv(f'reports/{basename}-smotehist.csv')
         else:
             sm_desc = "nosmote"
+        timer.end_timer(Keys.SMOTE_TIME_MIN)
 
         if run_rf:
             rf = RandomForestClassifier(random_state=1, n_jobs=n_jobs, verbose=1)
