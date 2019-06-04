@@ -8,7 +8,6 @@ from datetime import datetime
 import logging
 import traceback2
 import sys
-import pprint
 from util.dict_util import add_dict_to_dict
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -32,6 +31,8 @@ class Keys(object):
     SCORE_TIME_MIN = "score_time_min"
     PREDICT_TIME_MIN = "predict_time_min"
     SMOTE_TIME_MIN = "smote_time_min"
+    VECTORIZER_TIME_MIN = "vectorizer_time_min"
+    LDA_TIME_MIN = "lda_time_min"
     FILE_LOAD_TIME_MIN = "file_load_time_min"
     TOTAL_TIME_MIN = "total_time_min"
     STATUS = "status"
@@ -72,6 +73,7 @@ class Timer(object):
             diff_mins = round((end_time - start_time).total_seconds() / 50, 2)
             self.timer_dict[key] = diff_mins
             log.info(f'Total time for {key}: {self.timer_dict[key]}')
+            # TOOD: refactor here later. I don't like this dependency. Want to make timer more generic
             self.timer_dict[Keys.TOTAL_TIME_MIN] = self.get_total_time()
         else:
             log.info(f'No timer for: {key}')
@@ -236,13 +238,10 @@ class Model(object):
         return report
 
 
-
-
 class ClassifierRunner(object):
     """
     Class to help run various models
     """
-
 
     # Use this method to record results for all test runs
     def _record_results(self, report: dict) -> pd.DataFrame:
@@ -292,5 +291,3 @@ class ClassifierRunner(object):
             report = model.get_report()
             self._record_results(report)
         return self.report_df
-
-
