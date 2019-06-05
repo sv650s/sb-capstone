@@ -1,7 +1,7 @@
 import argparse
 import pandas as pd
 import logging
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from util.ClassifierRunner import Keys, Timer
@@ -12,6 +12,8 @@ from util.dict_util import add_dict_to_dict
 from sklearn.externals import joblib
 import lightgbm as lgb
 from catboost import CatBoostClassifier
+from scipy.stats import randint as sp_randint
+from scipy.stats import uniform as sp_uniform
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
@@ -21,10 +23,13 @@ CV_TIME_MIN = "cv_time_min"
 MODEL_SAVE_TIME_MIN = "model_save_time_min"
 
 
-def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report):
+def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, use_random=False):
     log.info(f"Starting to train {model_name}\n\tparameters: {parameters}")
     report["model_name"] = model_name
-    cv = GridSearchCV(estimator=trainer, cv=5, param_grid=parameters, iid=False)
+    if use_random:
+        cv = RandomizedSearchCV(estimator=trainer, cv=5, param_distributions=parameters, iid=False)
+    else:
+        cv = GridSearchCV(estimator=trainer, cv=5, param_grid=parameters, iid=False)
     timer.start_timer(CV_TIME_MIN)
     best_model = cv.fit(x_train, y_train)
     timer.end_timer(CV_TIME_MIN)
@@ -155,10 +160,30 @@ if __name__ == "__main__":
 
         if run_lGBM:
             model_name = "lGBM"
-            parameters = {"num_leaves": [31, 62, 124], "min_data_in_leaf": [20, 40, 80], "max_depth": [4, 8, 16]}
+            # parameters = {"num_leaves": [31, 62, 124],
+            #               "min_data_in_leaf": [20, 40, 80],
+            #               "max_depth": [4, 8, 16]}
+            parameters = {"num_leaves": sp_randint(31, 124),
+                          "min_data_in_leaf": sp_randint(20, 80),
+                          "max_depth": sp_randint(4, 16)}
             trainer = lgb.LGBMClassifier(objective="multiclass",
-                                      seed=1)
-            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report)
+                                         seed=1)
+            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, use_random=True)
+            report_df = report_df.append(report, ignore_index=True)
+            report_df.to_csv(reportfile, index=False)
+
+        if run_cb:
+            model_name = "CB"
+            # parameters = {"max_depth": [4, 8, 16],
+            #               "l2_leaf_reg": [1, 10, 100],
+            #               "learning_rate": [0.01, 0.1, 1]}
+            parameters = {"max_depth": sp_randint(4, 16),
+                          "l2_leaf_reg": sp_randint(1, 100),
+                          "learning_rate": sp_uniform(0.01, 1.00)}
+            trainer = CatBoostClassifier(random_seed=1, loss_function='MultiClass', verbose=1)
+            report = run_cv(trainer=trainer, model_name=model_name, parameters=parameters, x_train=x_train,
+                            y_train=y_train, x_test=x_test, y_test=y_test, infile=infile, report=report,
+                            use_random=True)
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 
@@ -166,21 +191,12 @@ if __name__ == "__main__":
             model_name = "LRB100"
             parameters = {'C': [1, 10, 100]}
             trainer = LogisticRegression(random_state=0, solver='lbfgs',
-                                    multi_class='auto',
-                                    class_weight='balanced',
-                                    max_iter=args.lr_iter, n_jobs=args.n_jobs,
-                                    verbose=1)
+                                         multi_class='auto',
+                                         class_weight='balanced',
+                                         max_iter=args.lr_iter, n_jobs=args.n_jobs,
+                                         verbose=1)
             report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report)
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 
-        if run_cb:
-            model_name = "CB"
-            parameters = {"max_depth": [4, 8, 16],
-                          "l2_leaf_reg": [1, 10, 100],
-                          "learning_rate": [0.01, 0.1, 1]}
-            trainer = CatBoostClassifier(random_seed=1, loss_function='MultiClass')
-            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report)
-            report_df = report_df.append(report, ignore_index=True)
-            report_df.to_csv(reportfile, index=False)
 
