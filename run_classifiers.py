@@ -1,11 +1,9 @@
 import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier, RadiusNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from models.ClassifierRunner import ClassifierRunner, Keys, Timer, Model
+from util.ClassifierRunner import ClassifierRunner, Keys, Timer, Model
 from imblearn.over_sampling import SMOTE
 from datetime import datetime
 import pandas as pd

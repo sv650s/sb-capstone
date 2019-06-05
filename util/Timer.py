@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 # TODO: Refactor this later - I don't like this dependency
-from models.ClassifierRunner import Keys
+from util.ClassifierRunner import Keys
 
 log = logging.getLogger(__name__)
 

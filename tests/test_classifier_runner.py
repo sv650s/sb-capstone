@@ -1,9 +1,8 @@
-from sklearn.neighbors import KNeighborsClassifier, RadiusNeighborsClassifier
-from models.ClassifierRunner import ClassifierRunner, Keys, Status, Model
+from sklearn.neighbors import KNeighborsClassifier
+from util.ClassifierRunner import ClassifierRunner, Keys, Status, Model
 from pandas import DataFrame
 import logging
 import pytest
-from unittest.mock import MagicMock
 from unittest import mock
 import numpy as np
 
