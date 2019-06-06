@@ -23,7 +23,7 @@ CV_TIME_MIN = "cv_time_min"
 MODEL_SAVE_TIME_MIN = "model_save_time_min"
 
 
-def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, use_random=False):
+def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer, use_random=False):
     log.info(f"Starting to train {model_name}\n\tparameters: {parameters}")
     report["model_name"] = model_name
     if use_random:
@@ -39,6 +39,7 @@ def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, in
     log.info(f'Best Score:\n{best_model.best_score_}')
     log.info(f'Best Params:\n{best_model.best_params_}')
 
+    report[Keys.PARAMETERS] = parameters
     report["best_estimator"] = best_model.best_estimator_
     report["best_index"] = best_model.best_index_
     report["best_score"] = best_model.best_score_
@@ -62,6 +63,7 @@ def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, in
 
     c_report = classification_report(y_test, y_predict, output_dict=True)
     report = add_dict_to_dict(report, c_report)
+    report.update(timer)
 
     return report
 
@@ -168,7 +170,7 @@ if __name__ == "__main__":
                           "max_depth": sp_randint(4, 16)}
             trainer = lgb.LGBMClassifier(objective="multiclass",
                                          seed=1)
-            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, use_random=True)
+            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer, use_random=True)
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 
@@ -177,13 +179,14 @@ if __name__ == "__main__":
             # parameters = {"max_depth": [4, 8, 16],
             #               "l2_leaf_reg": [1, 10, 100],
             #               "learning_rate": [0.01, 0.1, 1]}
-            parameters = {"max_depth": sp_randint(4, 16),
+            parameters = {"depth": sp_randint(4, 10),
                           "l2_leaf_reg": sp_randint(1, 100),
-                          "learning_rate": sp_uniform(0.01, 1.00)}
-            trainer = CatBoostClassifier(random_seed=1, loss_function='MultiClass', verbose=1)
+                          "iterations": sp_randint(2, 10)
+                          }
+            trainer = CatBoostClassifier(random_seed=1, loss_function='MultiClass', objective='MultiClass')
             report = run_cv(trainer=trainer, model_name=model_name, parameters=parameters, x_train=x_train,
                             y_train=y_train, x_test=x_test, y_test=y_test, infile=infile, report=report,
-                            use_random=True)
+                            timer=timer, use_random=True)
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 
@@ -195,7 +198,7 @@ if __name__ == "__main__":
                                          class_weight='balanced',
                                          max_iter=args.lr_iter, n_jobs=args.n_jobs,
                                          verbose=1)
-            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report)
+            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer)
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 

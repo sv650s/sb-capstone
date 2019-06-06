@@ -141,8 +141,6 @@ if __name__ == "__main__":
             log.debug(f'grouped: {grouped_df.head()}')
             log.debug(f'grouped: {grouped_df.shape}')
 
-            smote_size = int(round(grouped_df.iloc[0] * 1.66))
-
             sm = SMOTE(random_state=2, sampling_strategy={1: int(round(grouped_df.iloc[0] * 1.67)),
                                                           2: int(round(grouped_df.iloc[1] * 2.00)),
                                                           3: int(round(grouped_df.iloc[2] * 1.67)),
