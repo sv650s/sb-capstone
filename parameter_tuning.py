@@ -1,14 +1,14 @@
 import argparse
+import pickle
 import pandas as pd
 import logging
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from util.ClassifierRunner import Keys
-from util.program_util import Timer
+from util.program_util import Timer, Keys, Status
 import util.file_util as fu
 from imblearn.over_sampling import SMOTE
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from util.dict_util import add_dict_to_dict
 from sklearn.externals import joblib
 import lightgbm as lgb
@@ -25,13 +25,16 @@ log = logging.getLogger(__name__)
 CV_TIME_MIN = "cv_time_min"
 MODEL_SAVE_TIME_MIN = "model_save_time_min"
 FEATURE_PICKLE_TIME_MIN = "feature_pickle_time_min"
+CONFUSION_MATRIX_TIME_MIN = "confusion_matrix_time_min"
 
 
-def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer, use_random=False):
+def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer, use_random=False,
+           n_iter=10):
     log.info(f"Starting to train {model_name}\n\tparameters: {parameters}")
     report["model_name"] = model_name
     if use_random:
-        cv = RandomizedSearchCV(estimator=trainer, cv=5, param_distributions=parameters, iid=False)
+        cv = RandomizedSearchCV(estimator=trainer, cv=5, param_distributions=parameters, iid=False, verbose=1,
+                                n_iter=n_iter)
     else:
         cv = GridSearchCV(estimator=trainer, cv=5, param_grid=parameters, iid=False)
     timer.start_timer(CV_TIME_MIN)
@@ -69,6 +72,11 @@ def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, in
     report = add_dict_to_dict(report, c_report)
     report.update(timer.get_report())
 
+    cm_filename = f"models/{datetime.now().strftime(DATE_FORMAT)}-{infile_basename}-{model_name}-{sm_desc}-matrix.csv"
+    cm = confusion_matrix(y_test, y_predict)
+    cm_df = pd.DataFrame(cm, columns=[str(x) for x in range(1, 6)])
+    cm_df.to_csv(cm_filename, index=False)
+
     log.info(f"Finished training {model_name}\n\tparameters: {parameters}")
     return report
 
@@ -81,6 +89,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr_iter", help="logistic regression iterations", default=100)
     parser.add_argument("--n_jobs", help="n_jobs for classifiers", default=-1)
     parser.add_argument("--smote", help="enable smote", action='store_true')
+    parser.add_argument("--n_iter", help="number of iterations for random CV", default=10)
     # get command line arguments
     args = parser.parse_args()
 
@@ -106,13 +115,17 @@ if __name__ == "__main__":
         run_cb = config_cb in TRUE_LIST
         config_lgbm = row["lGBM"]
         run_lGBM = config_lgbm in TRUE_LIST
+        pickled = row["pickled"] in TRUE_LIST
         infile = f'{data_dir}/{data_file}'
         timer = Timer()
 
         report = {"file": data_file}
 
         timer.start_timer(Keys.FILE_LOAD_TIME_MIN)
-        df = pd.read_csv(infile)
+        if pickled:
+            df = pickle.load(open(infile, 'rb'))
+        else:
+            df = pd.read_csv(infile)
         timer.end_timer(Keys.FILE_LOAD_TIME_MIN)
         y = df[class_column]
 
@@ -174,7 +187,7 @@ if __name__ == "__main__":
             trainer = lgb.LGBMClassifier(objective="multiclass",
                                          seed=1)
             report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer,
-                            use_random=True)
+                            use_random=True, n_iter=int(args.n_iter))
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 
@@ -187,7 +200,7 @@ if __name__ == "__main__":
             trainer = CatBoostClassifier(random_seed=1, loss_function='MultiClass', objective='MultiClass')
             report = run_cv(trainer=trainer, model_name=model_name, parameters=parameters, x_train=x_train,
                             y_train=y_train, x_test=x_test, y_test=y_test, infile=infile, report=report,
-                            timer=timer, use_random=True)
+                            timer=timer, use_random=True, n_iter=int(args.n_iter))
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 
@@ -199,6 +212,11 @@ if __name__ == "__main__":
                                          class_weight='balanced',
                                          max_iter=args.lr_iter, n_jobs=args.n_jobs,
                                          verbose=1)
-            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer)
+            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer,
+                            n_iter=int(args.n_iter))
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
+
+        config_df.loc[index, Keys.STATUS] = Status.SUCCESS
+        config_df.loc[index, Keys.STATUS_DATE] = datetime.now().strftime(DATE_FORMAT)
+        config_df.to_csv(args.config_file, index=False)
