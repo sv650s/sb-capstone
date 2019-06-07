@@ -4,7 +4,8 @@ import logging
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from util.ClassifierRunner import Keys, Timer
+from util.ClassifierRunner import Keys
+from util.program_util import Timer
 import util.file_util as fu
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import classification_report
@@ -14,13 +15,16 @@ import lightgbm as lgb
 from catboost import CatBoostClassifier
 from scipy.stats import randint as sp_randint
 from scipy.stats import uniform as sp_uniform
+from datetime import datetime
 
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATE_FORMAT = '%Y-%m-%d'
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
 TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
 log = logging.getLogger(__name__)
 CV_TIME_MIN = "cv_time_min"
 MODEL_SAVE_TIME_MIN = "model_save_time_min"
+FEATURE_PICKLE_TIME_MIN = "feature_pickle_time_min"
 
 
 def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer, use_random=False):
@@ -51,7 +55,7 @@ def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, in
 
     timer.start_timer(MODEL_SAVE_TIME_MIN)
     _, infile_basename = fu.get_dir_basename(infile)
-    joblib_filename = f"models/{infile_basename}-{model_name}-{sm_desc}.pkl"
+    joblib_filename = f"models/{datetime.now().strftime(DATE_FORMAT)}-{infile_basename}-{model_name}-{sm_desc}-best.pkl"
     with open(joblib_filename, 'wb') as file:
         joblib.dump(model, file)
     report["model_file"] = joblib_filename
@@ -63,8 +67,9 @@ def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, in
 
     c_report = classification_report(y_test, y_predict, output_dict=True)
     report = add_dict_to_dict(report, c_report)
-    report.update(timer)
+    report.update(timer.get_report())
 
+    log.info(f"Finished training {model_name}\n\tparameters: {parameters}")
     return report
 
 
@@ -165,12 +170,11 @@ if __name__ == "__main__":
             # parameters = {"num_leaves": [31, 62, 124],
             #               "min_data_in_leaf": [20, 40, 80],
             #               "max_depth": [4, 8, 16]}
-            parameters = {"num_leaves": sp_randint(31, 124),
-                          "min_data_in_leaf": sp_randint(20, 80),
-                          "max_depth": sp_randint(4, 16)}
+            parameters = {"num_trees": sp_randint(50, 300)}
             trainer = lgb.LGBMClassifier(objective="multiclass",
                                          seed=1)
-            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer, use_random=True)
+            report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer,
+                            use_random=True)
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 
@@ -179,10 +183,7 @@ if __name__ == "__main__":
             # parameters = {"max_depth": [4, 8, 16],
             #               "l2_leaf_reg": [1, 10, 100],
             #               "learning_rate": [0.01, 0.1, 1]}
-            parameters = {"depth": sp_randint(4, 10),
-                          "l2_leaf_reg": sp_randint(1, 100),
-                          "iterations": sp_randint(2, 10)
-                          }
+            parameters = {"iterations": sp_randint(50, 300)}
             trainer = CatBoostClassifier(random_seed=1, loss_function='MultiClass', objective='MultiClass')
             report = run_cv(trainer=trainer, model_name=model_name, parameters=parameters, x_train=x_train,
                             y_train=y_train, x_test=x_test, y_test=y_test, infile=infile, report=report,
@@ -201,5 +202,3 @@ if __name__ == "__main__":
             report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer)
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
-
-
