@@ -1,0 +1,2 @@
+data_dir,data_file,class_column,dtype,drop_columns,knn,rn,lr,lrb,rf,gb,lGBM,xgb,cb,pickled
+dataset/feature_files,review_body-tfidf-df_default-ngram12-50000-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,No,No,No,Yes,No,Yes,No
