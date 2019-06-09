@@ -30,3 +30,14 @@ def add_dict_to_dict(target :dict, source :dict) -> dict:
             target[key] = value
 
     return target
+
+
+
+def remove_null(in_dict: dict) -> dict:
+    """
+    remove any key's that have null values
+    :return:
+    """
+    return {k: v for k, v in in_dict.items() if v is not None}
+
+

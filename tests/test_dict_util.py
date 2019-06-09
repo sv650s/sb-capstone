@@ -19,3 +19,9 @@ class TestDictUtil(object):
         key_num = 4
         assert len(outcome.keys()) == key_num, \
             f"number of keys should be {key_num}"
+
+
+    def test_remove_null(self):
+        source = {"a": 1, "b": None, "c": 2}
+        outcome = du.remove_null(source)
+        assert len(outcome.keys()) == 2, "Number of keys should be 2"
