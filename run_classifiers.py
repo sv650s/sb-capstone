@@ -1,20 +1,19 @@
-import numpy as np
 from sklearn.neighbors import KNeighborsClassifier, RadiusNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from util.ClassifierRunner import ClassifierRunner, Keys, Timer, Model
+from util.ClassifierRunner import Model
 from imblearn.over_sampling import SMOTE
-from datetime import datetime
 import pandas as pd
 import logging
-import argparse
 import util.file_util as fu
 import util.df_util as dfu
 import lightgbm as lgb
 import gc
 from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
+from util.ConfigBasedProgram import TimedProgram, ConfigBasedProgram
+from util.program_util import Keys, Status
 
 # configure logger so we can see output from the classes
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -23,113 +22,69 @@ LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(me
 log = logging.getLogger(__name__)
 
 
-def create_training_data(x: pd.DataFrame, class_column: str, drop_columns: str = None):
-    """
-    Take dataframe and:
-    1. split between features and predictions
-    2. create test and training sets
-    :param x:
-    :param class_column:
-    :return:
-    """
+class RunClassifiers(TimedProgram):
 
-    y = x[class_column]
-    x.drop(class_column, axis=1, inplace=True)
+    def __init__(self, index, config_df, report=None, args=None):
+        super(RunClassifiers, self).__init__(index, config_df, report, args)
+        self.n_jobs = int(self.args.n_jobs)
+        self.lr_iter = int(self.args.lr_iter)
+        self.neighbors = int(self.args.neighbors)
+        self.radius = int(self.args.radius)
+        self.lr_c = int(self.args.lr_c)
 
-    if drop_columns:
-        drop_list = drop_columns.replace(" ", "").split(",")
-        log.info(f"Dropping columns from features {drop_list}")
-        x.drop(drop_list, axis=1, inplace=True)
+    def create_training_data(self, x: pd.DataFrame, class_column: str, drop_columns: str = None):
+        """
+        Take dataframe and:
+        1. split between features and predictions
+        2. create test and training sets
+        :param x:
+        :param class_column:
+        :param drop_columns:
+        :return:
+        """
 
-    log.info(f'shape of x: {x.shape}')
-    log.info(f'shape of y: {y.shape}')
+        y = x[class_column]
+        x.drop(class_column, axis=1, inplace=True)
 
-    return train_test_split(x, y, random_state=1)
+        if drop_columns:
+            drop_list = drop_columns.replace(" ", "").split(",")
+            log.info(f"Dropping columns from features {drop_list}")
+            x.drop(drop_list, axis=1, inplace=True)
 
+        log.info(f'shape of x: {x.shape}')
+        log.info(f'shape of y: {y.shape}')
 
-if __name__ == "__main__":
+        return train_test_split(x, y, random_state=1)
 
-    parser = argparse.ArgumentParser(description='Add a class column ')
-    parser.add_argument("config_file", help="file with parameters to drive the permutations")
-    parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
-    parser.add_argument("--noreport", help="do not generate report", action='store_true')
-    parser.add_argument("--lr_iter", help="number of iterations for LR", default=100)
-    parser.add_argument("--n_jobs", help="number of iterations for LR", default=-1)
-    parser.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
-    parser.add_argument("--radius", help="radius for radius neighbor classification", default=30)
-    parser.add_argument("-s", "--smote", help="if yes, will run the data with SMOTE", action='store_true')
-    parser.add_argument("--lr_c", help="c parameter for LR", default=1.0)
-    # get command line arguments
-    args = parser.parse_args()
+    def execute(self):
 
-    # process argument
-    if args.loglevel is not None:
-        loglevel = getattr(logging, args.loglevel.upper(), None)
-    logging.basicConfig(format=LOG_FORMAT, level=loglevel)
-    log = logging.getLogger(__name__)
-
-    # ready in config file
-    # config file has the following format
-    config_df = pd.read_csv(args.config_file)
-    report_file_name = fu.get_report_filename(args.config_file)
-    config_length = len(config_df)
-
-    # convert arguments to int
-    n_jobs = int(args.n_jobs)
-    lr_iter = int(args.lr_iter)
-    neighbors = int(args.neighbors)
-    radius = int(args.radius)
-    lr_c = int(args.lr_c)
-
-    start_time = datetime.now()
-    cr = ClassifierRunner(write_to_csv=not args.noreport, outfile=report_file_name)
-    report_df = pd.DataFrame()
-    for index, row in config_df.iterrows():
-
-        data_dir = row["data_dir"]
-        data_file = row["data_file"]
-        class_column = row["class_column"]
-        drop_columns = row["drop_columns"]
-        if pd.notnull(row["dtype"]):
-            dtype = np.dtype(row["dtype"])
-        else:
-            dtype = None
+        data_file = self.get_config("data_file")
+        class_column = self.get_config("class_column")
+        drop_columns = self.get_config("drop_columns")
+        dtype = self.get_config("dtype")
 
         # let's get the parameters to figure out which training models we need to run
-        run_knn = row["knn"] in TRUE_LIST
-        run_rn = row["rn"] in TRUE_LIST
-        run_lr = row["lr"] in TRUE_LIST
-        run_lrb = row["lrb"] in TRUE_LIST
-        run_rf = row["rf"] in TRUE_LIST
-        run_gb = row["gb"] in TRUE_LIST
-        run_lGBM = row["lGBM"] in TRUE_LIST
-        run_xgb = row["xgb"] in TRUE_LIST
-        run_cb = row["cb"] in TRUE_LIST
+        model_name = self.get_config("model_name")
 
         # description = row["description"]
         description = data_file.split(".")[0]
         log.debug(f'description {description}')
 
-        timer = Timer()
-
-        infile = f'{data_dir}/{data_file}'
+        infile = self.get_infile()
         log.info(f"loading file {infile}")
-        load_start_time = datetime.now()
-        timer.start_timer(Keys.FILE_LOAD_TIME_MIN)
+        self.start_timer(Keys.FILE_LOAD_TIME_MIN)
         if dtype and len(dtype) > 0:
             df = pd.read_csv(infile, dtype=dtype)
             df = dfu.cast_column_type(df, class_column, "int8")
         else:
             df = pd.read_csv(infile)
-        timer.end_timer(Keys.FILE_LOAD_TIME_MIN)
-        load_end_time = datetime.now()
-        load_time_min = round((load_end_time - load_start_time).total_seconds() / 60, 2)
+        self.stop_timer(Keys.FILE_LOAD_TIME_MIN)
 
-        X_train, X_test, Y_train, Y_test = create_training_data(df, class_column, drop_columns)
+        X_train, X_test, Y_train, Y_test = self.create_training_data(df, class_column, drop_columns)
 
         # put these here so our columns are not messed up
-        timer.start_timer(Keys.SMOTE_TIME_MIN)
-        if args.smote:
+        self.start_timer(Keys.SMOTE_TIME_MIN)
+        if self.args.smote:
             sm_desc = "smote"
 
             log.debug(f'Y_train {Y_train.shape}')
@@ -161,169 +116,83 @@ if __name__ == "__main__":
             dist.to_csv(f'reports/{basename}-smotehist.csv')
         else:
             sm_desc = "nosmote"
-        timer.end_timer(Keys.SMOTE_TIME_MIN)
+        self.stop_timer(Keys.SMOTE_TIME_MIN)
 
-        if run_rf:
-            rf = RandomForestClassifier(random_state=1, n_jobs=n_jobs, verbose=1)
-            model = Model(model=rf,
-                          x_train=X_train,
-                          y_train=Y_train,
-                          x_test=X_test,
-                          y_test=Y_test,
-                          name="RF",
-                          timer=timer,
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          parameters={"n_jobs": n_jobs, "verbose": 1}
-                          )
-            cr.addModel(model)
+        if model_name == "RF":
+            classifier = RandomForestClassifier(random_state=1, n_jobs=self.n_jobs, verbose=1)
+            parameters = {"n_jobs": self.n_jobs, "verbose": 1}
 
-        if run_gb:
-            gb = GradientBoostingClassifier(verbose=1)
-            model = Model(gb,
-                          X_train,
-                          Y_train,
-                          X_test,
-                          Y_test,
-                          timer=timer,
-                          name="GB",
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          )
-            cr.addModel(model)
+        elif model_name == "GB":
+            classifier = GradientBoostingClassifier(verbose=1)
+            parameters = {"verbose": 1}
 
-        if run_lGBM:
-            gb = lgb.LGBMClassifier(objective="multiclass", num_threads=2,
-                                    seed=1)
-            model = Model(gb,
-                          X_train,
-                          Y_train,
-                          X_test,
-                          Y_test,
-                          timer=timer,
-                          name="lGBM",
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          )
-            cr.addModel(model)
+        elif model_name == "lGBM":
+            classifier = lgb.LGBMClassifier(objective="multiclass", num_threads=2,
+                                            seed=1)
+            parameters = {"objective": "multiclass", "num_threads": 2, "seed": 1}
 
-        if run_xgb:
-            xgb = XGBClassifier(n_jobs=n_jobs, verbosity=1, seed=1)
-            model = Model(xgb,
-                          X_train,
-                          Y_train,
-                          X_test,
-                          Y_test,
-                          timer=timer,
-                          name="XGB",
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          parameters={"n_jobs": n_jobs, "verbosity": 1, "seed": 1}
-                          )
-            cr.addModel(model)
+        elif model_name == "XGB":
+            classifier = XGBClassifier(n_jobs=self.n_jobs, verbosity=1, seed=1)
+            parameters = {"n_jobs": self.n_jobs, "verbosity": 1, "seed": 1}
 
-        if run_cb:
-            cb = CatBoostClassifier(random_seed=1)
-            model = Model(cb,
-                          X_train,
-                          Y_train,
-                          X_test,
-                          Y_test,
-                          timer=timer,
-                          name="CB",
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          parameters={"random_seed": 1}
-                          )
-            cr.addModel(model)
+        elif model_name == "CB":
+            classifier = CatBoostClassifier(random_seed=1)
+            parameters = {"random_seed": 1}
 
-        if run_lr:
-            lr = LogisticRegression(random_state=0, solver='lbfgs',
-                                    multi_class='auto',
-                                    max_iter=lr_iter, n_jobs=n_jobs, C=lr_c,
-                                    verbose=1)
-            model = Model(lr,
-                          X_train,
-                          Y_train,
-                          X_test,
-                          Y_test,
-                          timer=timer,
-                          name=f"LR{lr_iter}",
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          parameters={"n_jobs": n_jobs,
-                                      "c": lr_c,
-                                      "max_iter": lr_iter,
-                                      "verbose": 1}
-                          )
-            cr.addModel(model)
+        elif model_name == "LR":
+            classifier = LogisticRegression(random_state=0, solver='lbfgs',
+                                            multi_class='auto',
+                                            max_iter=self.lr_iter, n_jobs=self.n_jobs, C=self.lr_c,
+                                            verbose=1)
+            parameters = {"n_jobs": self.n_jobs,
+                          "c": self.lr_c,
+                          "max_iter": self.lr_iter,
+                          "verbose": 1}
 
-        if run_lrb:
-            lrb = LogisticRegression(random_state=0, solver='lbfgs',
-                                     multi_class='auto',
-                                     class_weight='balanced',
-                                     max_iter=lr_iter, n_jobs=n_jobs, C=lr_c,
-                                     verbose=1)
-            model = Model(lrb,
-                          X_train,
-                          Y_train,
-                          X_test,
-                          Y_test,
-                          timer=timer,
-                          name=f"LRB{lr_iter}",
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          parameters={"n_jobs": n_jobs,
-                                      "c": lr_c,
-                                      "class_weight": 'balanced',
-                                      "max_iter": lr_iter,
-                                      "verbose": 1}
-                          )
-            cr.addModel(model)
+        elif model_name == "LRB100":
+            classifier = LogisticRegression(random_state=0, solver='lbfgs',
+                                            multi_class='auto',
+                                            class_weight='balanced',
+                                            max_iter=self.lr_iter, n_jobs=self.n_jobs, C=self.lr_c,
+                                            verbose=1)
+            parameters = {"n_jobs": self.n_jobs,
+                          "c": self.lr_c,
+                          "class_weight": 'balanced',
+                          "max_iter": self.lr_iter,
+                          "verbose": 1}
 
-        if run_knn:
-            neigh = KNeighborsClassifier(n_neighbors=neighbors, n_jobs=n_jobs)
-            model = Model(neigh,
-                          X_train,
-                          Y_train,
-                          X_test,
-                          Y_test,
-                          timer=timer,
-                          name="KNN",
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          parameters={"n_jobs": n_jobs,
-                                      "n_neighbors": neighbors}
-                          )
-            cr.addModel(model)
+        elif model_name == "KNN":
+            classifier = KNeighborsClassifier(n_neighbors=self.neighbors, n_jobs=self.n_jobs)
+            parameters = {"n_jobs": self.n_jobs,
+                          "n_neighbors": self.neighbors}
 
-        if run_rn:
-            rnc = RadiusNeighborsClassifier(radius=radius, n_jobs=n_jobs)
-            model = Model(rnc,
-                          X_train,
-                          Y_train,
-                          X_test,
-                          Y_test,
-                          timer=timer,
-                          name="RN",
-                          description=f'{description}-{sm_desc}',
-                          file=data_file,
-                          parameters={"n_jobs": n_jobs,
-                                      "radius": radius}
-                          )
-            cr.addModel(model)
+        elif model_name == "RN":
+            classifier = RadiusNeighborsClassifier(radius=self.radius, n_jobs=self.n_jobs)
+            parameters = {"n_jobs": self.n_jobs,
+                          "radius": self.radius}
 
-        report_df = cr.run_models()
+        model = Model(classifier,
+                      X_train,
+                      Y_train,
+                      X_test,
+                      Y_test,
+                      name=model_name,
+                      description=f'{description}-{sm_desc}',
+                      file=data_file,
+                      parameters=parameters
+                      )
+        report_dict, _ = model.run()
+        self.report.add_dict(report_dict)
 
-        config_df.loc[index, "status"] = "success"
-        config_df.loc[index, "status_date"] = datetime.now().strftime(TIME_FORMAT)
-        config_df.to_csv(args.config_file, index=False)
 
-        gc.collect()
-    print(report_df.tail())
-
-    log.info("Finished running all models")
-    end_time = datetime.now()
-    total_time = end_time - start_time
-    log.info(f'Total time: {total_time}')
-    print(report_df.head())
+if __name__ == "__main__":
+    program = ConfigBasedProgram("Run classifiers no feature files", RunClassifiers)
+    program.add_argument("--noreport", help="do not generate report", action='store_true')
+    program.add_argument("--lr_iter", help="number of iterations for LR. default 100", default=100)
+    program.add_argument("--n_jobs", help="number of cores to use. default -1", default=-1)
+    program.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
+    program.add_argument("--radius", help="radius for radius neighbor classification. default 30", default=30)
+    program.add_argument("-s", "--smote", help="if yes, will run the data with SMOTE. default False",
+                         action='store_true')
+    program.add_argument("--lr_c", help="c parameter for LR. default 1.0", default=1.0)
+    program.main()

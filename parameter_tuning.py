@@ -70,7 +70,7 @@ def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, in
 
     c_report = classification_report(y_test, y_predict, output_dict=True)
     report = add_dict_to_dict(report, c_report)
-    report.update(timer.get_report())
+    report.update(timer.get_report_dict())
 
     cm_filename = f"models/{datetime.now().strftime(DATE_FORMAT)}-{infile_basename}-{model_name}-{sm_desc}-matrix.csv"
     cm = confusion_matrix(y_test, y_predict)
