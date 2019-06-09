@@ -1,5 +1,11 @@
 import logging
 from datetime import datetime
+import util.dict_util as du
+
+TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATE_FORMAT = '%Y-%m-%d'
+LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
+TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +27,8 @@ class Keys(object):
     STATUS_DATE = "status_date"
     MESSAGE = "message"
     MODEL_NAME = "model_name"
+    MODEL_SAVE_TIME_MIN = "model_save_time_min"
+    MODEL_FILE = "model_file"
     MODEL = "model"
     FILE = "file"
     DESCRIPTION = "description"
@@ -30,6 +38,7 @@ class Keys(object):
     TEST_X = "X_test"
     TEST_Y = "Y_test"
     TIMER = "timer"
+    CM = "confusion_matrix"
 
 
 class Status(object):
@@ -88,10 +97,41 @@ class Timer(object):
         if other:
             self.timer_dict.update(other.timer_dict)
 
-    def get_report(self):
+    def get_report_dict(self):
         """
         returns dictionary representation of the timer object
         :return:
         """
         return self.timer_dict
 
+
+class TimedReport(Timer):
+    """
+    Extension of Timer object. This class allows you to record key-value pairs on top of timed events
+    """
+
+    def __init__(self):
+        Timer.__init__(self)
+        # have to keep this separate for now since timer_dict has logic to calculate total times
+        self.kv_dict = {}
+
+    def record(self, key: str, value: str):
+        log.debug(f'Recording key {key} value {value}')
+        self.kv_dict[key] = value
+
+    def merge_reports(self, report):
+        if isinstance(report, TimedReport):
+            self.merge_timers(report)
+            self.kv_dict = du.add_dict_to_dict(self.kv_dict, report.kv_dict)
+        else:
+            raise Exception("report is not a TimedReport object")
+
+    def add_dict(self, rdict: dict):
+        self.kv_dict = du.add_dict_to_dict(self.kv_dict, rdict)
+
+    def get_report_dict(self):
+        # make a copy so we can call this any time
+        report = self.kv_dict.copy()
+        report.update(self.timer_dict)
+        log.debug(f'merged report {report}')
+        return report

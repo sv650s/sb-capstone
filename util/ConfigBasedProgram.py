@@ -6,37 +6,17 @@ from datetime import datetime
 import argparse
 import logging
 import util.file_util as fu
-from util.program_util import Keys, Status, Timer
+from util.program_util import Keys, Status, TimedReport, TIME_FORMAT, TRUE_LIST, LOG_FORMAT
 import traceback2
 import sys
 
-TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-DATE_FORMAT = '%Y-%m-%d'
-LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
-TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
-log = logging.getLogger(__name__)
+
 CV_TIME_MIN = "cv_time_min"
 MODEL_SAVE_TIME_MIN = "model_save_time_min"
 FEATURE_PICKLE_TIME_MIN = "feature_pickle_time_min"
-TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
 
 
-class TimedReport(Timer):
-
-    def __init__(self):
-        Timer.__init__(self)
-        self.report_dict = {}
-
-    def record(self, key: str, value: str):
-        log.debug(f'Recording key {key} value {value}')
-        self.report_dict[key] = value
-
-    def get_report(self):
-        # make a copy so we can call this any time
-        report = self.report_dict.copy()
-        report.update(self.timer_dict)
-        log.debug(f'merged report {report}')
-        return report
+log = logging.getLogger(__name__)
 
 
 class TimedProgram(object):
@@ -60,7 +40,10 @@ class TimedProgram(object):
         :param config:
         :return:
         """
-        return self.config_df[config]
+        if pd.notnull(self.config_df[config]):
+            return self.config_df[config]
+        else:
+            return None
 
     def get_config_bool(self, config) -> bool:
         """
@@ -68,7 +51,10 @@ class TimedProgram(object):
         :param config:
         :return:
         """
-        return self.config_df[config] in TRUE_LIST
+        if pd.notnull(self.config_df[config]):
+            return self.config_df[config] in TRUE_LIST
+        else:
+            return False
 
     def get_config_list(self, config) -> list:
         """
@@ -76,21 +62,28 @@ class TimedProgram(object):
         :param config:
         :return:
         """
-        return self.config_df[config].replace(" ", "").split(",")
+        if pd.notnull(self.config_df[config]):
+            return self.config_df[config].replace(" ", "").split(",")
+        else:
+            return []
 
-    # def record_success(self):
-    #     self.report.record(Keys.STATUS, Status.SUCCESS)
-    #     self.report.reocrd(Keys.STATUS_DATE, datetime.now().strftime(DATE_FORMAT))
-    #
-    # def record_failure(self):
-    #     self.report.record(Keys.STATUS, Status.FAILED)
-    #     self.report.reocrd(Keys.STATUS_DATE, datetime.now().strftime(DATE_FORMAT))
-
-    def get_report(self):
-        return self.report.get_report()
+    def get_report_dict(self):
+        return self.report.get_report_dict()
 
     def record(self, key: str, value: str):
+        """
+        record key value into report
+        :param key:
+        :param value:
+        :return:
+        """
         self.report.record(key, value)
+
+    def start_timer(self, key: str):
+        self.report.start_timer(key)
+
+    def stop_timer(self, key: str):
+        self.report.end_timer(key)
 
     def get_infile(self):
         """
@@ -101,7 +94,7 @@ class TimedProgram(object):
         return f'{self.get_config("data_dir")}/{self.get_config("data_file")}'
 
     def execute(self):
-        raise Exception("Not yet implemented")
+        raise Exception(f"Not yet implemented. {__class__} must implement this method.")
 
 
 class ConfigBasedProgram(object):
@@ -122,8 +115,8 @@ class ConfigBasedProgram(object):
         self.report_file = None
         self.config_file = None
 
-    def get_report_file_name(self, config_file):
-        _, config_basename = fu.get_dir_basename(config_file)
+    def get_report_file_name(self):
+        _, config_basename = fu.get_dir_basename(self.config_file)
         reportfile = f'reports/{config_basename}-report.csv'
         log.debug(f'Report file: {reportfile}')
         return reportfile
@@ -163,14 +156,14 @@ class ConfigBasedProgram(object):
         log.info(f'Reading config file: {self.config_file}')
         self.config_df = pd.read_csv(self.config_file)
         self.report_df = pd.DataFrame()
-        self.report_file = self.get_report_file_name(self.config_file)
+        self.report_file = self.get_report_file_name()
 
         for index, row in self.config_df.iterrows():
             try:
                 iteration = self.program(index, row, args=args)
                 iteration.execute()
 
-                self.record_success(index, iteration.get_report())
+                self.record_success(index, iteration.get_report_dict())
 
             except Exception as e:
                 traceback2.print_exc(file=sys.stdout)

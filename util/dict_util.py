@@ -21,13 +21,16 @@ def add_dict_to_dict(target :dict, source :dict) -> dict:
     ------
     return: dictionary with source added to target
     """
-    for key, value in source.items():
-        if isinstance(value, dict):
-            # append key to dictionary keys
-            for subkey, subvalue in value.items():
-                target[f'{key}_{subkey}'] = subvalue
-        else:
-            target[key] = value
+    if isinstance(source, dict):
+        for key, value in source.items():
+            if isinstance(value, dict):
+                # append key to dictionary keys
+                for subkey, subvalue in value.items():
+                    target[f'{key}_{subkey}'] = subvalue
+            else:
+                target[key] = value
+    else:
+        raise Exception("source is not a dictionary")
 
     return target
 

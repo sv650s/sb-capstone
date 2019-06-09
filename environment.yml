@@ -28,5 +28,6 @@ dependencies:
   - imbalanced-learn=0.4
   - xgboost
   - catboost
+  - traceback2
 prefix: /Users/vinceluk/springboard-projects/capstone
 
