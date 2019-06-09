@@ -21,15 +21,13 @@ FEATURE_PICKLE_TIME_MIN = "feature_pickle_time_min"
 TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
 
 
-
-
 class TimedReport(Timer):
 
     def __init__(self):
         Timer.__init__(self)
         self.report_dict = {}
 
-    def record(self, key:str, value:str):
+    def record(self, key: str, value: str):
         log.debug(f'Recording key {key} value {value}')
         self.report_dict[key] = value
 
@@ -45,6 +43,7 @@ class ProgramIteration(object):
     """
     Abstract program iteration.  This represents what to do with each row of configuration file
     """
+
     def __init__(self, index, config_df, report=None, args=None):
         log.debug(f"ProgramIteration constructor - index: {index}")
         self.index = index
@@ -55,7 +54,7 @@ class ProgramIteration(object):
         else:
             self.report = TimedReport()
 
-    def get_config(self, config:str) -> str:
+    def get_config(self, config: str) -> str:
         """
         get string configuration
         :param config:
@@ -79,16 +78,25 @@ class ProgramIteration(object):
         """
         return self.config_df[config].replace(" ", "").split(",")
 
-    def record_success(self):
-        self.report.record(Keys.STATUS, Status.SUCCESS)
-        self.report.reocrd(Keys.STATUS_DATE, datetime.now().strftime(DATE_FORMAT))
-
-    def record_failure(self):
-        self.report.record(Keys.STATUS, Status.FAILED)
-        self.report.reocrd(Keys.STATUS_DATE, datetime.now().strftime(DATE_FORMAT))
+    # def record_success(self):
+    #     self.report.record(Keys.STATUS, Status.SUCCESS)
+    #     self.report.reocrd(Keys.STATUS_DATE, datetime.now().strftime(DATE_FORMAT))
+    #
+    # def record_failure(self):
+    #     self.report.record(Keys.STATUS, Status.FAILED)
+    #     self.report.reocrd(Keys.STATUS_DATE, datetime.now().strftime(DATE_FORMAT))
 
     def get_report(self):
         return self.report.get_report()
+
+
+    def get_infile(self):
+        """
+        convenience method to get infile
+        :return:
+        """
+        self.report.record("file", self.get_config("data_file"))
+        return f'{self.get_config("data_dir")}/{self.get_config("data_file")}'
 
     def execute(self):
         raise Exception("Not yet implemented")
@@ -126,12 +134,19 @@ class ConfigBasedProgram(object):
         """
         self.parser.add_argument(*args, **kwargs)
 
-    def run_iteration(self, index:int, config_row:pd.DataFrame):
-        """
-        Abstract method - need to implement this
-        :return:
-        """
-        raise Exception("Not Yet Implemented")
+    def record_success(self, index, report):
+        self.report_df = self.report_df.append(report, ignore_index=True)
+        self.report_df[Keys.STATUS] = Status.SUCCESS
+        self.report_df[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+        self.report_df.to_csv(self.report_file, index=False)
+
+        self.config_df.loc[index, Keys.STATUS] = Status.SUCCESS
+        self.config_df.loc[index, Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+
+    def record_failure(self, index, err_message):
+        self.config_df.loc[index, Keys.STATUS] = Status.FAILED
+        self.config_df.loc[index, Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+        self.config_df.loc[index, Keys.MESSAGE] = err_message
 
     def main(self):
         # get command line arguments
@@ -152,17 +167,14 @@ class ConfigBasedProgram(object):
             try:
                 iteration = self.program(index, row, args=args)
                 iteration.execute()
-                self.config_df.loc[index, Keys.STATUS] = Status.SUCCESS
-                self.report_df = self.report_df.append(iteration.get_report(), ignore_index=True)
-                self.report_df.to_csv(self.report_file, index=False)
+
+                self.record_success(index, iteration.get_report())
 
             except Exception as e:
                 traceback2.print_exc(file=sys.stdout)
                 log.error(str(e))
-                self.config_df.loc[index, Keys.STATUS] = Status.SUCCESS
-                row["message"] = str(e)
+                self.record_failure(index, str(e))
+
             finally:
-                self.config_df.loc[index, "status_date"] = datetime.now().strftime(TIME_FORMAT)
                 log.info(f'Finished iteration: {index}')
                 self.config_df.to_csv(self.config_file, index=False)
-
