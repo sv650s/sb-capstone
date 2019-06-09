@@ -51,7 +51,7 @@ class Model(object):
         self.y_train = y_train
         self.x_test = x_test
         self.y_test = y_test
-        self.description = description
+        self.description = f'{description}-{name}'
         self.file = file
         self.parameters = parameters
         self.status = Status.NEW
@@ -82,10 +82,10 @@ class Model(object):
             Keys.TRAIN_FEATURES: train_col,
             Keys.TEST_EXAMPLES: test_row,
             Keys.TEST_FEATURES: test_col,
+            Keys.PARAMETERS: parameters
         }
         self.report.add_dict(rdict)
         # do this here so ti doesn't get flattened
-        self.report.record(Keys.PARAMETERS, parameters)
 
     def run(self):
         log.info(f'Running model: {str(self)}')
@@ -98,7 +98,7 @@ class Model(object):
 
             # TODO: add logic for CV's
 
-            model_filename = f'models/{self.description}-{self.name}.jbl'
+            model_filename = f'models/{datetime.now().strftime(DATE_FORMAT)}-{self.description}.jbl'
             self.report.record(Keys.MODEL_FILE, model_filename)
             self.report.start_timer(Keys.MODEL_SAVE_TIME_MIN)
             with open(model_filename, 'wb') as file:
@@ -159,7 +159,7 @@ class Model(object):
         if len(self.y_predict) > 0 and len(self.y_test) > 0:
             log.debug(f'getting classificaiton report for {self}')
             c_report = classification_report(self.y_test, self.y_predict, output_dict=True)
-            self.report.add_dict(c_report)
+            self.report.add_and_flatten_dict(c_report)
 
     def get_confusion_matrix(self):
         """

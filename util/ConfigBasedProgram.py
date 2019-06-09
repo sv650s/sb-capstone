@@ -131,8 +131,9 @@ class ConfigBasedProgram(object):
 
     def record_success(self, index, report):
         self.report_df = self.report_df.append(report, ignore_index=True)
-        self.report_df[Keys.STATUS] = Status.SUCCESS
-        self.report_df[Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+        self.report_df.loc[index, Keys.STATUS] = Status.SUCCESS
+        self.report_df.loc[index, Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+        self.report_df.loc[index, Keys.CONFIG_FILE] = self.config_file
         self.report_df.to_csv(self.report_file, index=False)
 
         self.config_df.loc[index, Keys.STATUS] = Status.SUCCESS
