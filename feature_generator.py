@@ -12,16 +12,6 @@ import numpy as np
 from datetime import datetime
 from util.ConfigBasedProgram import ConfigBasedProgram, ProgramIteration
 
-# LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(message)s'
-#
-# # KEEP_COLUMNS = ["product_title", "helpful_votes", "review_headline", "review_body", "star_rating"]
-# # FEATURE_COLUMNS = ["review_headline", "review_body"]
-# # FEATURE_COLUMNS = ["review_body"]
-#
-# # csv that has all the input
-# # PARAM_INFILE = "amazon_review_feature_generation_input.csv"
-# TRUE_NAMES = ["yes", "Yes", "True", "true"]
-
 log = logging.getLogger(__name__)
 OUTFILE = "outfile"
 
@@ -35,7 +25,6 @@ class GenerateWord2Vec(object):
 
 class GenerateFeatures(ProgramIteration):
 
-
     def execute(self):
         log.info("Execute")
 
@@ -44,7 +33,6 @@ class GenerateFeatures(ProgramIteration):
         y_columns = self.get_config_list("y")
 
         infile = self.get_infile()
-
 
         df = pd.read_csv(infile)
 
@@ -78,14 +66,7 @@ class GenerateFeatures(ProgramIteration):
             self.report.record(OUTFILE, outfile)
 
 
-
-
-
-
 if __name__ == "__main__":
     prog = ConfigBasedProgram("Takes pre-processed files and generate feature files", GenerateFeatures)
     prog.add_argument("-o", "--outdir", help="output director", default="dataset/feature_files")
     prog.main()
-
-
-

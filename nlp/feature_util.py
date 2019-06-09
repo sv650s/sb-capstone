@@ -147,6 +147,8 @@ def get_feature_df(model, df: pd.DataFrame) -> pd.DataFrame:
         # turn this into dictionary so we can add it as row to DF
         feature_dict = dict(enumerate(feature_vector))
         f_df = f_df.append(feature_dict, ignore_index=True)
+        if index % 10000 == 0:
+            log.info(f"Generating vector for index: {index}")
     return f_df
 
 
@@ -173,6 +175,7 @@ def generate_word2vec_file(x: pd.DataFrame,
     :param iterations:
     :return:
     """
+    log.info("generating word2vec")
     log.debug(f'{x.head()}')
     wpt = WordPunctTokenizer()
 
@@ -223,6 +226,7 @@ def generate_fasttext_file(x: pd.DataFrame,
     :param iterations:
     :return:
     """
+    log.info("generating fasttext")
     log.debug(f'{x.head()}')
     wpt = WordPunctTokenizer()
 

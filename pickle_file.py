@@ -26,7 +26,7 @@ class Pickler(ProgramIteration):
     def execute(self):
         log.debug(f'Executing {self.index}')
 
-        infile = f'{self.get_config("data_dir")}/{self.get_config("data_file")}'
+        infile = self.get_infile()
         outdir, out_basename = fu.get_dir_basename(infile)
         outfile = f'{outdir}/{out_basename}.pkl'
         log.debug(f'infile {infile}')
@@ -49,7 +49,6 @@ class Pickler(ProgramIteration):
             self.report.end_timer(PICKLE_READ_TIME_MIN)
             log.debug(new_df.head())
 
-        self.record_success()
 
 
 if __name__ == "__main__":
