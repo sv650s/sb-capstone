@@ -8,7 +8,7 @@ import pickle
 import logging
 import util.file_util as fu
 from util.program_util import Keys
-from util.ConfigBasedProgram import ProgramIteration, ConfigBasedProgram
+from util.ConfigBasedProgram import TimedProgram, ConfigBasedProgram
 
 log = logging.getLogger(__name__)
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -21,7 +21,7 @@ PICKLE_WRITE_TIME_MIN = "pickle_write_time_min"
 PICKLE_READ_TIME_MIN = "pickle_read_time_min"
 
 
-class Pickler(ProgramIteration):
+class Pickler(TimedProgram):
 
     def execute(self):
         log.debug(f'Executing {self.index}')

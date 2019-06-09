@@ -39,7 +39,7 @@ class TimedReport(Timer):
         return report
 
 
-class ProgramIteration(object):
+class TimedProgram(object):
     """
     Abstract program iteration.  This represents what to do with each row of configuration file
     """
@@ -89,6 +89,8 @@ class ProgramIteration(object):
     def get_report(self):
         return self.report.get_report()
 
+    def record(self, key: str, value: str):
+        self.report.record(key, value)
 
     def get_infile(self):
         """
@@ -104,7 +106,7 @@ class ProgramIteration(object):
 
 class ConfigBasedProgram(object):
 
-    def __init__(self, description: str, program: ProgramIteration):
+    def __init__(self, description: str, program: TimedProgram):
         """
         :param description:  description of program
         :param program:  class of iteration object
