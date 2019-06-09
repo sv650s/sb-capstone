@@ -1,0 +1,9 @@
+data_dir,data_file,status_date
+dataset/feature_files,review_body-bow-df_default-ngram12-992-17214-lda20.csv,2019-06-06 21:20:33
+dataset/feature_files,review_body-tfidf-df_default-ngram12-992-17214-lda20.csv,2019-06-06 21:20:59
+dataset/feature_files,review_body-tfidf-df_default-ngram12-50000-10020-lda20.csv,2019-06-06 21:29:42
+dataset/feature_files,review_body-bow-df_default-ngram12-111909-10020-lda20.csv,2019-06-06 21:44:13
+dataset/feature_files,review_body-tfidf-df_default-ngram12-111909-10020-lda20.csv,2019-06-06 22:04:17
+dataset/feature_files,review_body-tfidf-df_default-ngram12-111909-20020-lda20.csv,2019-06-06 22:51:06
+dataset/feature_files,review_body-bow-df_default-ngram12-111909-20020-lda20.csv,
+dataset/feature_files,review_body-bow-df_default-ngram12-111909-30020-lda20.csv,

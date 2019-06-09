@@ -39,6 +39,7 @@ class Keys(object):
     TEST_Y = "Y_test"
     TIMER = "timer"
     CM = "confusion_matrix"
+    CONFIG_FILE = "config_file"
 
 
 class Status(object):
@@ -127,6 +128,9 @@ class TimedReport(Timer):
             raise Exception("report is not a TimedReport object")
 
     def add_dict(self, rdict: dict):
+        self.kv_dict.update(rdict)
+
+    def add_and_flatten_dict(self, rdict: dict):
         self.kv_dict = du.add_dict_to_dict(self.kv_dict, rdict)
 
     def get_report_dict(self):

@@ -1,0 +1,3 @@
+data_dir,data_file,class_column,dtype,drop_columns,knn,rn,lr,lrb,rf,gb,lGBM,xgb,cb,smote,status,status_date
+dataset/feature_files,review_body-bow-df_default-ngram12-50000-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,Yes,No,No,Yes,No,Yes,Yes,success,6/3/19 22:57
+dataset/feature_files,review_body-tfidf-df_default-ngram12-50000-10020-lda20.csv,star_rating,,"helpful_votes, total_votes",No,No,No,Yes,No,No,Yes,No,Yes,Yes,success,6/4/19 2:06
