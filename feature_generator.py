@@ -2,15 +2,12 @@
 #
 # Generate feature files based on a config
 #
-import argparse
 import pandas as pd
+# leave this in - will be called by globals
 from nlp.feature_util import generate_bow_file, generate_tfidf_file, generate_word2vec_file, generate_fasttext_file
 import logging
-import traceback2
 from pprint import pformat
-import numpy as np
-from datetime import datetime
-from util.ConfigBasedProgram import ConfigBasedProgram, ProgramIteration
+from util.ConfigBasedProgram import ConfigBasedProgram, TimedProgram
 
 log = logging.getLogger(__name__)
 OUTFILE = "outfile"
@@ -23,7 +20,7 @@ class GenerateWord2Vec(object):
         self.config_df = config_df
 
 
-class GenerateFeatures(ProgramIteration):
+class GenerateFeatures(TimedProgram):
 
     def execute(self):
         log.info("Execute")
@@ -63,7 +60,7 @@ class GenerateFeatures(ProgramIteration):
 
             # call function specified by the fn_name column
             outfile = globals()[function](**args_dict)
-            self.report.record(OUTFILE, outfile)
+            self.record(OUTFILE, outfile)
 
 
 if __name__ == "__main__":
