@@ -27,6 +27,7 @@ class Model(object):
                  y_train: pd.DataFrame,
                  x_test: pd.DataFrame,
                  y_test: pd.DataFrame,
+                 class_column: str,
                  name: str = None,
                  description: str = None,
                  # report: TimedReport = None,
@@ -51,7 +52,7 @@ class Model(object):
         self.y_train = y_train
         self.x_test = x_test
         self.y_test = y_test
-        self.description = f'{description}-{name}'
+        self.class_column = class_column
         self.file = file
         self.parameters = parameters
         self.status = Status.NEW
@@ -70,6 +71,7 @@ class Model(object):
             self.name = name
         else:
             self.name = type(model).__name__
+        self.description = f'{description}-{name}-{class_column}'
 
         train_row, train_col = self.x_train.shape
         test_row, test_col = self.x_test.shape

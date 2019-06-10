@@ -3,5 +3,5 @@ dataset/feature_files,review_body-fasttext-111909-400-nolda.csv,star_rating,,"he
 dataset/feature_files,review_body-fasttext-111909-400-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,success,2019-06-09 16:12:49
 dataset/feature_files,review_body-fasttext-111909-400-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,success,2019-06-09 16:13:45
 dataset/feature_files,review_body-word2vec-111909-400-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,No,success,2019-06-09 16:15:00
-dataset/feature_files,review_body-word2vec-111909-400-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,,
-dataset/feature_files,review_body-word2vec-111909-400-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,,
+dataset/feature_files,review_body-word2vec-111909-400-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,success,2019-06-09 16:20:43
+dataset/feature_files,review_body-word2vec-111909-400-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,success,2019-06-09 16:21:40
