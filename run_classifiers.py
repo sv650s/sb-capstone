@@ -54,7 +54,7 @@ class RunClassifiers(TimedProgram):
         log.info(f'shape of x: {x.shape}')
         log.info(f'shape of y: {y.shape}')
 
-        return train_test_split(x, y, random_state=1)
+        return train_test_split(x, y, random_state=1, stratify=y)
 
     def execute(self):
 
@@ -177,6 +177,7 @@ class RunClassifiers(TimedProgram):
                       X_test,
                       Y_test,
                       name=model_name,
+                      class_column=class_column,
                       description=f'{description}-{sm_desc}',
                       file=data_file,
                       parameters=parameters
