@@ -1,0 +1,7 @@
+file,file_load_time_min,outfile,pickle_read_time_min,pickle_write_time_min,status,total_time_min
+dataset/feature_files/review_body-bow-df_default-ngram12-992-17214-lda20.csv,0.32,dataset/feature_files/review_body-bow-df_default-ngram12-992-17214-lda20.pkl,0.0,0.03,success,1.02
+dataset/feature_files/review_body-tfidf-df_default-ngram12-992-17214-lda20.csv,0.49,dataset/feature_files/review_body-tfidf-df_default-ngram12-992-17214-lda20.pkl,0.01,0.01,success,1.5
+dataset/feature_files/review_body-tfidf-df_default-ngram12-50000-10020-lda20.csv,9.46,dataset/feature_files/review_body-tfidf-df_default-ngram12-50000-10020-lda20.pkl,0.37,0.6,success,29.950000000000006
+dataset/feature_files/review_body-bow-df_default-ngram12-111909-10020-lda20.csv,16.76,dataset/feature_files/review_body-bow-df_default-ngram12-111909-10020-lda20.pkl,,,failed,16.76
+dataset/feature_files/review_body-tfidf-df_default-ngram12-111909-10020-lda20.csv,23.55,dataset/feature_files/review_body-tfidf-df_default-ngram12-111909-10020-lda20.pkl,,,failed,23.55
+dataset/feature_files/review_body-tfidf-df_default-ngram12-111909-20020-lda20.csv,,dataset/feature_files/review_body-tfidf-df_default-ngram12-111909-20020-lda20.pkl,,,,

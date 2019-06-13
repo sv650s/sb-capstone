@@ -1,0 +1,2 @@
+file,model_save_time_min,outfile,tokenize_time_min,total_time_min,vectorize_time_min,status,status_date,config_file
+amazon_reviews_us_Wireless_v1_00-csv-100k-preprocessed.csv,0.06,dataset/feature_files/review_body-word2vec-111909-4000-nolda.csv,0.04,121.24000000000001,60.53,success,2019-06-12 05:57:48,config/2019-06-09-feature_generator-mini.csv
