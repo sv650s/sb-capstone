@@ -58,7 +58,7 @@ def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, in
 
     timer.start_timer(MODEL_SAVE_TIME_MIN)
     _, infile_basename = fu.get_dir_basename(infile)
-    joblib_filename = f"models/{datetime.now().strftime(DATE_FORMAT)}-{infile_basename}-{model_name}-{sm_desc}-best.pkl"
+    joblib_filename = f"models/{datetime.now().strftime(DATE_FORMAT)}-{infile_basename}-{model_name}-{sm_desc}-best.jbl"
     with open(joblib_filename, 'wb') as file:
         joblib.dump(model, file)
     report["model_file"] = joblib_filename
@@ -68,14 +68,12 @@ def run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, in
     y_predict = model.predict(x_test)
     timer.end_timer(Keys.PREDICT_TIME_MIN)
 
+    report[Keys.CM] = confusion_matrix(y_test, y_predict)
+
     c_report = classification_report(y_test, y_predict, output_dict=True)
     report = add_dict_to_dict(report, c_report)
     report.update(timer.get_report_dict())
 
-    cm_filename = f"models/{datetime.now().strftime(DATE_FORMAT)}-{infile_basename}-{model_name}-{sm_desc}-matrix.csv"
-    cm = confusion_matrix(y_test, y_predict)
-    cm_df = pd.DataFrame(cm, columns=[str(x) for x in range(1, 6)])
-    cm_df.to_csv(cm_filename, index=False)
 
     log.info(f"Finished training {model_name}\n\tparameters: {parameters}")
     return report
@@ -180,10 +178,11 @@ if __name__ == "__main__":
 
         if run_lGBM:
             model_name = "lGBM"
-            # parameters = {"num_leaves": [31, 62, 124],
-            #               "min_data_in_leaf": [20, 40, 80],
-            #               "max_depth": [4, 8, 16]}
-            parameters = {"num_trees": sp_randint(50, 300)}
+            parameters = {"num_trees": sp_randint(50, 300),
+                          "num_leaves": sp_randint(12, 124),
+                          "min_data_in_leaf": sp_randint(20, 80),
+                          "max_depth": sp_randint(4, 16)
+                          }
             trainer = lgb.LGBMClassifier(objective="multiclass",
                                          seed=1)
             report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer,
@@ -193,10 +192,10 @@ if __name__ == "__main__":
 
         if run_cb:
             model_name = "CB"
-            # parameters = {"max_depth": [4, 8, 16],
-            #               "l2_leaf_reg": [1, 10, 100],
-            #               "learning_rate": [0.01, 0.1, 1]}
-            parameters = {"iterations": sp_randint(50, 300)}
+            parameters = {"iterations": sp_randint(50, 300),
+                          "max_depth": sp_randint(4, 16),
+                          "l2_leaf_reg": sp_randint(1, 100)
+                          }
             trainer = CatBoostClassifier(random_seed=1, loss_function='MultiClass', objective='MultiClass')
             report = run_cv(trainer=trainer, model_name=model_name, parameters=parameters, x_train=x_train,
                             y_train=y_train, x_test=x_test, y_test=y_test, infile=infile, report=report,
@@ -206,14 +205,14 @@ if __name__ == "__main__":
 
         if run_lrb:
             model_name = "LRB100"
-            parameters = {'C': [1, 10, 100]}
+            parameters = {'C': sp_uniform(0.01, 10) }
             trainer = LogisticRegression(random_state=0, solver='lbfgs',
                                          multi_class='auto',
                                          class_weight='balanced',
                                          max_iter=args.lr_iter, n_jobs=args.n_jobs,
                                          verbose=1)
             report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer,
-                            n_iter=int(args.n_iter))
+                            n_iter=int(args.n_iter), use_random=True)
             report_df = report_df.append(report, ignore_index=True)
             report_df.to_csv(reportfile, index=False)
 

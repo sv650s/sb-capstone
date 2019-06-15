@@ -32,7 +32,7 @@ def write_to_file(data: pd.DataFrame,
         outfile = f'dataset/feature_files/{feature_column}-{description}-{examples}-{features}-nolda.csv'
     log.info(f'writing file: {outfile}')
     # TODO: move this to feature generator later
-    y["helpful_product"] = y["star_rating"].apply(lambda x: "Yes" if x >= 3 else "No")
+    y["helpful_product"] = y["star_rating"].apply(lambda x: 1 if x >= 3 else 0)
     data = data.join(y)
     data.to_csv(outfile, doublequote=True, index=False)
     return outfile

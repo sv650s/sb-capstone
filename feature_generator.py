@@ -50,6 +50,12 @@ class GenerateFeatures(TimedProgram):
             del args_dict["y"]
             del args_dict["data_dir"]
             del args_dict["data_file"]
+            if "status" in args_dict:
+                del args_dict["status"]
+            if "status_date" in args_dict:
+                del args_dict["status_date"]
+            if "message" in args_dict:
+                del args_dict["message"]
 
             args_dict["feature_column"] = feature_column
             log.info(f'generating features from source file: {infile}')
