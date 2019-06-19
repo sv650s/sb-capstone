@@ -4,22 +4,24 @@ import re
 import pandas as pd
 
 
-
 # common utilities for various notebooks
 
 
-
 # function to print mutltiple histograms
-def plot_score_histograms(df:pd.DataFrame):
-    MODELS = df["model_name"].unique()
+def plot_score_histograms(df: pd.DataFrame):
+
+    if "label" not in df.columns:
+        df["label"] = df.apply(lambda x: f'{x["model_name"]}-{x["description"]}', axis=1)
+
+    models = df["model_name"].unique()
     f1_cols, precision_cols, recall_cols = get_score_columns(df)
-    for model in MODELS:
+    for model in models:
         model_report = df[df["label"].str.startswith(f'{model}-')]
 
         pos = list(range(len(model_report)))
         width = 0.15
         f, a = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(20, len(model_report) * 1))
-        column_dict = { "F1": f1_cols, "Precision": precision_cols, "Recall": recall_cols }
+        column_dict = {"F1": f1_cols, "Precision": precision_cols, "Recall": recall_cols}
 
         # sort the report in reverse order so we see the models top down
         report_reverse = model_report.sort_values("label", ascending=False)
@@ -33,14 +35,14 @@ def plot_score_histograms(df:pd.DataFrame):
 
             offset = 0
             for col in columns_copy:
-        #         print(f'Plotting {col}')
+                #         print(f'Plotting {col}')
                 a[index].barh([p + offset for p in pos],
-                        report_reverse[col],
-                        width,
-        #                 align="edge",
-        #                 alpha=0.5,
-                        tick_label=report_reverse["label"].tolist(),
-                        orientation="horizontal")
+                              report_reverse[col],
+                              width,
+                              #                 align="edge",
+                              #                 alpha=0.5,
+                              tick_label=report_reverse["label"].tolist(),
+                              orientation="horizontal")
                 offset += width
                 a[index].set_title(title)
                 a[index].set_xlim(0, 1.0)
@@ -48,7 +50,8 @@ def plot_score_histograms(df:pd.DataFrame):
 
 
 def plot_macro_data(df: pd.DataFrame, cv=False):
-    df["label"] = df.apply(lambda x: f'{x["model_name"]}-{x["description"]}', axis=1)
+    if "label" not in df.columns:
+        df["label"] = df.apply(lambda x: f'{x["model_name"]}-{x["description"]}', axis=1)
 
     df = df.sort_values(["label"])
 
