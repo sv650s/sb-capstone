@@ -2,6 +2,7 @@ name: capstone
 channels:
   - defaults
   - conda-forge
+  - anaconda
 dependencies:
   - python=3.7.*
   - autopep8
@@ -29,5 +30,13 @@ dependencies:
   - xgboost
   - catboost
   - traceback2
+  - numpy
+  - scipy
+  - tensorflow
+  - pyyaml
+  - hdf5
+  - h5py
+  - cudnn
+  - pydot
 prefix: /Users/vinceluk/springboard-projects/capstone
 

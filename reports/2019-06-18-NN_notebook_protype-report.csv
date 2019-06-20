@@ -1,0 +1,16 @@
+1_f1-score,1_precision,1_recall,1_support,2_f1-score,2_precision,2_recall,2_support,3_f1-score,3_precision,3_recall,3_support,4_f1-score,4_precision,4_recall,4_support,5_f1-score,5_precision,5_recall,5_support,accuracy,confusion_matrix,description,embedding,file,macro avg_f1-score,macro avg_precision,macro avg_recall,macro avg_support,model_file,model_name,network_history_file,status,test_examples,test_features,train_examples,train_features,weighted avg_f1-score,weighted avg_precision,weighted avg_recall,weighted avg_support,status_date
+0.684015656,0.579598422,0.834322581,3875,0.102233677,0.26984127,0.063063063,1887,0.254482072,0.350961538,0.199609375,2560,0.324146982,0.414012739,0.266335993,4637,0.833707244,0.774200913,0.903122711,15019,0.66702409,"[[ 3233   106   181    89   266]
+ [ 1005   119   283   189   291]
+ [  630   126   511   634   659]
+ [  317    47   298  1235  2740]
+ [  393    43   183   836 13564]]",DNN_384_348-review_body-word2vec5-111909-512-nolda-nosmote-star_rating,word2vec5,review_body-word2vec5-111909-512-nolda.csv,0.439717126,0.477722977,0.453290745,27978,models/2019-06-19-review_body-word2vec5-111909-512-nolda-nosmote-DNN_384_384-star_rating.h5,DNN_384_384,models/2019-06-19-DNN_384_348-review_body-word2vec5-111909-512-nolda-nosmote-star_rating-history.pkl,success,27978,512,83931,512,0.626187303,0.614807938,0.66702409,27978,
+0.686399321,0.582777878,0.83483871,3875,0.061751152,0.236749117,0.035506094,1887,0.281108084,0.335683297,0.241796875,2560,0.310244712,0.43220339,0.241966789,4637,0.833175442,0.769995481,0.90765031,15019,0.667488741,"[[ 3235    63   242    57   278]
+ [ 1017    67   356   147   300]
+ [  631    89   619   543   678]
+ [  280    38   381  1122  2816]
+ [  388    26   246   727 13632]]",DNN_128_128-review_body-word2vec5-111909-512-nolda-nosmote-star_rating,word2vec5,review_body-word2vec5-111909-512-nolda.csv,0.434535742,0.471481833,0.452351755,27978,models/2019-06-19-DNN_128_128-review_body-word2vec5-111909-512-nolda-nosmote-star_rating.h5,DNN_128_182,models/2019-06-19-DNN_128_128-review_body-word2vec5-111909-512-nolda-nosmote-star_rating-history.pkl,success,27978,512,83931,512,0.623633755,0.612375736,0.667488741,27978,6/19/19 16:41
+0.691543992,0.619885434,0.781935484,3875,0.115929942,0.272015656,0.073661897,1887,0.23439958,0.35645933,0.174609375,2560,0.305788423,0.39923558,0.247789519,4637,0.826869061,0.750040657,0.921233105,15019,0.664843806,"[[ 3030   148   176   120   401]
+ [  881   139   261   210   396]
+ [  497   137   447   652   827]
+ [  225    53   223  1149  2987]
+ [  255    34   147   747 13836]]",DNN_340-review_body-word2vec5-111909-512-nolda-nosmote-star_rating,word2vec5,review_body-word2vec5-111909-512-nolda.csv,0.4349062,0.479527331,0.439845876,27978,models/2019-06-19-review_body-word2vec5-111909-512-nolda-nosmote-DNN_340-star_rating.h5,DNN_340,models/2019-06-19-review_body-word2vec5-111909-512-nolda-nosmote-DNN_340-star_rating-history.pkl,success,27978,512,83931,512,0.619602654,0.605618754,0.664843806,27978,6/19/19 17:02

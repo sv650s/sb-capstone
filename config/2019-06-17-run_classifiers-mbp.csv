@@ -1,0 +1,3 @@
+data_dir,data_file,class_column,dtype,drop_columns,model_name,smote,status,status_date,message
+dataset/feature_files,review_body-word2vec5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DNN,Yes,failed,2019-06-17 23:22:45,object of type 'NoneType' has no len()
+dataset/feature_files,review_body-fasttext5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DNN,Yes,failed,2019-06-17 23:23:01,object of type 'NoneType' has no len()

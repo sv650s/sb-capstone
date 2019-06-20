@@ -11,3 +11,29 @@
  [ 190   71  153  160  443]
  [  83   27  114  334 1436]
  [ 107   22   54  153 6776]]",26.05,review_body-tfidf-df_default-ngram12-50000-10020-lda20.csv,3.03,0.4202757989868897,0.48544336589283466,0.4212855906139903,12500.0,models/2019-06-13-review_body-tfidf-df_default-ngram12-50000-10020-lda20-lGBM-nosmote-best.jbl,lGBM,0.0,"{'num_trees': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a23685b00>, 'num_leaves': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a2035e630>, 'min_data_in_leaf': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a34ae0128>, 'max_depth': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a34ae0390>}",0.09,0.0,199.69000000000003,25.74,0.6281962445752655,0.6202143430593954,0.68448,12500.0
+0.624569460390356,0.5884261763115197,0.6654434250764526,1635.0,0.0,0.0,0.0,742.0,0.07878245299910475,0.44,0.043264503441494594,1017.0,0.06566604127579738,0.5072463768115942,0.03510531594784353,1994.0,0.7952068473609131,0.6691635455680399,0.9797525309336333,7112.0,0.6536,<catboost.core.CatBoostClassifier object at 0x1a24683f98>,2.0,"{'iterations': 283, 'l2_leaf_reg': 5, 'max_depth': 14}",0.6702131663402393,"[[1088    0    8    4  535]
+ [ 300    0   23   14  405]
+ [ 211    0   44   36  726]
+ [ 125    0   20   70 1779]
+ [ 125    0    5   14 6968]]",6602.21,review_body-tfidf-df_default-ngram12-50000-10020-lda20.csv,3.03,0.31284496040523424,0.4409672197382307,0.3447131550798848,12500.0,models/2019-06-18-review_body-tfidf-df_default-ngram12-50000-10020-lda20-CB-nosmote-best.jbl,CB,0.01,"{'iterations': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a21ab2320>, 'max_depth': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a240cdd68>, 'l2_leaf_reg': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a244bebe0>}",0.26,0.0,29452.689999999995,935.25,0.551019360573846,0.5744077767769243,0.6536,12500.0
+0.6188905547226388,0.6070588235294118,0.6311926605504588,1635.0,0.2465483234714004,0.19440124416796267,0.33692722371967654,742.0,0.27327586206896554,0.24328472755180353,0.31170108161258603,1017.0,0.3358024691358025,0.2847173761339846,0.4092276830491474,1994.0,0.735811190495304,0.8574368568755847,0.6444038245219348,7112.0,0.55984,"LogisticRegression(C=1.669276796894772, class_weight='balanced', dual=False,
+                   fit_intercept=True, intercept_scaling=1, l1_ratio=None,
+                   max_iter=100, multi_class='auto', n_jobs=-1, penalty='l2',
+                   random_state=0, solver='lbfgs', tol=0.0001, verbose=1,
+                   warm_start=False)",9.0,{'C': 1.669276796894772},0.5766685273762654,"[[1032  313  153   62   75]
+ [ 228  250  140   89   35]
+ [ 118  261  317  243   78]
+ [ 101  176  327  816  574]
+ [ 221  286  366 1656 4583]]",327.55,review_body-tfidf-df_default-ngram12-50000-10020-lda20.csv,3.03,0.44206567997882223,0.43737980565174944,0.46669049469076074,12500.0,models/2019-06-18-review_body-tfidf-df_default-ngram12-50000-10020-lda20-LRB100-nosmote-best.jbl,LRB100,0.0,{'C': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a244be9b0>},0.01,0.0,32695.72999999998,328.22,0.5900340619976658,0.6440019873338979,0.55984,12500.0
+0.6972167556929997,0.6451612903225806,0.7584097859327217,1635.0,0.14257028112449802,0.2795275590551181,0.09568733153638814,742.0,0.223841059602649,0.34279918864097364,0.16617502458210423,1017.0,0.27013542409123303,0.4667487684729064,0.1900702106318957,1994.0,0.8383857169425328,0.7497505266659275,0.9507874015748031,7112.0,0.68968,"LGBMClassifier(boosting_type='gbdt', class_weight=None, colsample_bytree=1.0,
+               importance_type='split', learning_rate=0.1, max_depth=14,
+               min_child_samples=20, min_child_weight=0.001,
+               min_data_in_leaf=55, min_split_gain=0.0, n_estimators=100,
+               n_jobs=-1, num_leaves=23, num_trees=253, objective='multiclass',
+               random_state=None, reg_alpha=0.0, reg_lambda=0.0, seed=1,
+               silent=True, subsample=1.0, subsample_for_bin=200000,
+               subsample_freq=0)",3.0,"{'max_depth': 14, 'min_data_in_leaf': 55, 'num_leaves': 23, 'num_trees': 253}",0.6922936052567146,"[[1240   65   61   35  234]
+ [ 326   71   87   59  199]
+ [ 186   66  169  170  426]
+ [  77   29  111  379 1398]
+ [  93   23   65  169 6762]]",23.3,review_body-bow-df_default-ngram12-50000-10020-lda20.csv,2.12,0.4344298474907825,0.4967974666315012,0.43222595085158255,12500.0,models/2019-06-18-review_body-bow-df_default-ngram12-50000-10020-lda20-lGBM-nosmote-best.jbl,lGBM,0.0,"{'num_trees': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a21ab2400>, 'num_leaves': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a24aa5da0>, 'min_data_in_leaf': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a24aa5f28>, 'max_depth': <scipy.stats._distn_infrastructure.rv_frozen object at 0x1a24aa5dd8>}",0.1,0.0,175.83,23.27,0.637970572504123,0.629903817866179,0.68968,12500.0

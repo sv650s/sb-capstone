@@ -209,7 +209,7 @@ if __name__ == "__main__":
             trainer = LogisticRegression(random_state=0, solver='lbfgs',
                                          multi_class='auto',
                                          class_weight='balanced',
-                                         max_iter=args.lr_iter, n_jobs=args.n_jobs,
+                                         max_iter=args.lr_iter, n_jobs=int(args.n_jobs),
                                          verbose=1)
             report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer,
                             n_iter=int(args.n_iter), use_random=True)

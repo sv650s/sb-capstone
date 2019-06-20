@@ -14,6 +14,7 @@ from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
 from util.ConfigBasedProgram import TimedProgram, ConfigBasedProgram
 from util.program_util import Keys, Status
+from DNN import DNN
 
 # configure logger so we can see output from the classes
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -31,6 +32,7 @@ class RunClassifiers(TimedProgram):
         self.neighbors = int(self.args.neighbors)
         self.radius = int(self.args.radius)
         self.lr_c = int(self.args.lr_c)
+        self.epochs = int(self.args.epochs)
 
     def create_training_data(self, x: pd.DataFrame, class_column: str, drop_columns: str = None):
         """
@@ -171,6 +173,14 @@ class RunClassifiers(TimedProgram):
             parameters = {"n_jobs": self.n_jobs,
                           "radius": self.radius}
 
+        elif model_name == "DNN":
+            classifier = DNN(num_input_features=X_train.shape[1])
+            parameters = {"batch_size": 128,
+                          "epoch": self.epochs,
+                          "verbose": 1}
+
+
+
         model = Model(classifier,
                       X_train,
                       Y_train,
@@ -196,4 +206,5 @@ if __name__ == "__main__":
     program.add_argument("-s", "--smote", help="if yes, will run the data with SMOTE. default False",
                          action='store_true')
     program.add_argument("--lr_c", help="c parameter for LR. default 1.0", default=1.0)
+    program.add_argument("--epochs", help="epoch for deep learning. Default 1", default=1)
     program.main()

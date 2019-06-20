@@ -45,6 +45,17 @@ class TimedProgram(object):
         else:
             return None
 
+    def get_config_int(self, config: str) -> int:
+        """
+        get int config
+        :param config:
+        :return:
+        """
+        if pd.notnull(self.config_df[config]):
+            return int(self.config_df[config])
+        else:
+            return None
+
     def get_config_bool(self, config) -> bool:
         """
         gets a boolean type configuration

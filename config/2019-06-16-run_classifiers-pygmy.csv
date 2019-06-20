@@ -1,0 +1,25 @@
+data_dir,data_file,class_column,dtype,drop_columns,model_name,smote,status,status_date,message
+dataset/feature_files,review_body-word2vec5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,Yes,success,2019-06-16 17:10:32,
+dataset/feature_files,review_body-word2vec5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,Yes,success,2019-06-16 17:18:46,
+dataset/feature_files,review_body-word2vec5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,Yes,success,2019-06-16 17:20:23,
+dataset/feature_files,review_body-fasttext5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,Yes,success,2019-06-16 17:22:43,
+dataset/feature_files,review_body-fasttext5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,Yes,success,2019-06-16 17:31:23,
+dataset/feature_files,review_body-fasttext5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,Yes,success,2019-06-16 17:32:59,
+dataset/feature_files,review_body-word2vec5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,No,success,2019-06-16 17:35:16,
+dataset/feature_files,review_body-word2vec5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,success,2019-06-16 17:43:20,
+dataset/feature_files,review_body-word2vec5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,success,2019-06-16 17:45:00,
+dataset/feature_files,review_body-fasttext5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,No,success,2019-06-16 17:47:21,
+dataset/feature_files,review_body-fasttext5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,success,2019-06-16 17:55:36,
+dataset/feature_files,review_body-fasttext5-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,success,2019-06-16 17:57:10,
+dataset/feature_files,review_body-fasttext30-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,No,success,2019-06-16 17:59:28,
+dataset/feature_files,review_body-fasttext30-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,success,2019-06-16 18:07:41,
+dataset/feature_files,review_body-fasttext30-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,success,2019-06-16 18:09:12,
+dataset/feature_files,review_body-word2vec30-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,No,success,2019-06-16 18:11:33,
+dataset/feature_files,review_body-word2vec30-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,success,2019-06-16 18:19:43,
+dataset/feature_files,review_body-word2vec30-111909-512-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,success,2019-06-16 18:21:15,
+dataset/feature_files,review_body-fasttext30-111909-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,No,success,2019-06-16 18:41:21,[Errno 2] File b'dataset/feature_files/review_body-fasttext30-111909-4000-nolda.csv' does not exist: b'dataset/feature_files/review_body-fasttext30-111909-4000-nolda.csv'
+dataset/feature_files,review_body-fasttext30-111909-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,success,2019-06-16 19:40:57,[Errno 2] File b'dataset/feature_files/review_body-fasttext30-111909-4000-nolda.csv' does not exist: b'dataset/feature_files/review_body-fasttext30-111909-4000-nolda.csv'
+dataset/feature_files,review_body-fasttext30-111909-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,success,2019-06-16 19:54:45,[Errno 2] File b'dataset/feature_files/review_body-fasttext30-111909-4000-nolda.csv' does not exist: b'dataset/feature_files/review_body-fasttext30-111909-4000-nolda.csv'
+dataset/feature_files,review_body-word2vec30-111909-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",lGBM,No,success,2019-06-16 20:14:47,[Errno 2] File b'dataset/feature_files/review_body-word2vec30-111909-4000-nolda.csv' does not exist: b'dataset/feature_files/review_body-word2vec30-111909-4000-nolda.csv'
+dataset/feature_files,review_body-word2vec30-111909-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",CB,No,success,2019-06-16 21:15:04,[Errno 2] File b'dataset/feature_files/review_body-word2vec30-111909-4000-nolda.csv' does not exist: b'dataset/feature_files/review_body-word2vec30-111909-4000-nolda.csv'
+dataset/feature_files,review_body-word2vec30-111909-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB100,No,success,2019-06-16 21:28:55,[Errno 2] File b'dataset/feature_files/review_body-word2vec30-111909-4000-nolda.csv' does not exist: b'dataset/feature_files/review_body-word2vec30-111909-4000-nolda.csv'
