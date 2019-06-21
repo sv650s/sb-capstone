@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD
 from sklearn.preprocessing import OneHotEncoder
 import numpy as np
+from keras.layers import Dense, Activation
 
 """
 From this doc:

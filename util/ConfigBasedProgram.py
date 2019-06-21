@@ -45,6 +45,7 @@ class TimedProgram(object):
         else:
             return None
 
+<<<<<<< HEAD
     def get_config_int(self, config: str) -> int:
         """
         get int config
@@ -56,6 +57,8 @@ class TimedProgram(object):
         else:
             return None
 
+=======
+>>>>>>> 6ab2132fae464409e90008fdfacbfb2783bd3287
     def get_config_bool(self, config) -> bool:
         """
         gets a boolean type configuration

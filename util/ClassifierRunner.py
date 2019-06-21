@@ -8,6 +8,10 @@ from datetime import datetime
 import logging
 import traceback2
 import sys
+<<<<<<< HEAD
+=======
+from util.dict_util import add_dict_to_dict
+>>>>>>> 6ab2132fae464409e90008fdfacbfb2783bd3287
 from util.program_util import Keys, TimedReport, Status, TIME_FORMAT, DATE_FORMAT
 from sklearn.externals import joblib
 
@@ -29,6 +33,10 @@ class Model(object):
                  class_column: str,
                  name: str = None,
                  description: str = None,
+<<<<<<< HEAD
+=======
+                 # report: TimedReport = None,
+>>>>>>> 6ab2132fae464409e90008fdfacbfb2783bd3287
                  file: str = None,
                  parameters: dict = None,
                  ):
@@ -41,6 +49,10 @@ class Model(object):
         :param y_test:
         :param name:
         :param description:
+<<<<<<< HEAD
+=======
+        :param timer:
+>>>>>>> 6ab2132fae464409e90008fdfacbfb2783bd3287
         :param file:
         :param parameters:
         """
@@ -92,11 +104,16 @@ class Model(object):
         try:
 
             self.report.start_timer(Keys.TRAIN_TIME_MIN)
+<<<<<<< HEAD
             self.model = self.model.fit(self.x_train, self.y_train)
+=======
+            model = self.model.fit(self.x_train, self.y_train)
+>>>>>>> 6ab2132fae464409e90008fdfacbfb2783bd3287
             self.report.end_timer(Keys.TRAIN_TIME_MIN)
 
             # TODO: add logic for CV's
 
+<<<<<<< HEAD
             if self.model.__name__ == "DNN":
                 model_filename = f'models/{datetime.now().strftime(DATE_FORMAT)}-{self.description}.h5'
                 self.report.record(Keys.MODEL_FILE, model_filename)
@@ -113,6 +130,17 @@ class Model(object):
 
             self.report.start_timer(Keys.PREDICT_TIME_MIN)
             self.y_predict = self.model.predict(self.x_test)
+=======
+            model_filename = f'models/{datetime.now().strftime(DATE_FORMAT)}-{self.description}.jbl'
+            self.report.record(Keys.MODEL_FILE, model_filename)
+            self.report.start_timer(Keys.MODEL_SAVE_TIME_MIN)
+            with open(model_filename, 'wb') as file:
+                joblib.dump(model, model_filename)
+            self.report.end_timer(Keys.MODEL_SAVE_TIME_MIN)
+
+            self.report.start_timer(Keys.PREDICT_TIME_MIN)
+            self.y_predict = model.predict(self.x_test)
+>>>>>>> 6ab2132fae464409e90008fdfacbfb2783bd3287
             self.report.end_timer(Keys.PREDICT_TIME_MIN)
 
             self.report.record(Keys.STATUS, Status.SUCCESS)
