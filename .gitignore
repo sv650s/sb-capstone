@@ -8,4 +8,5 @@ domino*
 .idea
 *.swp
 .coverage*
+models
 

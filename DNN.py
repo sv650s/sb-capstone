@@ -3,8 +3,14 @@ import logging
 import datetime
 from util.ConfigBasedProgram import TimedProgram, ConfigBasedProgram
 from keras.models import Sequential
-from keras.layers import Dense, Activation
-
+from keras.layers import Dense, Activation, Dropout
+from keras.layers.normalization import BatchNormalization
+from keras.callbacks import EarlyStopping
+from keras.models import load_model
+from sklearn.model_selection import train_test_split
+from keras.optimizers import SGD
+from sklearn.preprocessing import OneHotEncoder
+import numpy as np
 
 """
 From this doc:
@@ -26,32 +32,60 @@ The number of hidden neurons should be less than twice the size of the input lay
 
 """
 
-
-class NNClassifier(TimedProgram):
-
-    def execute(self):
-
-        # hidden_layers = self.get_config("hidden_layers")
-        # activation_fn = self.get_config("activation_fn")
-        # optimizer = self.get_config("optimizer")
-        # loss_fn = self.get_config("loss_fn")
-
-        data_file = self.get_config("data_file")
-        class_column = self.get_config("class_column")
-        drop_columns = self.get_config("drop_columns")
-        dtype = self.get_config("dtype")
+log = logging.getLogger(__name__)
 
 
+class DNN(object):
+
+    def __init__(self,
+                 num_input_features: int,
+                 batch_size=128,
+                 epoch: int = 5,
+                 verbose=1):
+
+        self.batch_size = batch_size
+        self.epoch = epoch
+        self.verbose = verbose
+
+        self.early_stop = EarlyStopping(monitor='val_loss', patience=4, verbose=1)
 
         model = Sequential()
-        model.add(Dense(512, input_shape=()))
-        model.add(Dense(100, input_shape=))
 
+        model.add(Dense(128, input_shape=(num_input_features,), kernel_initializer='glorot_uniform'))
+        model.add(BatchNormalization())
+        model.add(Activation('relu'))
+        model.add(Dropout(0.2))
 
+        model.add(Dense(128, kernel_initializer='glorot_uniform'))
+        model.add(BatchNormalization())
+        model.add(Activation('relu'))
+        model.add(Dropout(0.2))
 
+        model.add(Dense(5, activation='relu'))
+        model.add(Activation('softmax'))
+        model.compile(optimizer=SGD(), loss='categorical_crossentropy', metrics=['accuracy'])
 
+        self.model = model
+        # use for fitting later
+        self.network_history = None
 
+    def save(self, filename):
+        self.model.save(filepath=filename, overwrite=True, include_optimizer=True)
 
-if __name__ == "__main__":
-    prog = ConfigBasedProgram("Use NN to classify reviews", TimedProgram)
-    prog.main()
+    def load(self, filename):
+        self.model = load_model(filename)
+
+    def predict(self, x_test):
+        return self.model.predict(x_test)
+
+    def fit(self, x_train, y_train):
+        y_train = OneHotEncoder().fit_transform(y_train.values.reshape(len(y_train), 1)).toarray()
+
+        x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, random_state=1)
+
+        self.network_history = self.model.fit(x_train, y_train,
+                                              batch_size=self.batch_size,
+                                              epochs=self.epoch,
+                                              verbose=self.verbose,
+                                              validation_data=(x_val, y_val),
+                                              callbacks=[self.early_stop])
