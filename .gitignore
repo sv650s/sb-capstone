@@ -9,4 +9,5 @@ domino*
 *.swp
 .coverage*
 models
+logs
 
