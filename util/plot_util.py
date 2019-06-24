@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import pandas as pd
+from keras.models import load_model
 
 
 # common utilities for various notebooks
@@ -9,7 +10,6 @@ import pandas as pd
 
 # function to print mutltiple histograms
 def plot_score_histograms(df: pd.DataFrame):
-
     if "label" not in df.columns:
         df["label"] = df.apply(lambda x: f'{x["model_name"]}-{x["description"]}', axis=1)
 
@@ -103,3 +103,25 @@ def get_score_columns(df: pd.DataFrame) -> (list, list, list):
     #     print(CLASS_RECALL_COLS)
 
     return CLASS_F1_COLS, CLASS_PRECISION_COLS, CLASS_RECALL_COLS
+
+
+def display_confusion_matrix(row: pd.Series):
+    """
+    Display confusion matrix 
+    :param df: row in report that represents one test run
+    :return: 
+    """
+    matrix = row.confusion_matrix.iloc[0]
+    matrix = matrix.replace('\\n', '\n')
+    print(matrix)
+
+
+def display_model_summary(row: pd.Series):
+    """
+    Loads the model file and print summary of the model
+    :param row: row in a report df
+    :return:
+    """
+    print(f"\n\n{row.description}\n")
+    model = load_model(row.model_file)
+    print(model.summary())

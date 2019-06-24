@@ -1,14 +1,13 @@
 import csv
 import os
 import logging
-from .file_samplers import Sampler
 import re
 
 
 log = logging.getLogger(__name__)
 
 
-def convert_tsv_to_csv(infile: str, outfile: str, sampler:Sampler = None):
+def convert_tsv_to_csv(infile: str, outfile: str, sampler = None):
     """
     Read a tsv file line by line then covert it into a readable csv file
     :param infile: input TSV file
