@@ -3,6 +3,7 @@ import seaborn as sns
 import re
 import pandas as pd
 from keras.models import load_model
+import numpy as np
 
 
 # common utilities for various notebooks
@@ -125,3 +126,60 @@ def display_model_summary(row: pd.Series):
     print(f"\n\n{row.description}\n")
     model = load_model(row.model_file)
     print(model.summary())
+
+
+def plot_roc_auc(model_name, roc_auc, fpr, tpr):
+    for i in np.arange(0, len(fpr.keys()) - 2):
+        plt.plot(fpr[i], tpr[i], label=f'Rating {i + 1}')
+    plt.plot(fpr["micro"], tpr["micro"], label="Micro Average ROC",
+             linestyle=":", linewidth=4, color='pink')
+    plt.plot(fpr["macro"], tpr["macro"], label="Macro Average ROC",
+             linestyle=":", linewidth=4, color='black')
+    plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
+
+    space = 0
+    for i in np.arange(0, len(fpr.keys()) - 2):
+        plt.text(x=0, y=-0.25 + space,
+                 s=f'Rating {i + 1} AUC: {roc_auc[f"auc_{i + 1}"]}',
+                 withdash=True)
+        space -= 0.05
+    plt.text(x=0, y=-0.25 + space,
+             s=f'Micro AUC: {roc_auc["auc_micro"]}',
+             withdash=True)
+    space -= 0.05
+    plt.text(x=0, y=-0.25 + space,
+             s=f'Macro AUC: {roc_auc["auc_macro"]}',
+             withdash=True)
+
+    plt.legend(loc='lower right')
+    plt.xlabel('FPR')
+    plt.ylabel('TPR')
+    plt.title(f'{model_name} ROC AUC')
+
+
+def plot_network_history(network_history):
+    """
+    Plots 2 graphs from network history
+    1. epochs vs loss
+    2. epochs vs accuracy
+    :param network_history:
+    :return:
+    """
+    fig = plt.figure(figsize=(10,5))
+    gs = fig.add_gridspec(1, 2)
+
+    ax1 = fig.add_subplot(gs[0, 0])
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.plot(network_history.history['loss'])
+    plt.plot(network_history.history['val_loss'])
+    plt.legend(['Training', 'Validation'], loc='lower left')
+
+    ax1 = fig.add_subplot(gs[0, 1])
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.plot(network_history.history['acc'])
+    plt.plot(network_history.history['val_acc'])
+    plt.legend(['Training', 'Validation'], loc='upper left')
+    plt.show()
+

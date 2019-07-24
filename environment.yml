@@ -9,6 +9,7 @@ dependencies:
   - pandas
   - unittest2
   - jupyter
+  - jupyterlab
   - pandas-datareader
   - matplotlib
   - seaborn

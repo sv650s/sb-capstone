@@ -19,3 +19,8 @@
  [  502    83   505   594   876]
  [  226    28   247  1045  3091]
  [  267    21   149   601 13981]]",DNN_340-nobatch-review_body-word2vec5-111909-512-nolda-nosmote-star_rating,word2vec5,,review_body-word2vec5-111909-512-nolda.csv,,0.429706028,0.483293826,0.438226163,27978,,models/DNN_340-nobatch-review_body-word2vec5-111909-512-nolda-nosmote-star_rating.h5,DNN_340,,models/DNN_340-nobatch-review_body-word2vec5-111909-512-nolda-nosmote-star_rating-history.pkl,na,,,,success,6/23/19 14:13,27978,512,,,83931,512,,0.617366752,0.60567962,0.66777468,27978
+0.69133377,0.599016455,0.817290323,3875,0.0616659,0.234265734,0.035506094,1887,0.261082537,0.34996717,0.208203125,2560,0.311280862,0.423533779,0.246064266,4637,0.831993254,0.759511766,0.919768293,15019,0.669168632,,"[[ 3167    87   223    77   321]
+ [  980    67   310   185   345]
+ [  569    81   533   599   778]
+ [  261    27   278  1141  2930]
+ [  310    24   179   692 13814]]",DNN_384_384-nobatch-review_body-word2vec5-111909-512-nolda-nosmote-star_rating,word2vec5,,review_body-word2vec5-111909-512-nolda.csv,,0.431471265,0.473258981,0.44536642,27978,,models/DNN_384_384-nobatch-review_body-word2vec5-111909-512-nolda-nosmote-star_rating.h5,DNN_384_384,,models/DNN_384_384-nobatch-review_body-word2vec5-111909-512-nolda-nosmote-star_rating-history.pkl,na,,,,success,6/23/19 14:07,27978,512,,,83931,512,,0.6220162,0.608699603,0.669168632,27978
