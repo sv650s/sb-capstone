@@ -215,24 +215,24 @@ class ModelWrapper(object):
 
     def save(self, save_dir, append_report=False):
         description = self._get_description()
-        log.info(f"description: {description}")
+        print(f"description: {description}")
 
         self.model_file = f"{save_dir}/models/{description}-model.h5"
         self.network_history_file = f'{save_dir}/models/{description}-history.pkl'
         self.report_file = f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_protype-report.csv"
         self.tokenizer_file = f'{save_dir}/models/dl-tokenizer.pkl'
 
-        log.info(f"Saving model file: {self.model_file}")
+        print(f"Saving model file: {self.model_file}")
         self.model.save(self.model_file)
 
-        log.info(f"Saving network history file: {self.network_history_file}")
+        print(f"Saving network history file: {self.network_history_file}")
         pickle.dump(self.network_history, open(self.network_history_file, 'wb'))
 
         if self.tokenizer:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
             pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
 
-        log.info(f"Saving report file: {self.report_file}")
+        print(f"Saving report file: {self.report_file}")
         report = self.get_report()
         report.save(self.report_file, append=append_report)
 
