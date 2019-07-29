@@ -9,10 +9,17 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 import util.dict_util as du
 import util.file_util as fu
+import json
+import logging
+import os
+from datetime import datetime
+import pickle
 
 
 DATE_FORMAT = '%Y-%m-%d'
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+log = logging.getLogger()
 
 
 
@@ -46,29 +53,33 @@ def calculate_roc_auc(y_test: np.ndarray, y_score: pd.DataFrame):
     tpr = {}
     roc_auc = {}
     for i in np.arange(0, 5):
-        fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_score[i].to_list())
-        roc_auc[f'auc_{i + 1}'] = auc(fpr[i], tpr[i])
+        fpr_ndarray, tpr_ndarray, _ = roc_curve(y_test[:, i], y_score[i].to_list())
+        fpr[str(i)] = fpr_ndarray.tolist()
+        tpr[str(i)] = tpr_ndarray.tolist()
+        roc_auc[f'auc_{i + 1}'] = auc(fpr[str(i)], tpr[str(i)]).tolist()
 
     # Compute micro-average ROC curve and ROC area
-    fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.values.ravel())
-    roc_auc["auc_micro"] = auc(fpr["micro"], tpr["micro"])
+    fpr_ndarray, tpr_ndarray, _ = roc_curve(y_test.ravel(), y_score.values.ravel())
+    fpr["micro"] = fpr_ndarray.tolist()
+    tpr["micro"] = tpr_ndarray.tolist()
+    roc_auc["auc_micro"] = auc(fpr["micro"], tpr["micro"]).tolist()
 
     # Compute macro-average ROC curve and ROC area
 
     # First aggregate all false positive rates
-    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+    all_fpr = np.unique(np.concatenate([fpr[str(i)] for i in range(n_classes)]))
 
     # Then interpolate all ROC curves at this points
     mean_tpr = np.zeros_like(all_fpr)
     for i in range(n_classes):
-        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+        mean_tpr += np.interp(all_fpr, fpr[str(i)], tpr[str(i)])
 
     # Finally aveage it and compute AUC
     mean_tpr /= n_classes
 
-    fpr["macro"] = all_fpr
-    tpr["macro"] = mean_tpr
-    roc_auc["auc_macro"] = auc(fpr["macro"], tpr["macro"])
+    fpr["macro"] = all_fpr.tolist()
+    tpr["macro"] = mean_tpr.tolist()
+    roc_auc["auc_macro"] = auc(fpr["macro"], tpr["macro"]).tolist()
 
     return roc_auc, fpr, tpr
 
@@ -93,6 +104,8 @@ def unencode(input):
 def preprocess_file(data_df, feature_column, label_column, keep_percentile):
     """
     Preprocessing data file and create the right inputs for Keras models
+        Generally using this for more advanced models like GRU, LSTM, CNN as we are embedding as part of this
+
         Features:
         * tokenize
         * pad features into sequence
@@ -140,16 +153,34 @@ def preprocess_file(data_df, feature_column, label_column, keep_percentile):
     return X_train, X_test, y_train, y_test, t, max_sequence_length
 
 
-class ModelEvaluator(object):
+class ModelWrapper(object):
 
-    def __init__(self, name, model, network_history):
+    def __init__(self, model, name, label_name, data_file, embedding, tokenizer=None, description=None):
         self.name = name
         self.model = model
-        self.network_history = network_history
+        self.label_name = label_name
+        self.data_file = data_file
+        self.embedding = embedding
+        self.tokenizer = tokenizer
 
-    def evaluate(self, X_test, y_test):
+    def fit(self, X_train, y_train, batch_size, epochs, validation_split=0.2, verbose=1, callbacks=None):
+        self.network_history = self.model.fit(X_train,
+                                              y_train,
+                                              batch_size=batch_size,
+                                              epochs=epochs,
+                                              validation_split=validation_split,
+                                              callbacks=callbacks,
+                                              verbose=verbose)
+        self.X_train = X_train
+        self.y_train = y_train
+        return self.network_history
+
+    def evaluate(self, X_test, y_test, verbose=1):
+        self.X_test = X_test
+        self.y_test = y_test
+
         print("Running model.evaluate...")
-        self.scores = self.model.evaluate(X_test, y_test, verbose=1)
+        self.scores = self.model.evaluate(X_test, y_test, verbose=verbose)
 
         print("Running model.predict...")
         # this is a 2D array with each column as probabilyt of that class
@@ -158,7 +189,7 @@ class ModelEvaluator(object):
         print("Unencode predictions...")
         # 1D array with class index as each value
         y_predict_unencoded = unencode(self.y_predict)
-        y_test_unencoded = unencode(y_test)
+        y_test_unencoded = unencode(self.y_test)
 
 
         print("Generating confusion matrix...")
@@ -171,5 +202,114 @@ class ModelEvaluator(object):
         self.classification_report = classification_report(y_test_unencoded, y_predict_unencoded)
         # classification report dictioonary
         self.crd = classification_report(y_test_unencoded, y_predict_unencoded, output_dict=True)
+
+    def _get_description(self):
+        directory, inbasename = fu.get_dir_basename(self.data_file)
+        if self.X_test is not None:
+            # self.X_test might not be set yet
+            description = f"{inbasename}-{self.name}-{self.X_test.shape[1]}-{self.label_name}"
+        else:
+            description = self.name
+        return description
+
+
+    def save(self, save_dir, append_report=False):
+        description = self._get_description()
+        log.info(f"description: {description}")
+
+        self.model_file = f"{save_dir}/models/{description}-model.h5"
+        self.network_history_file = f'{save_dir}/models/{description}-history.pkl'
+        self.report_file = f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_protype-report.csv"
+        self.tokenizer_file = f'{save_dir}/models/dl-tokenizer.pkl'
+
+        log.info(f"Saving model file: {self.model_file}")
+        self.model.save(self.model_file)
+
+        log.info(f"Saving network history file: {self.network_history_file}")
+        pickle.dump(self.network_history, open(self.network_history_file, 'wb'))
+
+        if self.tokenizer:
+            log.info(f"Saving tokenizer file: {self.tokenizer_file}")
+            pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
+
+        log.info(f"Saving report file: {self.report_file}")
+        report = self.get_report()
+        report.save(self.report_file, append=append_report)
+
+    def get_report(self):
+        report = ModelReport(self.name, self._get_description())
+        report.add("classification_report", self.crd)
+        report.add("roc_auc", self.roc_auc)
+        report.add("loss", self.scores[0])
+        report.add("accuracy", self.scores[1])
+        report.add("tpr", self.tpr)
+        report.add("fpr", self.fpr)
+        report.add("confusion_matrix", self.confusion_matrix)
+        report.add("file", self.data_file)
+        report.add("network_history_file", self.network_history)
+        report.add("tokenizer_file", self.tokenizer)
+        if self.X_train is not None:
+            report.add("max_sequence_length", self.X_train.shape[1])
+        report.add("embedding", self.embedding)
+        report.add("model_file", self.model_file)
+        report.add("test_examples", self.X_test.shape[0])
+        report.add("test_features", self.X_test.shape[1])
+        report.add("train_examples", self.X_train.shape[0])
+        report.add("train_features", self.X_train.shape[1])
+        report.add("status", "success")
+        report.add("status_date", datetime.now().strftime(TIME_FORMAT))
+
+        return report
+
+
+
+
+class ModelReport(object):
+    """
+    dict wrapper that represents a report from model execution
+    """
+
+    # these columns will be json objects
+    json_columns = ["classification_report", "fpr", "tpr", "confusion_matrix"]
+
+    def __init__(self, model_name, description=None):
+        self.report = {}
+        self.report["model_name"] = model_name
+        self.report["description"] = description
+
+    def add(self, key, value):
+        """
+        add value to report using key
+        :param key:
+        :param value:
+        :return:
+        """
+        log.debug(f"key: {key} value: {value}")
+        log.debug(f"key type: {type(key)} value type: {type(value)}")
+        # if it's a list then we serialize to json string format so we can load it back later
+        if isinstance(value, list) or isinstance(value, dict):
+            self.report[key] = json.dumps(value)
+        else:
+            self.report[key] = value
+
+    def to_df(self):
+        df = pd.DataFrame()
+        return df.append(self.report, ignore_index=True)
+
+    def save(self, report_file, append=False):
+        # check to see if report file exisits, if so load it and append
+        exists = os.path.isfile(report_file)
+        if append and exists:
+            log.info(f'Loading to append to: {report_file}')
+            report_df = pd.read_csv(report_file)
+        else:
+            report_df = pd.DataFrame()
+
+        report_df = report_df.append(self.to_df(), ignore_index=True)
+        report_df.to_csv(report_file, index=False)
+        return report_df
+
+    def __str__(self):
+        return str(self.to_df())
 
 

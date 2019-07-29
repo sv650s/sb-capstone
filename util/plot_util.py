@@ -130,7 +130,7 @@ def display_model_summary(row: pd.Series):
 
 def plot_roc_auc(model_name, roc_auc, fpr, tpr):
     for i in np.arange(0, len(fpr.keys()) - 2):
-        plt.plot(fpr[i], tpr[i], label=f'Rating {i + 1}')
+        plt.plot(fpr[str(i)], tpr[str(i)], label=f'Rating {i + 1}')
     plt.plot(fpr["micro"], tpr["micro"], label="Micro Average ROC",
              linestyle=":", linewidth=4, color='pink')
     plt.plot(fpr["macro"], tpr["macro"], label="Macro Average ROC",
