@@ -10,4 +10,5 @@ domino*
 .coverage*
 models
 logs
+.ipynb_checkpoints
 
