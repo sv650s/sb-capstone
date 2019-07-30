@@ -163,7 +163,9 @@ class ModelWrapper(object):
         self.embedding = embedding
         self.tokenizer = tokenizer
 
+
     def fit(self, X_train, y_train, batch_size, epochs, validation_split=0.2, verbose=1, callbacks=None):
+        start_time = datetime.now()
         self.network_history = self.model.fit(X_train,
                                               y_train,
                                               batch_size=batch_size,
@@ -171,6 +173,8 @@ class ModelWrapper(object):
                                               validation_split=validation_split,
                                               callbacks=callbacks,
                                               verbose=verbose)
+        end_time = datetime.now()
+        self.train_time_min = round((end_time - start_time).total_seconds() / 50, 2)
         self.X_train = X_train
         self.y_train = y_train
         return self.network_history
@@ -180,11 +184,17 @@ class ModelWrapper(object):
         self.y_test = y_test
 
         print("Running model.evaluate...")
+        start_time = datetime.now()
         self.scores = self.model.evaluate(X_test, y_test, verbose=verbose)
+        end_time = datetime.now()
+        self.evaluate_time_min = round((end_time - start_time).total_seconds() / 50, 2)
 
         print("Running model.predict...")
         # this is a 2D array with each column as probabilyt of that class
+        start_time = datetime.now()
         self.y_predict = self.model.predict(X_test)
+        end_time = datetime.now()
+        self.predict_time_min = round((end_time - start_time).total_seconds() / 50, 2)
 
         print("Unencode predictions...")
         # 1D array with class index as each value
@@ -232,9 +242,10 @@ class ModelWrapper(object):
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
             pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
 
-        print(f"Saving report file: {self.report_file}")
+        print(f"Saving to report file: {self.report_file}")
         report = self.get_report()
         report.save(self.report_file, append=append_report)
+
 
     def get_report(self):
         report = ModelReport(self.name, self._get_description())
@@ -247,7 +258,7 @@ class ModelWrapper(object):
         report.add("confusion_matrix", self.confusion_matrix)
         report.add("file", self.data_file)
         report.add("network_history_file", self.network_history)
-        report.add("tokenizer_file", self.tokenizer)
+        report.add("tokenizer_file", self.tokenizer_file)
         if self.X_train is not None:
             report.add("max_sequence_length", self.X_train.shape[1])
         report.add("embedding", self.embedding)
@@ -256,6 +267,9 @@ class ModelWrapper(object):
         report.add("test_features", self.X_test.shape[1])
         report.add("train_examples", self.X_train.shape[0])
         report.add("train_features", self.X_train.shape[1])
+        report.add("train_time_min", self.train_time_min)
+        report.add("evaluate_time_min", self.train_time_min)
+        report.add("predict_time_min", self.train_time_min)
         report.add("status", "success")
         report.add("status_date", datetime.now().strftime(TIME_FORMAT))
 
@@ -289,6 +303,8 @@ class ModelReport(object):
         # if it's a list then we serialize to json string format so we can load it back later
         if isinstance(value, list) or isinstance(value, dict):
             self.report[key] = json.dumps(value)
+        elif isinstance(value, np.ndarray):
+            self.report[key] = json.dumps(value.tolist())
         else:
             self.report[key] = value
 
@@ -300,13 +316,14 @@ class ModelReport(object):
         # check to see if report file exisits, if so load it and append
         exists = os.path.isfile(report_file)
         if append and exists:
-            log.info(f'Loading to append to: {report_file}')
-            report_df = pd.read_csv(report_file)
+            print(f'Loading to append to: {report_file}')
+            report_df = pd.read_csv(report_file, quotechar="'")
         else:
             report_df = pd.DataFrame()
 
         report_df = report_df.append(self.to_df(), ignore_index=True)
-        report_df.to_csv(report_file, index=False)
+        print("Saving report file...")
+        report_df.to_csv(report_file, index=False, quotechar="'")
         return report_df
 
     def __str__(self):
