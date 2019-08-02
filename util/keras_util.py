@@ -4,10 +4,11 @@ import numpy as np
 import pandas as pd
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing import sequence
-from sklearn.preprocessing import LabelEncoder
+from keras.engine.topology import Layer
+from keras import backend as K
+import keras
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
-import util.dict_util as du
 import util.file_util as fu
 import json
 import logging
@@ -131,7 +132,7 @@ def preprocess_file(data_df, feature_column, label_column, keep_percentile):
     features_train, features_test, y_train, y_test = train_test_split(features, y, random_state=1)
 
     # Pre-process our features (review body)
-    t = Tokenizer()
+    t = Tokenizer(lower=True, oov_token="<UNK>")
     # fit the tokenizer on the documents
     t.fit_on_texts(features_train)
     # tokenize both our training and test data
@@ -229,7 +230,7 @@ class ModelWrapper(object):
 
         self.model_file = f"{save_dir}/models/{description}-model.h5"
         self.network_history_file = f'{save_dir}/models/{description}-history.pkl'
-        self.report_file = f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_protype-report.csv"
+        self.report_file = f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
         self.tokenizer_file = f'{save_dir}/models/dl-tokenizer.pkl'
 
         print(f"Saving model file: {self.model_file}")
@@ -330,3 +331,102 @@ class ModelReport(object):
         return str(self.to_df())
 
 
+# define our attention layer for later
+class AttentionLayer(Layer):
+
+    def __init__(self, step_dim,
+                 W_regularizer=None, b_regularizer=None,
+                 W_constraint=None, b_constraint=None,
+                 bias=True, **kwargs):
+
+        """
+        Keras Layer that implements an Attention mechanism for temporal data.
+        Supports Masking.
+        Follows the work of Raffel et al. [https://arxiv.org/abs/1512.08756]
+        # Input shape
+            3D tensor with shape: `(samples, steps, features)`.
+        # Output shape
+            2D tensor with shape: `(samples, features)`.
+        :param kwargs:
+        Just put it on top of an RNN Layer (GRU/LSTM/SimpleRNN) with return_sequences=True.
+        The dimensions are inferred based on the output shape of the RNN.
+        """
+
+        self.supports_masking = True
+        self.init = keras.initializers.get('glorot_uniform')
+
+        self.W_regularizer = keras.regularizers.get(W_regularizer)
+        self.b_regularizer = keras.regularizers.get(b_regularizer)
+
+        self.W_constraint = keras.constraints.get(W_constraint)
+        self.b_constraint = keras.constraints.get(b_constraint)
+
+        self.bias = bias
+        self.step_dim = step_dim
+        self.features_dim = 0
+        super(AttentionLayer, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        assert len(input_shape) == 3
+
+        self.W = self.add_weight((input_shape[-1],),
+                                 initializer=self.init,
+                                 name='{}_W'.format(self.name),
+                                 regularizer=self.W_regularizer,
+                                 constraint=self.W_constraint)
+        self.features_dim = input_shape[-1]
+
+        if self.bias:
+            self.b = self.add_weight((input_shape[1],),
+                                     initializer='zero',
+                                     name='{}_b'.format(self.name),
+                                     regularizer=self.b_regularizer,
+                                     constraint=self.b_constraint)
+        else:
+            self.b = None
+
+        self.built = True
+
+    def compute_mask(self, input, input_mask=None):
+        # do not pass the mask to the next layers
+        return None
+
+    def call(self, x, mask=None):
+        # TF backend doesn't support it
+        # eij = K.dot(x, self.W)
+        # features_dim = self.W.shape[0]
+        # step_dim = x._keras_shape[1]
+
+        features_dim = self.features_dim
+        step_dim = self.step_dim
+
+        eij = K.reshape(K.dot(K.reshape(x, (-1, features_dim)),
+                              K.reshape(self.W, (features_dim, 1))),
+                        (-1, step_dim))
+
+        if self.bias:
+            eij += self.b
+
+        eij = K.tanh(eij)
+
+        a = K.exp(eij)
+
+        # apply mask after the exp. will be re-normalized next
+        if mask is not None:
+            # Cast the mask to floatX to avoid float64 upcasting in theano
+            a *= K.cast(mask, K.floatx())
+
+        # in some cases especially in the early stages of training the sum may be almost zero
+        a /= K.cast(K.sum(a, axis=1, keepdims=True) + K.epsilon(), K.floatx())
+        a = K.expand_dims(a)
+        weighted_input = x * a
+
+        return K.sum(weighted_input, axis=1)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[0], self.features_dim
+
+    def get_config(self):
+        config = {'step_dim': self.step_dim}
+        base_config = super(AttentionLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
