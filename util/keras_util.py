@@ -168,6 +168,9 @@ class ModelWrapper(object):
         self.data_file = data_file
         self.embedding = embedding
         self.tokenizer = tokenizer
+        self.description = description
+        # dumping ground for anything else we want to store
+        self.misc_items = {}
 
 
     def fit(self, X_train, y_train, batch_size, epochs, validation_split=0.2, verbose=1, callbacks=None):
@@ -184,6 +187,9 @@ class ModelWrapper(object):
         self.X_train = X_train
         self.y_train = y_train
         return self.network_history
+
+    def add(self, key, value):
+        self.misc_items[key] = value
 
     def evaluate(self, X_test, y_test, verbose=1):
         self.X_test = X_test
@@ -254,7 +260,10 @@ class ModelWrapper(object):
 
 
     def get_report(self):
-        report = ModelReport(self.name, self._get_description())
+        if self.description:
+            report = ModelReport(self.name, self.description)
+        else:
+            report = ModelReport(self.name, self._get_description())
         report.add("classification_report", self.crd)
         report.add("roc_auc", self.roc_auc)
         report.add("loss", self.scores[0])
@@ -278,6 +287,8 @@ class ModelWrapper(object):
         report.add("predict_time_min", self.train_time_min)
         report.add("status", "success")
         report.add("status_date", datetime.now().strftime(TIME_FORMAT))
+        for k, v in self.misc_items.items():
+            report.add(k, v)
 
         return report
 
