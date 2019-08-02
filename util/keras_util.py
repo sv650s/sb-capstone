@@ -283,8 +283,8 @@ class ModelWrapper(object):
         report.add("train_examples", self.X_train.shape[0])
         report.add("train_features", self.X_train.shape[1])
         report.add("train_time_min", self.train_time_min)
-        report.add("evaluate_time_min", self.train_time_min)
-        report.add("predict_time_min", self.train_time_min)
+        report.add("evaluate_time_min", self.evaluate_time_min)
+        report.add("predict_time_min", self.predict_time_min)
         report.add("status", "success")
         report.add("status_date", datetime.now().strftime(TIME_FORMAT))
         for k, v in self.misc_items.items():
