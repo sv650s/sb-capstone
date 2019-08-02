@@ -102,7 +102,7 @@ def unencode(input):
     return [row.idxmax() + 1 for index, row in input_df.iterrows()]
 
 
-def preprocess_file(data_df, feature_column, label_column, keep_percentile):
+def preprocess_file(data_df, feature_column, label_column, keep_percentile, use_oov_token=True):
     """
     Preprocessing data file and create the right inputs for Keras models
         Generally using this for more advanced models like GRU, LSTM, CNN as we are embedding as part of this
@@ -115,10 +115,11 @@ def preprocess_file(data_df, feature_column, label_column, keep_percentile):
 
         split between training and testing
 
-    :param data_df:
-    :param feature_column:
-    :param review_column:
+    :param data_df: DF with both features and label
+    :param feature_column: string name of feature column
+    :param label_column: string name of lable column
     :param keep_percentile: percentile of feature length to keep - all features will be padded to this length
+    :param use_oov_token: Default True. Use a out of vocabulary token for tokenizer
     :return:
     """
     labels = data_df[label_column]
@@ -132,7 +133,11 @@ def preprocess_file(data_df, feature_column, label_column, keep_percentile):
     features_train, features_test, y_train, y_test = train_test_split(features, y, random_state=1)
 
     # Pre-process our features (review body)
-    t = Tokenizer(lower=True, oov_token="<UNK>")
+    if use_oov_token:
+        t = Tokenizer(lower=True, oov_token="<UNK>")
+    else:
+        t = Tokenizer(lower=True)
+
     # fit the tokenizer on the documents
     t.fit_on_texts(features_train)
     # tokenize both our training and test data
