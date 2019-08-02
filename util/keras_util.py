@@ -235,7 +235,7 @@ class ModelWrapper(object):
         return description
 
 
-    def save(self, save_dir, append_report=False):
+    def save(self, save_dir, append_report=True):
         description = self._get_description()
         print(f"description: {description}")
 
