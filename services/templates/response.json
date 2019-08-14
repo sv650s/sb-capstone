@@ -1,0 +1,13 @@
+{
+  "status": "{{ status }}",
+  "prediction": {
+    "star_rating": "{{ rating }}",
+    "raw": {{ prediction_raw }},
+    "truth": "{{ truth }}"
+  },
+  "input": {
+    "raw": "{{ review_raw }}",
+    "preprocessed": "{{ review_preprocessed }}",
+    "encoded": "{{ review_encoded }}"
+  }
+}

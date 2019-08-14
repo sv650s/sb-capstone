@@ -5,6 +5,8 @@ import tensorflow as tf
 import sys
 
 from flask import Flask
+from flask import render_template
+
 import json
 import logging
 import tensorflow as tf
@@ -58,17 +60,47 @@ def predict():
         load_tokenizer(tokenizer_file)
 
 
+    # TODO: replace this later
     text = "hi there what your name"
-    y = model.predict(preprocess_text([text]))
+    truth = 2
+
+    text_preprocessed = preprocess_text(text)
+    text_encoded = encode_text([text_preprocessed])
+
+    y = model.predict(text_encoded)
+
+    y_unencoded = t2.unencode(y)[0]
+
+    y_dict = convert_predictions_to_dict(y.ravel())
+
+    print(f'y_dict type: { type(y_dict) }', sys.stderr)
+    print(f'y_dict {y_dict}', sys.stderr)
+
     print(f'predicted y: {y}', sys.stderr)
-    #json_response = json.dumps(resp)
-    json_response = json.dumps(y.tolist())
+    json_response = render_template('response.json',
+                                    status = "SUCCESS",
+                                    review_raw = text,
+                                    review_preprocessed = text_preprocessed,
+                                    truth = truth,
+                                    review_encoded = text_encoded,
+                                    prediction = y_unencoded,
+                                    prediction_raw = json.dumps(y_dict),
+                                    )
     log.debug(json_response)
     print(f'Tensorflow version: {tf.__version__}', file=sys.stderr)
     return json_response
 
+
+def convert_predictions_to_dict(d: list):
+    return {str(i + 1): str(d[i]) for i in range(len(d))}
+
+
 def preprocess_text(text: str):
-    # TODO: call the pre-processing utility class here
+    # TODO: implement this
+    return text
+
+
+def encode_text(text: str):
     s = tokenizer.texts_to_sequences(text)
     print(f's: {s}', sys.stderr)
     sequence_padded = sequence.pad_sequences(s,
