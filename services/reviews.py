@@ -14,6 +14,7 @@ import tensorflow.keras as keras
 from tensorflow.keras.preprocessing import sequence
 import util.tf2_util as t2
 import pickle
+from config import Config
 
 
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
@@ -21,13 +22,18 @@ log = logging.getLogger(__name__)
 
 
 # TODO: load models
-MODEL_DIR = 'models'
-model_json_file = f'{MODEL_DIR}/amazon_reviews_us_Wireless_v1_00-preprocessed-110k-TF2-biGRU_1layer_attention-186-star_rating-model_json.h5'
-model_weights_file = f'{MODEL_DIR}/amazon_reviews_us_Wireless_v1_00-preprocessed-110k-TF2-biGRU_1layer_attention-186-star_rating-weights.h5'
-tokenizer_file = f'{MODEL_DIR}/tf2-tokenizer.pkl'
+# MODEL_DIR = 'models'
+# MODEL_JSON_FILE = f'{MODEL_DIR}/amazon_reviews_us_Wireless_v1_00-preprocessed-110k-TF2-biGRU_1layer_attention-186-star_rating-model_json.h5'
+# MODEL_WEIGHTS_FILE = f'{MODEL_DIR}/amazon_reviews_us_Wireless_v1_00-preprocessed-110k-TF2-biGRU_1layer_attention-186-star_rating-weights.h5'
+# TOKENIZER_FILE = f'{MODEL_DIR}/tf2-tokenizer.pkl'
 model = None
 tokenizer = None
 MAX_FEATURES = 200
+
+
+# TODO: error handling
+# https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-vii-error-handling
+
 
 
 
@@ -37,6 +43,7 @@ resp = {'prediction': 5}
 # Create the application instance
 # app = Flask(__name__, template_folder="templates")
 app = Flask(__name__)
+app.config.from_object(Config)
 
 # Create a URL route in our application for "/"
 @app.route('/')
@@ -54,10 +61,13 @@ def home():
 @app.route('/predict')
 def predict():
 
+    print(f'MODEL_DIR: {app.config["MODEL_DIR"]}')
+
     if model is None:
-        load_model(model_json_file, model_weights_file)
+        load_model(f'{app.config["MODEL_DIR"]}/{app.config["MODEL_JSON_FILE"]}',
+                   f'{app.config["MODEL_DIR"]}/{app.config["MODEL_WEIGHTS_FILE"]}')
     if tokenizer is None:
-        load_tokenizer(tokenizer_file)
+        load_tokenizer(f'{app.config["MODEL_DIR"]}/{app.config["TOKENIZER_FILE"]}')
 
 
     # TODO: replace this later
@@ -125,7 +135,7 @@ def load_model(json_path: str, weights_path: str):
         json_config = json_file.read()
     model = keras.models.model_from_json(json_config,
                                          custom_objects={'AttentionLayer': t2.AttentionLayer})
-    model.load_weights(model_weights_file)
+    model.load_weights(weights_path)
     return model
 
 
@@ -139,7 +149,7 @@ def load_tokenizer(tokenizer_path: str):
     print("loading tokenizer", sys.stderr)
     global tokenizer
 
-    with open(tokenizer_file, 'rb') as file:
+    with open(tokenizer_path, 'rb') as file:
         tokenizer = pickle.load(file)
 
 
