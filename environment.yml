@@ -4,6 +4,7 @@ channels:
   - conda-forge
   - anaconda
 dependencies:
+  - flask
   - python=3.7.*
   - autopep8
   - pandas
@@ -13,12 +14,12 @@ dependencies:
   - pandas-datareader
   - matplotlib
   - seaborn
-  - keras
+  - hdf5
+  - h5py
   - scikit-learn
   - nltk
-  - spacy
   - pyspark
-  - beautifulsoup4=4.7.1
+  - beautifulsoup4
   - unittest2=1.1.0
   - nltk=3.4.1
   - coverage=4.5.3
@@ -32,12 +33,12 @@ dependencies:
   - catboost
   - traceback2
   - numpy
-  - scipy
-  - tensorflow
+  - pip
   - pyyaml
-  - hdf5
-  - h5py
+  - scipy
   - cudnn
   - pydot
+  - pip:
+    - tensorflow==2.0.0-beta1
 prefix: /Users/vinceluk/springboard-projects/capstone
 
