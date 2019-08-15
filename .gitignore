@@ -1,5 +1,19 @@
 .vscode
+
+# python
 __pycache__
+*.pyc
+.pytest_cache/
+.coverage*
+.ipynb_checkpoints
+venv/
+
+# flask
+*/instance/
+dist/
+build/
+*.egg-info/
+
 .domino*
 .noLock
 .DS_Store
@@ -7,8 +21,6 @@ dataset
 domino*
 .idea
 *.swp
-.coverage*
 models
 logs
-.ipynb_checkpoints
 
