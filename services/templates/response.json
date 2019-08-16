@@ -7,7 +7,8 @@
   },
   "input": {
     "raw": "{{ review_raw }}",
+    "truth": "{{ truth }}",
     "preprocessed": "{{ review_preprocessed }}",
-    "encoded": "{{ review_encoded }}"
+    "encoded": {{ review_encoded }}
   }
 }
