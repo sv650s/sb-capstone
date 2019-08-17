@@ -5,6 +5,7 @@ channels:
   - anaconda
 dependencies:
   - flask
+  - Flask-SQLAlchemy
   - python=3.7.*
   - autopep8
   - pandas
@@ -31,6 +32,7 @@ dependencies:
   - imbalanced-learn=0.4
   - xgboost
   - catboost
+  - google-cloud-storage
   - traceback2
   - numpy
   - pip
@@ -38,6 +40,8 @@ dependencies:
   - scipy
   - cudnn
   - pydot
+  - virtualenv
+  - Werkzeug
   - pip:
     - tensorflow==2.0.0-beta1
 prefix: /Users/vinceluk/springboard-projects/capstone

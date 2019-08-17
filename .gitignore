@@ -7,6 +7,8 @@ __pycache__
 .coverage*
 .ipynb_checkpoints
 venv/
+env/
+*.log
 
 # flask
 */instance/

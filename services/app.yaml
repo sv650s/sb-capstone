@@ -1,0 +1,15 @@
+# GCP app.yaml for deployment
+# https://cloud.google.com/appengine/docs/standard/python3/config/appref
+#
+runtime: python37
+service: reviews
+
+handlers:
+- url: /.*
+#  script: reviews.app
+  script: auto
+
+
+env_variables:
+  VERSION: "1.0"
+  BUCKET_NAME: ""

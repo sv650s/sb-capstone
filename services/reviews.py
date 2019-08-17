@@ -104,7 +104,7 @@ db.create_all()
 #     # return render_template('home.html')
 
 
-@app.route('/models/gru/api/v1.0/predict', methods=['POST'])
+@app.route('/models/api/v1.0/gru', methods=['POST'])
 def predict_reviews():
     if not request.args or not 'review' in request.args or not 'truth' in request.args:
         abort(400)
