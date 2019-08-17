@@ -15,6 +15,7 @@ import logging
 import os
 from datetime import datetime
 import pickle
+import sys
 
 
 DATE_FORMAT = '%Y-%m-%d'
@@ -144,7 +145,7 @@ def preprocess_file(data_df, feature_column, label_column, keep_percentile, use_
     train_sequences = t.texts_to_sequences(features_train)
     test_sequences = t.texts_to_sequences(features_test)
 
-    print("Vocabulary size={}".format(len(t.word_counts)))
+    print("Vocabulary size={}".format(len(t.word_index)))
     print("Number of Documents={}".format(t.document_count))
 
     # figure out 99% percentile for our max sequence length
@@ -191,7 +192,16 @@ class ModelWrapper(object):
     def add(self, key, value):
         self.misc_items[key] = value
 
-    def evaluate(self, X_test, y_test, verbose=1):
+    def evaluate(self, X_test, y_test, verbose=1, unencoder=unencode):
+        """
+        Evalue our model
+
+        :param X_test:
+        :param y_test:
+        :param verbose:
+        :param unencoder: Optional - will use unencoder from this file if needed
+        :return:
+        """
         self.X_test = X_test
         self.y_test = y_test
 
@@ -210,8 +220,8 @@ class ModelWrapper(object):
 
         print("Unencode predictions...")
         # 1D array with class index as each value
-        y_predict_unencoded = unencode(self.y_predict)
-        y_test_unencoded = unencode(self.y_test)
+        y_predict_unencoded = unencoder(self.y_predict)
+        y_test_unencoded = unencoder(self.y_test)
 
 
         print("Generating confusion matrix...")
@@ -235,24 +245,57 @@ class ModelWrapper(object):
         return description
 
 
-    def save(self, save_dir, append_report=True):
+    def save(self, save_dir, save_history=True, save_format=None, append_report=True):
         description = self._get_description()
         print(f"description: {description}")
 
         self.model_file = f"{save_dir}/models/{description}-model.h5"
+        self.model_json_file = f"{save_dir}/models/{description}-model.json"
+        self.weights_file = f"{save_dir}/models/{description}-weights.h5"
         self.network_history_file = f'{save_dir}/models/{description}-history.pkl'
         self.report_file = f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
         self.tokenizer_file = f'{save_dir}/models/dl-tokenizer.pkl'
 
         print(f"Saving model file: {self.model_file}")
-        self.model.save(self.model_file)
+        try:
+            self.model.save(self.model_file,
+                    save_format=save_format)
+        except Exception as e:
+            print("Unexpected error:", sys.exc_info()[0])
+            self.model_file = None
+
+        print(f"Saving json config file: {self.model_json_file}")
+        try:
+            model_json = self.model.to_json()
+            with open(self.model_json_file, 'w') as json_file:
+                json_file.write(model_json)
+        except Exception as e:
+            print("Unexpected error:", sys.exc_info()[0])
+            self.model_json_file = None
+
+        print(f"Saving weights file: {self.weights_file}")
+        try:
+            self.model.save_weights(self.weights_file,
+                    save_format=save_format)
+        except Exception as e:
+            print("Unexpected error:", sys.exc_info()[0])
+            self.weights_file = None
+
 
         print(f"Saving network history file: {self.network_history_file}")
-        pickle.dump(self.network_history, open(self.network_history_file, 'wb'))
+        try:
+            pickle.dump(self.network_history, open(self.network_history_file, 'wb'))
+        except Exception as e:
+            print("Unexpected error:", sys.exc_info()[0])
+            self.network_history_file = None
 
         if self.tokenizer:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
-            pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
+            try:
+                pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
+            except Exception as e:
+                print("Unexpected error:", sys.exc_info()[0])
+                self.tokenizer_file = None
 
         print(f"Saving to report file: {self.report_file}")
         report = self.get_report()
@@ -278,6 +321,8 @@ class ModelWrapper(object):
             report.add("max_sequence_length", self.X_train.shape[1])
         report.add("embedding", self.embedding)
         report.add("model_file", self.model_file)
+        report.add("model_json_file", self.model_json_file)
+        report.add("weights_file", self.weights_file)
         report.add("test_examples", self.X_test.shape[0])
         report.add("test_features", self.X_test.shape[1])
         report.add("train_examples", self.X_train.shape[0])
