@@ -6,7 +6,7 @@ channels:
 dependencies:
   - flask
   - Flask-SQLAlchemy
-  - python=3.7.*
+  - python=3.6.8
   - autopep8
   - pandas
   - unittest2
