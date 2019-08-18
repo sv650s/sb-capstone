@@ -91,17 +91,16 @@ app.logger.info("creating database...")
 db.create_all()
 
 
-# # Create a URL route in our application for "/"
-# @app.route('/')
-# def home():
-#     """
-#     This function just responds to the browser ULR
-#     localhost:5000/
-#
-#     :return:        the rendered template 'home.html'
-#     """
-#     return "Hello, World!"
-#     # return render_template('home.html')
+# Create a URL route in our application for "/"
+@app.route('/')
+def home():
+    """
+    This function just responds to the browser ULR
+    localhost:5000/
+
+    :return:        the rendered template 'home.html'
+    """
+    return "Hello, World!\n"
 
 
 @app.route('/models/api/v1.0/gru', methods=['POST'])
@@ -240,4 +239,4 @@ if __name__ == '__main__':
                f'{app.config["MODEL_DIR"]}/{app.config["MODEL_WEIGHTS_FILE"]}')
     app.logger.info("loaidng tokenizer...")
     load_tokenizer(f'{app.config["MODEL_DIR"]}/{app.config["TOKENIZER_FILE"]}')
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)

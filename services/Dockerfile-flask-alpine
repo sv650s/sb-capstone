@@ -1,0 +1,35 @@
+FROM tensorflow/tensorflow:2.0.0b1-py3
+#FROM python:3.7.3-alpine
+
+RUN adduser -D reviews
+
+WORKDIR /home/reviews
+
+# re-install gcc for our pip install
+RUN apk add --no-cache \
+            --allow-untrusted \
+            --repository \
+             http://dl-3.alpinelinux.org/alpine/edge/testing \
+            hdf5 \
+            hdf5-dev && \
+    apk add --no-cache build-base python3-dev && \
+    pip3 install --upgrade pip setuptools && \
+    pip3 install virtualenv
+COPY requirements.txt ./
+RUN virtualenv venv && \
+    venv/bin/pip --version && \
+    venv/bin/pip install -r requirements.txt
+#RUN venv/bin/pip install h5py==2.9.0
+#RUN venv/bin/pip install -r requirements.txt
+
+COPY util templates models reviews.py config.py run_service.sh requirements.txt ./
+RUN chmod +x run_service.sh
+
+ENV FLASK_APP reviews.py
+
+RUN chown -R reviews:reviews ./
+USER reviews
+
+# TODO: update this script to run wgsi server instead for Production
+EXPOSE 5000
+ENTRYPOINT ["./run_service.sh"]

@@ -8,20 +8,17 @@ WORKDIR /home/reviews
 COPY requirements.txt ./
 RUN apt-get install  --yes libhdf5-dev python3-all-dev && \
     pip3 install --upgrade pip setuptools && \
-    pip3 install virtualenv && \
-    virtualenv venv && \
-    venv/bin/pip --version && \
-    venv/bin/pip install -r requirements.txt
+    pip3 install -r requirements.txt
 
-COPY util ./util
-COPY templates ./templates
-COPY models ./models
-COPY reviews.py config.py run_service.sh requirements.txt ./
-RUN chmod +x run_service.sh
+# COPY util ./util
+# COPY templates ./templates
+# COPY models ./models
+# COPY reviews.py config.py run_service.sh ./
+# RUN chmod +x run_service.sh
 
 ENV FLASK_APP reviews.py
 
-RUN chown -R reviews:reviews ./
+# RUN chown -R reviews:reviews ./
 USER reviews
 
 # TODO: update this script to run wgsi server instead for Production
