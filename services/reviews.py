@@ -100,7 +100,7 @@ def home():
 
     :return:        the rendered template 'home.html'
     """
-    return "Hello, World!\n"
+    return "Hello, World 2!\n"
 
 
 @app.route('/models/api/v1.0/gru', methods=['POST'])

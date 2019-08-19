@@ -9,14 +9,12 @@ COPY requirements.txt ./
 RUN apt-get install  --yes libhdf5-dev python3-all-dev && \
     pip3 install --upgrade pip setuptools && \
     pip3 install virtualenv && \
-    virtualenv venv && \
-    venv/bin/pip --version && \
-    venv/bin/pip install -r requirements.txt
+    pip3 install -r requirements.txt
 
 COPY util ./util
 COPY templates ./templates
 COPY models ./models
-COPY reviews.py config.py run_service.sh requirements.txt ./
+COPY reviews.py config.py run_service.sh ./
 RUN chmod +x run_service.sh
 
 ENV FLASK_APP reviews.py
