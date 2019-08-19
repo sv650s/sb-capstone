@@ -18,6 +18,7 @@ import util.tf2_util as t2
 import pickle
 from config import Config
 from logging.config import dictConfig
+from util.AmazonPreprocessor import AmazonPreprocessor
 
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
 
@@ -100,7 +101,7 @@ def home():
 
     :return:        the rendered template 'home.html'
     """
-    return "Hello, World 2!\n"
+    return f"Welcome to Capstone Service - Version {app.config['VERSION']}!\n"
 
 
 @app.route('/models/api/v1.0/gru', methods=['POST'])
@@ -185,7 +186,9 @@ def convert_predictions_to_dict(d: list):
 
 def preprocess_text(text: str):
     # TODO: implement this
-    return text
+
+    ap = AmazonPreprocessor()
+    return ap.normalize_text(text)
 
 
 def encode_text(text: str):

@@ -2,8 +2,7 @@
   "status": "{{ status }}",
   "prediction": {
     "star_rating": "{{ rating }}",
-    "raw": {{ prediction_raw }},
-    "truth": "{{ truth }}"
+    "raw": {{ prediction_raw }}
   },
   "input": {
     "raw": "{{ review_raw }}",

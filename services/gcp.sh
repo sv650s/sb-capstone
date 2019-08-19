@@ -14,7 +14,7 @@
 source set_vars.sh
 
 usage() {
-    echo "Usage: $0 [-disu] [-t <image_id>]"
+    echo "Usage: $0 [-disu] [-t <image_id>] [version]"
     echo "     -d - deploy container. This should be runned after you have pushed a container in -t"
     echo "     -i - initialize project"
     echo "     -s - shutdown project"
@@ -131,6 +131,7 @@ deploy() {
 update() {
     echo "Run and update the following command"
     echo "kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_REPO}:$version"
+    kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_REPO}:$version
 }
 
 create_cluster() {
