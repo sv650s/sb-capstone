@@ -18,6 +18,9 @@ dist/
 build/
 *.egg-info/
 
+# nltk
+nltk_data/
+
 .domino*
 .noLock
 .DS_Store
