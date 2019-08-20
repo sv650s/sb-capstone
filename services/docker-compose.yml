@@ -1,0 +1,15 @@
+version: "3.7"
+services:
+    reviews:
+        build:
+            context: ./
+            dockerfile: Dockerfile-flask
+            args:
+                - version=1.0
+        ports:
+            - "5000:5000"
+#        volumes:
+#            # bind mount current directory
+#            - ./:/home/reviews
+        image: capstone-service:latest
+

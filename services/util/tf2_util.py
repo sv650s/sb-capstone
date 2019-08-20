@@ -1,15 +1,15 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras import backend as K
+
+
 from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import confusion_matrix, classification_report
+
 import numpy as np
 import pandas as pd
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing import sequence
-from keras.engine.topology import Layer
-from keras import backend as K
-import keras
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.model_selection import train_test_split
-import util.file_util as fu
 import json
 import logging
 import os
@@ -21,7 +21,7 @@ import sys
 DATE_FORMAT = '%Y-%m-%d'
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 
@@ -250,7 +250,6 @@ class ModelWrapper(object):
         print(f"description: {description}")
 
         self.model_file = f"{save_dir}/models/{description}-model.h5"
-        self.model_json_file = f"{save_dir}/models/{description}-model.json"
         self.weights_file = f"{save_dir}/models/{description}-weights.h5"
         self.network_history_file = f'{save_dir}/models/{description}-history.pkl'
         self.report_file = f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
@@ -393,7 +392,7 @@ class ModelReport(object):
 
 
 # define our attention layer for later
-class AttentionLayer(Layer):
+class AttentionLayer(layers.Layer):
 
     def __init__(self, step_dim,
                  W_regularizer=None, b_regularizer=None,
@@ -430,15 +429,20 @@ class AttentionLayer(Layer):
     def build(self, input_shape):
         assert len(input_shape) == 3
 
-        self.W = self.add_weight((input_shape[-1],),
+        print(f'build.input_shape {input_shape}')
+        print(f'build.input_shape[-1] {input_shape[-1]}')
+
+        self.W = self.add_weight(shape=(input_shape[-1],),
                                  initializer=self.init,
                                  name='{}_W'.format(self.name),
                                  regularizer=self.W_regularizer,
                                  constraint=self.W_constraint)
         self.features_dim = input_shape[-1]
 
+        print(f'build.features_dim {self.features_dim}')
+
         if self.bias:
-            self.b = self.add_weight((input_shape[1],),
+            self.b = self.add_weight(shape=(input_shape[1],),
                                      initializer='zero',
                                      name='{}_b'.format(self.name),
                                      regularizer=self.b_regularizer,
@@ -465,6 +469,8 @@ class AttentionLayer(Layer):
                               K.reshape(self.W, (features_dim, 1))),
                         (-1, step_dim))
 
+        print(f'call.eij {eij}')
+
         if self.bias:
             eij += self.b
 
@@ -481,6 +487,8 @@ class AttentionLayer(Layer):
         a /= K.cast(K.sum(a, axis=1, keepdims=True) + K.epsilon(), K.floatx())
         a = K.expand_dims(a)
         weighted_input = x * a
+
+        print(f'call.weighted_input {weighted_input}')
 
         return K.sum(weighted_input, axis=1)
 

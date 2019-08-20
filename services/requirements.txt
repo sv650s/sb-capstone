@@ -1,0 +1,9 @@
+beautifulsoup4
+Flask-SQLAlchemy
+nltk
+google-cloud-storage
+numpy
+pandas
+scikit-learn
+tensorflow==2.0.0b1
+Werkzeug

@@ -1,0 +1,6 @@
+# ignore these files when uploading to GCP
+/tests
+/instance
+gcp.sh
+/__pycache__
+
