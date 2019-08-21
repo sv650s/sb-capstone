@@ -32,7 +32,7 @@ class Loader(object):
         pclass_ = getattr(importlib.import_module(module), cls)
         return pclass_()
 
-    def get_config(self, name, version):
+    def get_config(self, filename):
         pass
 
 
@@ -55,10 +55,8 @@ class LocalModelLoader(Loader):
 
         return model
 
-    def get_config(self, name, version):
-        # TOOD: figure out how to change behavior using some type of inheritance
-        app.logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
-        json_file = f'{app.config["MODEL_CONFIG_DIR"]}/{Classifier.get_config_filename(name, version)}'
+    def get_config(self, filename):
+        json_file = f'{app.config["MODEL_CONFIG_DIR"]}/{filename}'
         app.logger.debug(f"config json_file {json_file}")
         return json_file
 
@@ -102,9 +100,8 @@ class GCPModelLoader(Loader):
             tokenizer = pickle.load(file)
         return tokenizer
 
-    def get_config(self, name, version):
-        json_file = Classifier.get_config_filename(name, version)
-        return self._download_file(json_file)
+    def get_config(self, filename):
+        return self._download_file(filename)
 
 
 class Classifier(object):
@@ -276,7 +273,7 @@ class ModelFactory(object):
                 pclass_ = getattr(importlib.import_module(loader_module), loader_class)
                 loader = pclass_()
 
-                json_file = loader.get_config(name, version)
+                json_file = loader.get_config(Classifier.get_config_filename(name, version))
                 app.logger.debug(f"model_config_json {json_file}")
 
                 model = Classifier.from_json(json_file, loader)
