@@ -6,6 +6,8 @@ services:
             dockerfile: Dockerfile-flask
             args:
                 - version=1.0
+                - project_id="sb-capstone-250223"
+                - google_application_credentials="/home/reviews/credentials/gcp-keys.json"
         ports:
             - "5000:5000"
         volumes:

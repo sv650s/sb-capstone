@@ -101,7 +101,7 @@ def predict_reviews():
     truth = request.args.get('truth')
 
     # TODO: un-hard code this - get this from the URL
-    classifier = FileModelFactory.get_model('GRU', 'v1')
+    classifier = FileModelFactory.get_model('GRU', 'v1.0')
     if classifier:
         y_unencoded, y_raw, text_preprocessed, text_encoded = classifier.predict(text)
         y_dict = convert_predictions_to_dict(y_raw.ravel())

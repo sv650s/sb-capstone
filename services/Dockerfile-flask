@@ -9,21 +9,27 @@ COPY requirements.txt ./
 RUN apt-get install  --yes libhdf5-dev python3-all-dev && \
     pip3 install --upgrade pip setuptools && \
     pip3 install virtualenv && \
-    pip3 install -r requirements.txt
+    pip3 install -r requirements.txt && \
+    mkdir models
+
+# get argument from docker compose file
+ARG version
+ARG project_id
+
+ENV FLASK_APP reviews.py
+ENV VERSION $version
+ENV PROJECT_ID $project_id
+ENV GOOGLE_APPLICATION_CREDENTIALS $google_application_credentials
+
 
 COPY util ./util
 COPY templates ./templates
-COPY models ./models
+# COPY models ./models
+COPY credentials ./credentials
 COPY reviews.py config.py run_service.sh ./
 RUN chmod +x run_service.sh
 
 RUN chown -R reviews:reviews ./
-
-# get argument from docker compose file
-ARG version
-
-ENV FLASK_APP reviews.py
-ENV VERSION $version
 
 USER reviews
 

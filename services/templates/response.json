@@ -1,6 +1,6 @@
 {
   "status": "{{ status }}",
-  "timestamp" "{{ timestamp }}",
+  "timestamp": "{{ timestamp }}",
   "prediction": {
     "star_rating": "{{ rating }}",
     "raw": {{ prediction_raw }}

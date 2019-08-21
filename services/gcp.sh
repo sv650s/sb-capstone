@@ -68,6 +68,8 @@ init() {
         # create bucket
         echo "${BUCKET_NAME} not found. Creating file bucket"
         gsutil mb gs://${BUCKET_NAME}/
+        echo "set bucket read permission to public read"
+        gsutil defacl set public-read gs://${BUCKET_NAME}
     fi
 
 
