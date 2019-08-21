@@ -12,4 +12,4 @@ class Config(object):
     DEFAULT_MODEL_CONFIG = "config/GRU-v1.0.json"
     MODEL_CONFIG_DIR = "config"
     MODEL_LOADER_MODULE = os.environ.get("MODEL_LOADER_MODULE", default="util.model_util")
-    MODEL_LOADER_CLASS = os.environ.get("MODEL_LOADER_CLASS", default="LocalModelLoader")
+    MODEL_LOADER_CLASS = os.environ.get("MODEL_LOADER_CLASS", default="GCPModelLoader")

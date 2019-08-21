@@ -14,12 +14,15 @@ RUN apt-get install  --yes libhdf5-dev python3-all-dev && \
 
 # get argument from docker compose file
 ARG version
-ARG project_id
+ARG gcp_project_id
+ARG gcp_bucket_name
 ARG model_loader_class
+ARG google_application_credentials
 
 ENV FLASK_APP reviews.py
 ENV VERSION $version
-ENV PROJECT_ID $project_id
+ENV PROJECT_ID $gcp_project_id
+ENV BUCKET_NAME $gcp_bucket_name
 ENV GOOGLE_APPLICATION_CREDENTIALS $google_application_credentials
 ENV MODEL_LOADER_CLASS $model_loader_class
 
@@ -27,6 +30,7 @@ ENV MODEL_LOADER_CLASS $model_loader_class
 COPY util ./util
 COPY templates ./templates
 # COPY models ./models
+# COPY config ./config
 COPY credentials ./credentials
 COPY reviews.py config.py run_service.sh ./
 RUN chmod +x run_service.sh

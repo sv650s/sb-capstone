@@ -14,7 +14,9 @@ import json
 from pprint import pprint
 import util.gcp_file_util as gu
 
-logger = logging.getLogger(__name__)
+# TODO: figure out why logging doens't work without app.app.logger
+# logger = logging.getLogger(__name__)
+
 
 class Loader(object):
 
@@ -26,7 +28,7 @@ class Loader(object):
 
     # TODO: dynamically load this
     def load_preprocessor(self, module: str, cls: str):
-        logger.info(f"loading preprocessor from {module}.{cls}")
+        app.logger.info(f"loading preprocessor from {module}.{cls}")
         pclass_ = getattr(importlib.import_module(module), cls)
         return pclass_()
 
@@ -34,42 +36,75 @@ class Loader(object):
         pass
 
 
-
 class LocalModelLoader(Loader):
 
-    def load_tokenizer(self, tokenizer_path: str):
-        logger.info(f"loading tokenizer from {tokenizer_path}")
-        with open(f'{app.config["LOCAL_MODEL_DIR"]}/{tokenizer_path}', 'rb') as file:
+    def load_tokenizer(self, tokenizer_file: str):
+        app.logger.info(f"loading tokenizer from {tokenizer_file}")
+        with open(f'{app.config["LOCAL_MODEL_DIR"]}/{tokenizer_file}', 'rb') as file:
             tokenizer = pickle.load(file)
         return tokenizer
 
     def load_model(self, model_file: str, weights_file: str = None):
-        logger.info(f"loading model from {model_file}")
+        app.logger.info(f"loading model from {model_file}")
         with open(f'{app.config["LOCAL_MODEL_DIR"]}/{model_file}') as json_file:
             json_config = json_file.read()
         model = keras.models.model_from_json(json_config,
                                              custom_objects={'AttentionLayer': t2.AttentionLayer})
-        logger.info(f"loading model weights from {weights_file}")
+        app.logger.info(f"loading model weights from {weights_file}")
         model.load_weights(f'{app.config["LOCAL_MODEL_DIR"]}/{weights_file}')
 
         return model
 
     def get_config(self, name, version):
         # TOOD: figure out how to change behavior using some type of inheritance
-        logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
+        app.logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
         json_file = f'{app.config["MODEL_CONFIG_DIR"]}/{Classifier.get_config_filename(name, version)}'
-        logger.debug(f"config json_file {json_file}")
+        app.logger.debug(f"config json_file {json_file}")
         return json_file
 
 
 class GCPModelLoader(Loader):
 
+    def __init__(self):
+        super()
+        self.model_dir = app.config['MODEL_CACHE_DIR']
+        self.bucket_name = app.config['BUCKET_NAME']
+
+    def _download_file(self, filename):
+        app.logger.info(f'downloaded {filename} to {self.model_dir}')
+        store_path = f'{self.model_dir}/{filename}'
+        gu.download_blob(self.bucket_name,
+                         filename,
+                         store_path)
+        return store_path
+
+
     def load_model(self, model_file: str, weights_file: str = None):
-        pass
+
+        self._download_file(model_file)
+        app.logger.info(f"loading model from {model_file}")
+        with open(f'{self.model_dir}/{model_file}') as json_file:
+            json_config = json_file.read()
+        # TODO: fiture out what to do with this if there is not custom objects
+        model = keras.models.model_from_json(json_config,
+                                             custom_objects={'AttentionLayer': t2.AttentionLayer})
+
+        self._download_file(weights_file)
+        app.logger.info(f"loading model weights from {weights_file}")
+        model.load_weights(f'{self.model_dir}/{weights_file}')
+
+        return model
 
     def load_tokenizer(self, tokenizer_file: str):
-        pass
+        self._download_file(tokenizer_file)
+        app.logger.info(f"loading tokenizer from {tokenizer_file}")
+        with open(f'{self.model_dir}/{tokenizer_file}', 'rb') as file:
+            tokenizer = pickle.load(file)
+        return tokenizer
 
+    def get_config(self, name, version):
+        json_file = Classifier.get_config_filename(name, version)
+        return self._download_file(json_file)
 
 
 class Classifier(object):
@@ -114,21 +149,20 @@ class Classifier(object):
     # TODO: dynamically load padding as part of preprocessing
     def pad_text(self, text: str):
         s = self.tokenizer.texts_to_sequences(text)
-        logger.debug(f's: {s}')
+        app.logger.debug(f's: {s}')
         sequence_padded = sequence.pad_sequences(s,
                                                  maxlen=self.max_features,
                                                  padding='post',
                                                  truncating='post')
-        logger.debug(f'padded x: {sequence_padded}')
+        app.logger.debug(f'padded x: {sequence_padded}')
         return sequence_padded
 
     @staticmethod
     def get_config_filename(name: str, version: str):
         return f'{name}-{version}.json'
 
-
     @staticmethod
-    def from_json(json_file: str, loader=LocalModelLoader()):
+    def from_json(json_file: str, loader: Loader):
         """
         Recreates a model based on json configuration
 
@@ -142,7 +176,7 @@ class Classifier(object):
 
         config = json.loads(config_str)
 
-        logger.debug(f"json_config {pprint(config)}")
+        app.logger.debug(f"json_config {pprint(config)}")
 
         name = config["name"]
         version = config["version"]
@@ -164,20 +198,20 @@ class Classifier(object):
 
     def predict(self, text):
         # TODO: implement later
-        logger.debug(f"Preprocessing text [{text}]")
+        app.logger.debug(f"Preprocessing text [{text}]")
         text_preprocessed = self.preprocessor.normalize_text(text)
-        logger.debug(f"Preprocessed text [{text_preprocessed}]")
+        app.logger.debug(f"Preprocessed text [{text_preprocessed}]")
 
         # TODO: figure refactor out feaure encoder
         text_encoded = self.pad_text([text_preprocessed])
         # text_encoded = self.feature_encoder.encode(text_preprocessed)
-        logger.debug(f"Encoded text [{text_preprocessed}]")
+        app.logger.debug(f"Encoded text [{text_preprocessed}]")
 
         y_raw = self.model.predict(text_encoded)
-        logger.debug(f"y_raw [{y_raw}]")
+        app.logger.debug(f"y_raw [{y_raw}]")
 
         y_unencoded = self.label_encoder.unencode(y_raw)[0]
-        logger.debug(f"y_unencoded [{y_unencoded}]")
+        app.logger.debug(f"y_unencoded [{y_unencoded}]")
 
         return y_unencoded, y_raw, text_preprocessed, text_encoded
 
@@ -227,26 +261,26 @@ class ModelFactory(object):
         model = None
         try:
             model = ModelFactory._model_cache.get(name, version)
-            logger.info(f"got {Classifier.get_key(name, version)} from cache")
+            app.logger.info(f"got {Classifier.get_key(name, version)} from cache")
         except Exception as e:
-            logger.info(str(e))
+            app.logger.info(str(e))
         finally:
             if not model:
                 # TOOD: figure out how to change behavior using some type of inheritance
-                logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
+                app.logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
 
                 # dynamically create loader based configuration
                 loader_module = app.config["MODEL_LOADER_MODULE"]
                 loader_class = app.config["MODEL_LOADER_CLASS"]
-                logger.debug(f"Creating loader from {loader_module}.{loader_class}")
+                app.logger.info(f"Creating loader from {loader_module}.{loader_class}")
                 pclass_ = getattr(importlib.import_module(loader_module), loader_class)
                 loader = pclass_()
 
                 json_file = loader.get_config(name, version)
-                logger.debug(f"model_config_json {json_file}")
+                app.logger.debug(f"model_config_json {json_file}")
 
-                model = Classifier.from_json(json_file)
-                logger.debug(f'Finished loading model {model}')
+                model = Classifier.from_json(json_file, loader)
+                app.logger.debug(f'Finished loading model {model}')
                 if model:
                     ModelFactory._model_cache.put(model)
 
@@ -255,5 +289,3 @@ class ModelFactory(object):
     @staticmethod
     def put(model: Classifier):
         ModelFactory._model_cache.put(model)
-
-

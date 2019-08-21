@@ -7,12 +7,13 @@ services:
             args:
                 - version=1.0
                 - project_id=sb-capstone-250223
-                - google_application_credentials=/home/reviews/credentials/gcp-keys.json
-                - model_loader_class=LocalModelLoader
+                - google_application_credentials=/home/reviews/credentials/gcp-key.json
+                - gcp_bucket_name=sb-capstone-bucket
+                - model_loader_class=GCPModelLoader
         ports:
             - "5000:5000"
-        volumes:
-            # bind mount current directory
-            - ./:/home/reviews
+#        volumes:
+#            # bind mount current directory
+#            - ./:/home/reviews
         image: capstone-service:latest
 
