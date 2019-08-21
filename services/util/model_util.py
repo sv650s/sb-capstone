@@ -12,8 +12,64 @@ import logging
 from os import path
 import json
 from pprint import pprint
+import util.gcp_file_util as gu
 
 logger = logging.getLogger(__name__)
+
+class Loader(object):
+
+    def load_model(self, model_file: str, weights_file: str = None):
+        pass
+
+    def load_tokenizer(self, tokenizer_file: str):
+        pass
+
+    # TODO: dynamically load this
+    def load_preprocessor(self, module: str, cls: str):
+        logger.info(f"loading preprocessor from {module}.{cls}")
+        pclass_ = getattr(importlib.import_module(module), cls)
+        return pclass_()
+
+    def get_config(self, name, version):
+        pass
+
+
+
+class LocalModelLoader(Loader):
+
+    def load_tokenizer(self, tokenizer_path: str):
+        logger.info(f"loading tokenizer from {tokenizer_path}")
+        with open(f'{app.config["LOCAL_MODEL_DIR"]}/{tokenizer_path}', 'rb') as file:
+            tokenizer = pickle.load(file)
+        return tokenizer
+
+    def load_model(self, model_file: str, weights_file: str = None):
+        logger.info(f"loading model from {model_file}")
+        with open(f'{app.config["LOCAL_MODEL_DIR"]}/{model_file}') as json_file:
+            json_config = json_file.read()
+        model = keras.models.model_from_json(json_config,
+                                             custom_objects={'AttentionLayer': t2.AttentionLayer})
+        logger.info(f"loading model weights from {weights_file}")
+        model.load_weights(f'{app.config["LOCAL_MODEL_DIR"]}/{weights_file}')
+
+        return model
+
+    def get_config(self, name, version):
+        # TOOD: figure out how to change behavior using some type of inheritance
+        logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
+        json_file = f'{app.config["MODEL_CONFIG_DIR"]}/{Classifier.get_config_filename(name, version)}'
+        logger.debug(f"config json_file {json_file}")
+        return json_file
+
+
+class GCPModelLoader(Loader):
+
+    def load_model(self, model_file: str, weights_file: str = None):
+        pass
+
+    def load_tokenizer(self, tokenizer_file: str):
+        pass
+
 
 
 class Classifier(object):
@@ -72,7 +128,7 @@ class Classifier(object):
 
 
     @staticmethod
-    def from_json(json_file: str):
+    def from_json(json_file: str, loader=LocalModelLoader()):
         """
         Recreates a model based on json configuration
 
@@ -91,29 +147,16 @@ class Classifier(object):
         name = config["name"]
         version = config["version"]
 
-        model_json = f'{app.config["MODEL_DIR"]}/{config["model"]}'
-        model_weights_json = f'{app.config["MODEL_DIR"]}/{config["weights"]}'
+        model_json = config["model"]
+        model_weights_json = config["weights"]
+        model = loader.load_model(model_json, model_weights_json)
 
-        logger.info(f"loading model from {model_json}")
-        with open(model_json) as json_file:
-            json_config = json_file.read()
-        model = keras.models.model_from_json(json_config,
-                                             custom_objects={'AttentionLayer': t2.AttentionLayer})
-        logger.info(f"loading model weights from {model_weights_json}")
-        model.load_weights(model_weights_json)
-
-        tokenizer_path = f'{app.config["MODEL_DIR"]}/{config["tokenizer"]}'
-        logger.info(f"loading tokenizer from {tokenizer_path}")
-        with open(tokenizer_path, 'rb') as file:
-            tokenizer = pickle.load(file)
+        tokenizer_path = config["tokenizer"]
+        tokenizer = loader.load_tokenizer(tokenizer_path)
 
         preprocessor_module = config['preprocessor_module']
         preprocessor_class = config['preprocessor_class']
-        logger.info(f"loading preprocessor from {preprocessor_module}.{preprocessor_class}")
-        # pmodule = __import__(preprocessor_module)
-        # pclass_ = getattr(pmodule, preprocessor_class)
-        pclass_ = getattr(importlib.import_module(preprocessor_module), preprocessor_class)
-        preprocessor = pclass_()
+        preprocessor = loader.load_preprocessor(preprocessor_module, preprocessor_class)
 
         classifier = Classifier(name, version, model, tokenizer, preprocessor, app.config['MAX_FEATURES'])
 
@@ -169,7 +212,7 @@ class ModelCache(object):
         return self.model_map[Classifier.get_key(model_name, model_version)]
 
 
-class FileModelFactory(object):
+class ModelFactory(object):
     # map that stores all models and associated files
     _model_cache = ModelCache()
 
@@ -183,7 +226,7 @@ class FileModelFactory(object):
         """
         model = None
         try:
-            model = FileModelFactory._model_cache.get(name, version)
+            model = ModelFactory._model_cache.get(name, version)
             logger.info(f"got {Classifier.get_key(name, version)} from cache")
         except Exception as e:
             logger.info(str(e))
@@ -191,23 +234,26 @@ class FileModelFactory(object):
             if not model:
                 # TOOD: figure out how to change behavior using some type of inheritance
                 logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
-                json_file = f'{app.config["MODEL_CONFIG_DIR"]}/{Classifier.get_config_filename(name, version)}'
+
+                # dynamically create loader based configuration
+                loader_module = app.config["MODEL_LOADER_MODULE"]
+                loader_class = app.config["MODEL_LOADER_CLASS"]
+                logger.debug(f"Creating loader from {loader_module}.{loader_class}")
+                pclass_ = getattr(importlib.import_module(loader_module), loader_class)
+                loader = pclass_()
+
+                json_file = loader.get_config(name, version)
                 logger.debug(f"model_config_json {json_file}")
+
                 model = Classifier.from_json(json_file)
                 logger.debug(f'Finished loading model {model}')
                 if model:
-                    FileModelFactory._model_cache.put(model)
+                    ModelFactory._model_cache.put(model)
 
         return model
 
     @staticmethod
     def put(model: Classifier):
-        FileModelFactory._model_cache.put(model)
+        ModelFactory._model_cache.put(model)
 
-
-class GCPModelFactory(FileModelFactory):
-
-    @staticmethod
-    def get_model(name: str, version='latest'):
-        return FileModelFactory.get_model(name, version)
 

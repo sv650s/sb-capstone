@@ -11,8 +11,9 @@ from datetime import datetime
 import json
 import tensorflow as tf
 from config import Config
-from util.model_util import FileModelFactory
+from util.model_util import ModelFactory
 from logging.config import dictConfig
+import importlib
 
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 
@@ -78,6 +79,10 @@ class PredictionHistory(db.Model):
 app.logger.info("creating database...")
 db.create_all()
 
+def get_factory():
+    # return getattr(importlib.import_module(app.config['MODEL_FACTORY_MODULE']), app.config['MODEL_FACTORY_CLASS'])
+    return ModelFactory
+
 
 # Create a URL route in our application for "/"
 @app.route('/')
@@ -101,7 +106,7 @@ def predict_reviews():
     truth = request.args.get('truth')
 
     # TODO: un-hard code this - get this from the URL
-    classifier = FileModelFactory.get_model('GRU', 'v1.0')
+    classifier = get_factory().get_model('GRU', 'v1.0')
     if classifier:
         y_unencoded, y_raw, text_preprocessed, text_encoded = classifier.predict(text)
         y_dict = convert_predictions_to_dict(y_raw.ravel())

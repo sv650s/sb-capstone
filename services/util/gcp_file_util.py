@@ -1,5 +1,6 @@
 from google.cloud import storage
 import logging
+from flask import current_app
 
 
 logger = logging.getLogger(__name__)
