@@ -269,6 +269,20 @@ class ModelCache(object):
         """
         return len(self.model_map)
 
+    def keys(self):
+        """
+        returns list of keys in our cache
+        :return:
+        """
+        return list(self.model_map.keys())
+
+    def clear(self):
+        """
+        clears the cache
+        :return:
+        """
+        self.model_map.clear()
+
 
 class ModelFactory(object):
     # map that stores all models and associated files
@@ -314,3 +328,18 @@ class ModelFactory(object):
     @staticmethod
     def put(model: Classifier):
         ModelFactory._model_cache.put(model)
+
+
+    @staticmethod
+    def clear():
+        app.logger.info("clearning model cache")
+        ModelFactory._model_cache.clear()
+        app.logger.info(f"cache size after clearing :{ModelFactory._model_cache.size()}")
+
+    @staticmethod
+    def model_list():
+        """
+        returns a list of keys stored in the cache
+        :return:
+        """
+        return list(ModelFactory._model_cache.keys())

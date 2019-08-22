@@ -82,6 +82,15 @@ def get_factory():
     return ModelFactory
 
 
+def get_cache_response():
+    model_names = get_factory().model_list()
+    json_reponse = render_template('response-cache.json',
+                                   status = "SUCCESS",
+                                   timestamp = datetime.now().strftime(TIMESTAMP),
+                                   size = len(model_names),
+                                   model_names = json.dumps(model_names))
+    return json_reponse
+
 # Create a URL route in our application for "/"
 @app.route('/')
 def home():
@@ -93,6 +102,23 @@ def home():
     """
     return f"Welcome to Capstone Service - Version {app.config['VERSION']}!\n"
 
+@app.route('/models/api/v1.0/clear_cache', methods=['PUT'])
+def clear_models():
+    """
+    Reset and clear all cached models
+    :return:
+    """
+    get_factory().clear()
+    return get_cache_response()
+
+@app.route('/models/api/v1.0/cache', methods=['GET'])
+def cache():
+    """
+    Reset and clear all cached models
+    :return:
+    """
+    model_names = get_factory().model_list()
+    return get_cache_response()
 
 @app.route('/models/api/v1.0/gru', methods=['POST'])
 def predict_reviews():
