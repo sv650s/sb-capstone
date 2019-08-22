@@ -73,6 +73,8 @@ init() {
     fi
 
 
+    gsutil cp models/* gs://${BUCKET_NAME}
+    gsutil cp config/* gs://${BUCKET_NAME}
 }
 
 
