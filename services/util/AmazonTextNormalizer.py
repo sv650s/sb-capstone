@@ -20,7 +20,7 @@ STOP_WORDS_TO_REMOVE = [
 ]
 
 
-class AmazonTextPreprocessor:
+class AmazonTextNormalizer:
 
     def __init__(self,
                  stop_word_remove_list=STOP_WORDS_TO_REMOVE,

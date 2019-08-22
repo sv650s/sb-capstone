@@ -18,9 +18,10 @@ import util.gcp_file_util as gu
 # logger = logging.getLogger(__name__)
 
 
-class Loader(object):
 
-    def load_model(self, model_file: str, weights_file: str = None):
+class ModelLoader(object):
+
+    def load_model(self, model_file: str, weights_file: str = None, custom_objects = None):
         pass
 
     def load_tokenizer(self, tokenizer_file: str):
@@ -35,8 +36,21 @@ class Loader(object):
     def get_config(self, filename):
         pass
 
+    @staticmethod
+    def get_custom_objects(d: dict):
+        """
+        Converts a dictionary of string to custom object used for load_model function
 
-class LocalModelLoader(Loader):
+        Values in the dictionary will be dynamically converted into the class representation
+        """
+        ret_d = {}
+        for k, v in d.items():
+            ret_d[k] = getattr(importlib.import_module(".".join(v.split(".")[:-1])), v.split(".")[-1])
+        return ret_d
+
+
+class LocalModelLoader(ModelLoader):
+    # TODO: make loaders ignositic of flask app - somehow pass in the model dir dynamically
 
     def load_tokenizer(self, tokenizer_file: str):
         app.logger.info(f"loading tokenizer from {tokenizer_file}")
@@ -44,12 +58,12 @@ class LocalModelLoader(Loader):
             tokenizer = pickle.load(file)
         return tokenizer
 
-    def load_model(self, model_file: str, weights_file: str = None):
+    def load_model(self, model_file: str, weights_file: str = None, custom_objects = None):
         app.logger.info(f"loading model from {model_file}")
         with open(f'{app.config["LOCAL_MODEL_DIR"]}/{model_file}') as json_file:
             json_config = json_file.read()
         model = keras.models.model_from_json(json_config,
-                                             custom_objects={'AttentionLayer': t2.AttentionLayer})
+                                             custom_objects=custom_objects)
         app.logger.info(f"loading model weights from {weights_file}")
         model.load_weights(f'{app.config["LOCAL_MODEL_DIR"]}/{weights_file}')
 
@@ -61,7 +75,7 @@ class LocalModelLoader(Loader):
         return json_file
 
 
-class GCPModelLoader(Loader):
+class GCPModelLoader(ModelLoader):
 
     def __init__(self):
         super()
@@ -77,15 +91,14 @@ class GCPModelLoader(Loader):
         return store_path
 
 
-    def load_model(self, model_file: str, weights_file: str = None):
+    def load_model(self, model_file: str, weights_file: str, custom_objects: dict = None):
 
         self._download_file(model_file)
         app.logger.info(f"loading model from {model_file}")
         with open(f'{self.model_dir}/{model_file}') as json_file:
             json_config = json_file.read()
-        # TODO: fiture out what to do with this if there is not custom objects
         model = keras.models.model_from_json(json_config,
-                                             custom_objects={'AttentionLayer': t2.AttentionLayer})
+                                             custom_objects=custom_objects)
 
         self._download_file(weights_file)
         app.logger.info(f"loading model weights from {weights_file}")
@@ -159,7 +172,7 @@ class Classifier(object):
         return f'{name}-{version}.json'
 
     @staticmethod
-    def from_json(json_file: str, loader: Loader):
+    def from_json(json_file: str, model_loader: ModelLoader):
         """
         Recreates a model based on json configuration
 
@@ -180,21 +193,28 @@ class Classifier(object):
 
         model_json = config["model"]
         model_weights_json = config["weights"]
-        model = loader.load_model(model_json, model_weights_json)
+        model = model_loader.load_model(model_json, model_weights_json, ModelLoader.get_custom_objects(config["custom_objects"]))
 
         tokenizer_path = config["tokenizer"]
-        tokenizer = loader.load_tokenizer(tokenizer_path)
+        tokenizer = model_loader.load_tokenizer(tokenizer_path)
 
-        preprocessor_module = config['preprocessor_module']
-        preprocessor_class = config['preprocessor_class']
-        preprocessor = loader.load_preprocessor(preprocessor_module, preprocessor_class)
+        preprocessor_module = ".".join(config['preprocessor'].split(".")[:-1])
+        preprocessor_class = config['preprocessor'].split(".")[-1]
+        preprocessor = model_loader.load_preprocessor(preprocessor_module, preprocessor_class)
 
         classifier = Classifier(name, version, model, tokenizer, preprocessor, app.config['MAX_FEATURES'])
 
         return classifier
 
     def predict(self, text):
-        # TODO: implement later
+        """
+        does the follwing:
+        1. preprocess text
+        2. padding
+        3. calls predict on the model
+        :param text:
+        :return:
+        """
         app.logger.debug(f"Preprocessing text [{text}]")
         text_preprocessed = self.preprocessor.normalize_text(text)
         app.logger.debug(f"Preprocessed text [{text_preprocessed}]")
@@ -242,6 +262,13 @@ class ModelCache(object):
         """
         return self.model_map[Classifier.get_key(model_name, model_version)]
 
+    def size(self):
+        """
+        return number of items in the cache
+        :return:
+        """
+        return len(self.model_map)
+
 
 class ModelFactory(object):
     # map that stores all models and associated files
@@ -271,6 +298,7 @@ class ModelFactory(object):
                 loader_class = app.config["MODEL_LOADER_CLASS"]
                 app.logger.info(f"Creating loader from {loader_module}.{loader_class}")
                 pclass_ = getattr(importlib.import_module(loader_module), loader_class)
+                # TODO: dynamically load parameters from config
                 loader = pclass_()
 
                 json_file = loader.get_config(Classifier.get_config_filename(name, version))

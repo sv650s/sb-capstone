@@ -11,7 +11,7 @@
 # To view your application in the web browser run:
 #  $ gcloud app browse
 
-source set_vars.sh
+source gcp_vars.sh
 
 usage() {
     echo "Usage: $0 [-disu] [-t <image_id>] [version]"

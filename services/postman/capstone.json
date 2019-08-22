@@ -1,0 +1,115 @@
+{
+	"info": {
+		"_postman_id": "b666976e-a386-4317-a624-8e406e808b70",
+		"name": "SB Capstone",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "get history",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "marmoset:5000/history/api/v1.0",
+					"host": [
+						"marmoset"
+					],
+					"port": "5000",
+					"path": [
+						"history",
+						"api",
+						"v1.0"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "predict-success",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f26c62bd-5eb0-4441-8e45-0afad9d8a703",
+						"exec": [
+							"let jsonData = pm.response.json()",
+							"console.log('JSON response', jsonData)",
+							"",
+							"",
+							"pm.test(\"Response code is 200\", function () { pm.response.to.have.status(200); });",
+							"",
+							"pm.test(\"Status is SUCCESS\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql(\"SUCCESS\");",
+							"});",
+							"",
+							"pm.test(\"input.raw is same as input\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.input.raw).to.eql(pm.variables.get(\"review\"));",
+							"});",
+							"",
+							"pm.test(\"truth is same as input\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.input.truth).to.eql(pm.variables.get(\"truth\"));",
+							"});",
+							"",
+							"pm.test(\"feature length is 200\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.input.encoded.length).to.eql(300);",
+							"});",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "faf8c9ed-bc15-4b85-ab4e-3cc899b4301c",
+						"exec": [
+							"pm.environment.set(\"review\", \"hi whats your name\");",
+							"pm.environment.set(\"truth\", \"2\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "marmoset:5000/models/api/v1.0/gru?review={{review}}&truth={{truth}}",
+					"host": [
+						"marmoset"
+					],
+					"port": "5000",
+					"path": [
+						"models",
+						"api",
+						"v1.0",
+						"gru"
+					],
+					"query": [
+						{
+							"key": "review",
+							"value": "{{review}}"
+						},
+						{
+							"key": "truth",
+							"value": "{{truth}}"
+						},
+						{
+							"key": "",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

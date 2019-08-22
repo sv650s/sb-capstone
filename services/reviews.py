@@ -17,8 +17,6 @@ import importlib
 
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 
-LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
-
 # TODO: error handling
 # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-vii-error-handling
 
@@ -27,7 +25,7 @@ LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(me
 dictConfig({
     'version': 1,
     'formatters': {'default': {
-        'format': '[%(asctime)s] %(name)s.%(funcName)s[%(lineno)d] %(levelname)s: %(message)s',
+        'format': '[%(asctime)s] [%(levelname)s] %(name)s.%(funcName)s[%(lineno)d]: %(message)s',
     }},
     'handlers': {'wsgi': {
         'class': 'logging.StreamHandler',

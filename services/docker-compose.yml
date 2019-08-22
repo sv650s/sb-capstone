@@ -12,8 +12,5 @@ services:
                 - model_loader_class=GCPModelLoader
         ports:
             - "5000:5000"
-#        volumes:
-#            # bind mount current directory
-#            - ./:/home/reviews
         image: capstone-service:latest
 

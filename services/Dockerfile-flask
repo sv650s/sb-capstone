@@ -29,8 +29,6 @@ ENV MODEL_LOADER_CLASS $model_loader_class
 
 COPY util ./util
 COPY templates ./templates
-# COPY models ./models
-# COPY config ./config
 COPY credentials ./credentials
 COPY reviews.py config.py run_service.sh ./
 RUN chmod +x run_service.sh
