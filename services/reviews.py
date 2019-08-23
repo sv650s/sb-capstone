@@ -72,10 +72,10 @@ class PredictionHistory(db.Model):
     def __str__(self):
         return self.to_json()
 
-# app.logger.info("creating database...")
-# db.create_all()
-# db.session.commit()
-# app.logger.info("finished creating database...")
+app.logger.info("creating database...")
+db.create_all()
+db.session.commit()
+app.logger.info("finished creating database...")
 
 def get_factory():
     # return getattr(importlib.import_module(app.config['MODEL_FACTORY_MODULE']), app.config['MODEL_FACTORY_CLASS'])

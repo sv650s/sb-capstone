@@ -6,11 +6,12 @@ services:
             dockerfile: Dockerfile-flask
             args:
                 - version=1.0
-                - project_id=sb-capstone-250223
+                - project_id=${PROJECT_ID}
                 - google_application_credentials=/home/reviews/credentials/gcp-key.json
                 - gcp_bucket_name=sb-capstone-bucket
                 - model_loader_class=GCPModelLoader
-                - db_ip=35.247.24.229
+                - db_ip=${DB_IP}
+#                - db_ip=35.247.24.229
         ports:
             - "5000:5000"
         volumes:

@@ -6,10 +6,8 @@ class Config(object):
     LOCAL_MODEL_DIR = 'models'
     MODEL_CACHE_DIR = '/tmp'
     MAX_FEATURES = 200
-    # TODO: get SSL working
-    # SQLALCHEMY_DATABASE_URI = f'mysql://root@{os.environ.get("DB_IP")}/capstone-db?' \
-    #     'ssl_key=credentials/client-key.pem&ssl_cert=credentials/client-cert.pem'
-    SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://root:freel00k@{os.environ.get("DB_IP")}/capstonedb'
+    SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://root:freel00k@{os.environ.get("DB_IP")}/capstonedb?' \
+        'ssl_key=credentials/client-key.pem&ssl_cert=credentials/client-cert.pem'
     VERSION = os.environ.get("VERSION", default="latest")
     PROJECT_ID = os.environ.get("PROJECT_ID")
     BUCKET_NAME = os.environ.get("BUCKET_NAME")
