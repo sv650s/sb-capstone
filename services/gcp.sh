@@ -14,30 +14,45 @@
 source gcp_vars.sh
 
 usage() {
-    echo "Usage: $0 [-disu] [-t <image_id>] [version]"
-    echo "     -d - deploy container. This should be runned after you have pushed a container in -t"
-    echo "     -i - initialize project"
-    echo "     -s - shutdown project"
-    echo "     -t - tag docker image and upload <image_id>"
-    echo "     -u - update container for deployment"
+    echo "Usage: $0 <cmd> [cmd params]"
+    echo "Available cmd's"
+    echo "     copy - copy model files to file bucket ${BUCKET_NAME}"
+    echo "     create_db - creates database"
+    echo "     deploy - deploy container. This should be runned after you have pushed a container in -t"
+    echo "     delete_db - deletes database"
+    echo "     init - initialize project"
+    echo "     shutdown - shutdown project"
+    echo "     tag - tag docker image and upload. Requires additional <version> <image_id>"
+    echo "     update - update container for deployment"
 }
 
 
 version="v1"
-while getopts dist:u o
-do    case "$o" in
-    d)    deploy="x";;
-    i)    init="x";;
-    s)    shutdown="x";;
-    t)    tag="x" && image_id="$OPTARG";;
-    u)    update="x";;
-    [?])    usage && exit 1;;
-    esac
-done
-shift $((OPTIND-1))
+#while getopts cdist:u o
+#do    case "$o" in
+#    c)    copy="x";;
+#    d)    deploy="x";;
+#    i)    init="x";;
+#    s)    shutdown="x";;
+#    t)    tag="x" && image_id="$OPTARG";;
+#    u)    update="x";;
+#    [?])    usage && exit 1;;
+#    esac
+#done
+#shift $((OPTIND-1))
 
 if [ $# -gt 0 ]; then
-    version=$1
+    command=$1
+    if [ $# -gt 1 ]; then
+        version=$2
+    fi
+    if [ $# -gt 2 ]; then
+        image_id=$3
+    fi
+else
+    echo "ERROR: missing commaand"
+    usage
+    exit 1
 fi
 
 echo "version: $version"
@@ -73,6 +88,10 @@ init() {
     fi
 
 
+}
+
+copy() {
+    # copy model files to GCP
     gsutil cp models/* gs://${BUCKET_NAME}
     gsutil cp config/* gs://${BUCKET_NAME}
 }
@@ -144,15 +163,78 @@ create_cluster() {
 
 }
 
-if [ "x$init" == "xx" ]; then
+create_database() {
+    # reference: https://cloud.google.com/sql/docs/mysqlo/create-instance
+
+    # get my IP address
+    my_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
+
+    # create mysql database
+    # https://cloud.google.com/sql/docs/mysql/create-instance
+    echo "creating database..."
+    gcloud sql instances create ${DB_INSTANCE_NAME} --tier=${DB_MACHINE_TYPE} --region=${REGION} --authorized-networks=${my_ip}
+    if [ $? -gt 1 ]; then
+        echo "error creating database"
+    fi
+    # configure public IP for insance
+    # https://cloud.google.com/sql/docs/mysql/configure-ip
+    echo "setting username password..."
+    gcloud sql users set-password root % --instance=${DB_INSTANCE_NAME} --password 'freel00k'
+    if [ $? -gt 1 ]; then
+        echo "error setting password"
+    fi
+
+    echo "configuring public ip access..."
+    gcloud sql instances patch ${DB_INSTANCE_NAME} --assign-ip
+    if [ $? -gt 1 ]; then
+        echo "error assigning IP"
+    fi
+    gcloud sql instances describe ${DB_INSTANCE_NAME}
+#    gcloud sql instances patch ${db_instance_name} --authorized-networks=${my_ip}
+
+    # configure instance to use SSL
+    echo "configuring ssl..."
+    gcloud sql instances patch ${DB_INSTANCE_NAME} --require-ssl
+    if [ $? -gt 1 ]; then
+        echo "error configuring ssl"
+    fi
+
+
+    # set compute instance to have static IP
+    # add compute instance static IP to accepted DB connection
+
+
+#   mysql -uroot -p -h 35.247.24.229 \
+#    --ssl-ca=server-ca.pem --ssl-cert=client-cert.pem \
+#    --ssl-key=client-key.pem
+
+
+}
+
+delete_database() {
+    # deletes database from GCP
+    # https://cloud.google.com/sql/docs/mysql/delete-instance
+    echo "deleting database..."
+    gcloud sql instances delete ${DB_INSTANCE_NAME}
+
+}
+
+
+if [ "x${command}" == "xcopy" ]; then
+    copy
+elif [ "x${command}" == "xcreate_db" ]; then
+    create_database
+elif [ "x${command}" == "xdelete_db" ]; then
+    delete_database
+elif [ "x${command}" == "xinit" ]; then
     init
-elif [ "x$shutdown" == "xx" ]; then
+elif [ "x${command}" == "xshutdown" ]; then
     shutdown
-elif [ "x$tag" == "xx" ]; then
+elif [ "x${command}" == "xtag" ]; then
     tag
-elif [ "x$deploy" == "xx" ]; then
+elif [ "x${command}" == "xdeploy" ]; then
     deploy
-elif [ "x$update" == "xx" ]; then
+elif [ "x${command}" == "xupdate" ]; then
     update
 fi
 

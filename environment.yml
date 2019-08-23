@@ -5,8 +5,9 @@ channels:
   - anaconda
 dependencies:
   - flask
+  - flask-restplus
   - Flask-SQLAlchemy
-  - python=3.6.8
+  - python>=3.7.0
   - autopep8
   - pandas
   - unittest2
@@ -18,7 +19,6 @@ dependencies:
   - hdf5
   - h5py
   - scikit-learn
-  - nltk
   - pyspark
   - beautifulsoup4
   - unittest2=1.1.0
@@ -38,11 +38,13 @@ dependencies:
   - pip
   - pyyaml
   - scipy
-  - cudnn
+  - pymysql
+  - mysqlclient
   - pydot
   - virtualenv
   - Werkzeug
   - pip:
     - tensorflow==2.0.0-beta1
+    - mysql-connector
 prefix: /Users/vinceluk/springboard-projects/capstone
 

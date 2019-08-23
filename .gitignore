@@ -17,6 +17,7 @@ env/
 dist/
 build/
 *.egg-info/
+*/credentials/
 
 # nltk
 nltk_data/

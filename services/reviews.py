@@ -13,7 +13,6 @@ import tensorflow as tf
 from config import Config
 from util.model_util import ModelFactory
 from logging.config import dictConfig
-import importlib
 
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 
@@ -49,7 +48,7 @@ class PredictionHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     input_raw = db.Column(db.String(255), nullable=False)
     input_preprocessed = db.Column(db.String(255), nullable=True)
-    input_encoded = db.Column(db.String(500), nullable=True)
+    input_encoded = db.Column(db.String(1024), nullable=True)
     class_expected = db.Column(db.Integer, nullable=False)
     class_predicted = db.Column(db.Integer, nullable=False)
     class_predicted_raw = db.Column(db.String(100), nullable=False)  # json of softmax output
@@ -73,9 +72,10 @@ class PredictionHistory(db.Model):
     def __str__(self):
         return self.to_json()
 
-
-app.logger.info("creating database...")
-db.create_all()
+# app.logger.info("creating database...")
+# db.create_all()
+# db.session.commit()
+# app.logger.info("finished creating database...")
 
 def get_factory():
     # return getattr(importlib.import_module(app.config['MODEL_FACTORY_MODULE']), app.config['MODEL_FACTORY_CLASS'])

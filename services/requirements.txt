@@ -1,9 +1,11 @@
 beautifulsoup4
 Flask-SQLAlchemy
-nltk
 google-cloud-storage
+mysql-connector
+nltk
 numpy
 pandas
+pymysql
 scikit-learn
 tensorflow==2.0.0b1
 Werkzeug

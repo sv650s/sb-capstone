@@ -6,7 +6,8 @@ WORKDIR /home/reviews
 
 # re-install gcc for our pip install
 COPY requirements.txt ./
-RUN apt-get install  --yes libhdf5-dev python3-all-dev && \
+RUN apt-get update && \
+    apt-get install  --yes libhdf5-dev python3-all-dev python-mysqldb libmysqlclient-dev && \
     pip3 install --upgrade pip setuptools && \
     pip3 install virtualenv && \
     pip3 install -r requirements.txt && \
@@ -18,6 +19,7 @@ ARG gcp_project_id
 ARG gcp_bucket_name
 ARG model_loader_class
 ARG google_application_credentials
+ARG db_ip
 
 ENV FLASK_APP reviews.py
 ENV VERSION $version
@@ -25,6 +27,7 @@ ENV PROJECT_ID $gcp_project_id
 ENV BUCKET_NAME $gcp_bucket_name
 ENV GOOGLE_APPLICATION_CREDENTIALS $google_application_credentials
 ENV MODEL_LOADER_CLASS $model_loader_class
+ENV DB_IP $db_ip
 
 
 COPY util ./util
