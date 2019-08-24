@@ -71,7 +71,7 @@ tag() {
 
     gcloud auth configure-docker --quiet
 
-    echo -e "pushing docker image: ${IMAGE_REPO}:$version"
+    echo -e "\npushing docker image: ${IMAGE_REPO}:$version"
     docker push ${IMAGE_REPO}:$version
 }
 
@@ -162,17 +162,22 @@ create_cluster() {
     fi
 
 
-#    echo -e "\nsetting static ip for compute instance..."
-#    gcloud compute addresses create capstone-compute-instance --region ${REGION}
-#    if [ $? -eq 1 ]; then
-#        echo -e "ERROR: requesting static ip for compute instance"
-#        exit 1
-#    fi
-#
-#    external_ip=`gcloud compute instances list | tail -1 | awk '{print $5}'`
-#    my_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
-#    echo -e "\nadding external IP $external_ip to database"
-#    gcloud sql instances patch ${DB_INSTANCE_NAME} --authorized-networks=${external_ip},${my_ip}
+    # we need to assign a static ip to our compute instance since we are accessing
+    # MySql via a public IP address and we need to allow traffic to come in from that IP
+    instance_name=`gcloud compute instances list | tail -1 | awk '{print $1}'`
+    echo -e "\nsetting static ip for compute instance ${instance_name}..."
+    gcloud compute addresses create ${instance_name} --region ${REGION}
+    if [ $? -eq 1 ]; then
+        echo -e "ERROR: requesting static ip for compute instance"
+        exit 1
+    fi
+
+    # get external IP of our instance
+    instance_external_ip=`gcloud compute instances list | tail -1 | awk '{print $5}'`
+    my_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
+    echo -e "\nadding external IP $external_ip to database"
+    gcloud sql instances patch ${DB_INSTANCE_NAME} --authorized-networks=${instance_external_ip},${my_ip}
+
 
     kubectl get service
 
@@ -187,11 +192,11 @@ update_image() {
     kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_REPO}:$version
 }
 
-create_cluster() {
-
-    gcloud container clusters create capstone-cluster --num-nodes=1
-
-}
+#create_cluster() {
+#
+#    gcloud container clusters create ${CLUSTER_NAME} --num-nodes=1
+#
+#}
 
 create_database() {
     # reference: https://cloud.google.com/sql/docs/mysqlo/create-instance
