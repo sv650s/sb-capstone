@@ -6,6 +6,7 @@ from flask import Flask
 from flask import request, abort
 from flask import render_template, Blueprint
 from flask_sqlalchemy import SQLAlchemy
+from flask_restplus import Api, Resource, reqparse, fields
 
 from datetime import datetime
 import json
@@ -41,6 +42,8 @@ dictConfig({
 # app = Flask(__name__, template_folder="templates")
 app = Flask(__name__)
 app.config.from_object(Config)
+api = Api(app, version=app.config['VERSION'], title='Vince Capstone Service',
+          description='Classification model for reviews')
 db = SQLAlchemy(app)
 
 
@@ -72,10 +75,12 @@ class PredictionHistory(db.Model):
     def __str__(self):
         return self.to_json()
 
+
 app.logger.info("creating database...")
 db.create_all()
 db.session.commit()
 app.logger.info("finished creating database...")
+
 
 def get_factory():
     # return getattr(importlib.import_module(app.config['MODEL_FACTORY_MODULE']), app.config['MODEL_FACTORY_CLASS'])
@@ -85,24 +90,62 @@ def get_factory():
 def get_cache_response():
     model_names = get_factory().model_list()
     json_reponse = render_template('response-cache.json',
-                                   status = "SUCCESS",
-                                   timestamp = datetime.now().strftime(TIMESTAMP),
-                                   size = len(model_names),
-                                   model_names = json.dumps(model_names))
+                                   status="SUCCESS",
+                                   timestamp=datetime.now().strftime(TIMESTAMP),
+                                   size=len(model_names),
+                                   model_names=json.dumps(model_names))
     return json_reponse
 
+
 # Create a URL route in our application for "/"
-@app.route('/')
-def home():
-    """
-    This function just responds to the browser ULR
-    localhost:5000/
+# @api.route('/')
+# def home():
+#     """
+#     This function just responds to the browser ULR
+#     localhost:5000/
+#
+#     :return:        the rendered template 'home.html'
+#     """
+#     return f"Welcome to Capstone Service - Version {app.config['VERSION']}!\n"
 
-    :return:        the rendered template 'home.html'
-    """
-    return f"Welcome to Capstone Service - Version {app.config['VERSION']}!\n"
+@api.route('/model/cache', endpoint='model')
+class ModelCache(Resource):
 
-@app.route('/models/api/v1.0/clear_cache', methods=['PUT'])
+    def delete(self):
+        return clear_models(), 200
+
+    def get(self):
+        return cache(), 200
+
+
+
+
+@api.route('/model/<string:model>/<string:version>')
+@api.doc(params={'model': 'model name - ie, GRU',
+                 'version': 'model version - ie, v1.0'})
+class ModelPrediction(Resource):
+
+    # input model for predict function
+    predict_model = api.model("predict", {
+        "review": fields.String(title="Review", required=True),
+        "product_rating": fields.Integer(title="class rating - 1 to 5")
+    })
+
+    @api.expect(predict_model)
+    def post(self, model, version):
+        input = api.payload
+        app.logger.debug(f'input {input}')
+        return predict_reviews(model, version, input['review'], input['product_rating']), 200
+
+
+@api.route('/prediction/history')
+class ModelHistory(Resource):
+
+    def get(self):
+        return get_history(), 200
+
+
+# @api.route('/models/api/v1.0/clear_cache', methods=['PUT'])
 def clear_models():
     """
     Reset and clear all cached models
@@ -111,7 +154,8 @@ def clear_models():
     get_factory().clear()
     return get_cache_response()
 
-@app.route('/models/api/v1.0/cache', methods=['GET'])
+
+# @api.route('/models/api/v1.0/cache', methods=['GET'])
 def cache():
     """
     Reset and clear all cached models
@@ -120,17 +164,15 @@ def cache():
     model_names = get_factory().model_list()
     return get_cache_response()
 
-@app.route('/models/api/v1.0/gru', methods=['POST'])
-def predict_reviews():
-    if not request.args or not 'review' in request.args or not 'truth' in request.args:
-        abort(400)
+
+# @api.route('/models/api/v1.0/gru', methods=['POST'])
+def predict_reviews(model, version, text, truth):
+    # if not request.args or not 'review' in request.args or not 'truth' in request.args:
+    #     abort(400)
     app.logger.info(f'Tensorflow version: {tf.__version__}')
 
-    text = request.args.get('review')
-    truth = request.args.get('truth')
-
     # TODO: un-hard code this - get this from the URL
-    classifier = get_factory().get_model('GRU', 'v1.0')
+    classifier = get_factory().get_model(model, version)
     if classifier:
         y_unencoded, y_raw, text_preprocessed, text_encoded = classifier.predict(text)
         y_dict = convert_predictions_to_dict(y_raw.ravel())
@@ -162,20 +204,19 @@ def predict_reviews():
     return json_response
 
 
-@app.route('/history/api/v1.0', methods=['GET'])
+# @api.route('/history/api/v1.0', methods=['GET'])
 def get_history():
     results = PredictionHistory.query.all()
 
     app.logger.debug(type(results))
     resp = '[ ' + ", ".join(str(result) for result in results) + " ]"
 
-
     # return results[0].to_json()
     return resp
 
+
 def convert_predictions_to_dict(d: list):
     return {str(i + 1): str(d[i]) for i in range(len(d))}
-
 
 
 # If we're running in stand alone mode, run the application

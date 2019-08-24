@@ -1,4 +1,5 @@
 beautifulsoup4
+flask-restplus
 Flask-SQLAlchemy
 google-cloud-storage
 mysql-connector

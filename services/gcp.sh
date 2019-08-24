@@ -61,6 +61,12 @@ tag() {
     # push docker container
     # https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app
     # docker build -t gcr.io/${PROJECT_ID}/hello-app:v1 .
+    if [ "x$version" == "x" -o "x$image_id" == "x" ]; then
+        echo -e "ERROR: tag requireds <version> and <image_id> parameters"
+        usage
+        exit 1
+    fi
+
     docker tag $image_id ${IMAGE_REPO}:$version
 
     gcloud auth configure-docker --quiet
