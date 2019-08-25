@@ -3,17 +3,16 @@
     "model": "{{ model }}",
     "version": "{{ version }}",
     "raw": "{{ review_raw }}",
-    "truth": {{ truth }},
+    "truth": {{ truth }}{%- if status == "SUCCESS" %},
     "preprocessed": "{{ review_preprocessed }}",
     "encoded": {{ review_encoded }}
+{%- endif %}
   },
   {%- if status == "SUCCESS" %}
-    "prediction": {
-      "star_rating": {{ rating }},
-      "raw": {{ prediction_raw }}
-    },
-  {%- else %}
-      "error_message": "{{ error_message }}",
+  "prediction": {
+    "star_rating": {{ rating }},
+    "raw": {{ prediction_raw }}
+  },
   {%- endif %}
   "status": "{{ status }}",
   "timestamp": "{{ timestamp }}"

@@ -15,6 +15,7 @@ from config import Config
 from util.model_util import ModelFactory
 from logging.config import dictConfig
 import traceback2 as traceback
+from flask_restplus import abort
 
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 
@@ -48,7 +49,7 @@ api = Api(app, version=app.config['VERSION'], title="Vince's Amazon Review Class
 db = SQLAlchemy(app)
 
 
-class PredictionHistory(db.Model):
+class Prediction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     input_raw = db.Column(db.String(255), nullable=False)
     input_preprocessed = db.Column(db.String(255), nullable=True)
@@ -100,14 +101,14 @@ def get_factory():
     return ModelFactory
 
 
-def get_cache_response():
+def get_model_cache_json():
     model_names = get_factory().model_list()
     json_reponse = render_template('response-cache.json',
                                    status="SUCCESS",
                                    timestamp=datetime.now().strftime(TIMESTAMP),
                                    size=len(model_names),
                                    model_names=json.dumps(model_names))
-    return json_reponse
+    return json.loads(json_reponse)
 
 
 @api.route('/model/cache', endpoint='model')
@@ -116,12 +117,12 @@ class ModelCache(Resource):
     @api.response(200, 'Success')
     @api.doc(description="Clear our model cache")
     def delete(self):
-        return json.loads(clear_models()), 200
+        return json.loads(clear_model_cache()), 200
 
     @api.response(200, 'Success')
     @api.doc(description="List all models in the cache")
     def get(self):
-        return json.loads(cache()), 200
+        return get_model_cache_json()
 
 
 @api.route('/predict/<string:model>/<string:version>')
@@ -136,11 +137,12 @@ class ModelPrediction(Resource):
 
     @api.expect(predict_model)
     @api.response(201, 'Success')
-    @api.response(400, 'Error with prediction')
+    @api.response(400, 'Error while predicting results')
     @api.response(404, 'Cannot find model')
     @api.doc(description="Run the provided review through our model to see it's prediction")
     # @api.marshal_with(model)
     def post(self, model, version):
+        # TODO: need to do error handling for input
         input = api.payload
         app.logger.debug(f'input {input}')
         return predict_reviews(model, version, input['review'], input['product_rating'])
@@ -152,27 +154,18 @@ class ModelHistory(Resource):
     @api.response(200, 'Success')
     @api.doc(description='Retrieves a history of predictions')
     def get(self):
-        return json.loads(get_history()), 200
+        return get_history_json()
 
 
 # @api.route('/models/api/v1.0/clear_cache', methods=['PUT'])
-def clear_models():
+def clear_model_cache():
     """
     Reset and clear all cached models
     :return:
     """
     get_factory().clear()
-    return get_cache_response()
+    return get_model_cache_json()
 
-
-# @api.route('/models/api/v1.0/cache', methods=['GET'])
-def cache():
-    """
-    Reset and clear all cached models
-    :return:
-    """
-    model_names = get_factory().model_list()
-    return get_cache_response()
 
 
 # @api.route('/models/api/v1.0/gru', methods=['POST'])
@@ -184,7 +177,7 @@ def predict_reviews(model, version, text, truth):
     # TODO: un-hard code this - get this from the URL
     classifier = get_factory().get_model(model, version)
     # json_response = None
-    history = None
+    prediction = None
     if classifier:
         try:
             y_unencoded, y_raw, text_preprocessed, text_encoded = classifier.predict(text)
@@ -192,61 +185,79 @@ def predict_reviews(model, version, text, truth):
 
             status = "SUCCESS"
             # save response to DB
-            history = PredictionHistory(input_raw=text,
-                                        input_preprocessed=text_preprocessed,
-                                        input_encoded=json.dumps(text_encoded.ravel().tolist()),
-                                        class_expected=truth,
-                                        class_predicted=y_unencoded,
-                                        class_predicted_raw=json.dumps(y_dict),
-                                        model_name=model,
-                                        model_version=version,  # get this from the URL
-                                        status=status)
-            db.session.add(history)
+            prediction = Prediction(input_raw=text,
+                                    input_preprocessed=text_preprocessed,
+                                    input_encoded=json.dumps(text_encoded.ravel().tolist()),
+                                    class_expected=truth,
+                                    class_predicted=y_unencoded,
+                                    class_predicted_raw=json.dumps(y_dict),
+                                    model_name=model,
+                                    model_version=version,  # get this from the URL
+                                    status=status)
+            db.session.add(prediction)
             db.session.commit()
 
-            json_response = history.to_json()
-
-            response_code = 201
+            json_response = prediction.to_json()
 
         except:
             error_message = traceback.format_exc()
             json_response = json.loads(render_template('response.json',
                                                        status="FAILED",
-                                                       error_message=error_message,
+                                                       error_message="Model not found",
                                                        review_raw=text,
                                                        truth=truth,
                                                        model=model,
                                                        version=version,
                                                        timestamp=datetime.now().strftime(TIMESTAMP)))
-            response_code = 400
+            abort(400, error_message, custom=json_response)
     else:
-        json_response = json.loads(render_template('response.json',
-                                                   status="FAILED",
-                                                   error_message="Model not found",
-                                                   review_raw=text,
-                                                   truth=truth,
-                                                   model=model,
-                                                   version=version,
-                                                   timestamp=datetime.now().strftime(TIMESTAMP)))
-        response_code = 404
+        template_str = render_template('response.json',
+                                       status="FAILED",
+                                       error_message="Model not found",
+                                       review_raw=text,
+                                       truth=truth,
+                                       model=model,
+                                       version=version,
+                                       timestamp=datetime.now().strftime(TIMESTAMP))
+        app.logger.debug(f'template_str {template_str}')
+        json_response = json.loads(template_str)
+        app.logger.debug(f'response {json_response}')
+        abort(404, 'model not found', custom=json_response)
 
     app.logger.debug(json_response)
 
-    return json_response, response_code
+    return json_response, 201
 
 
 # @api.route('/history/api/v1.0', methods=['GET'])
-def get_history():
-    results = PredictionHistory.query.all()
+def get_history_json():
+    """
+    returns json representation of history object
+    format will be:
+    [
+        prediction1 json,
+        prediction2 json,
+        .
+        .
+    ]
+    :return:
+    """
+    results = Prediction.query.all()
 
     app.logger.debug(type(results))
     resp = '[ ' + ", ".join(str(result) for result in results) + " ]"
 
     # return results[0].to_json()
-    return resp
+    return json.loads(resp)
 
 
 def convert_predictions_to_dict(d: list):
+    """
+    Converts the raw list of floats from softmax function into a dictionary
+    values for dictionary have to be converted to string in order for it to be convertible to json
+    :param d:
+    :return:
+    """
     return {str(i + 1): str(d[i]) for i in range(len(d))}
 
 
