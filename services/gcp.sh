@@ -16,30 +16,23 @@ source gcp_vars.sh
 usage() {
     echo "Usage: $0 <cmd> [cmd params]"
     echo "Available cmd's"
-    echo "     copy - copy model files to file bucket ${BUCKET_NAME}"
-    echo "     create_db - creates database"
-    echo "     create_cluster - deploy container. This should be runned after you have pushed a container in -t"
-    echo "     delete_db - deletes database"
-    echo "     init - initialize project"
-    echo "     shutdown_cluster - shutdown project"
-    echo "     tag - tag docker image and upload. Requires additional <version> <image_id>"
-    echo "     update_image - update container for deployment"
+    echo "     cluster_create - create a k8 cluster and deploy container to this cluster. The container needs to exist. You should run <image_upload> job before"
+    echo "     cluster_shutdown - shutdown project"
+    echo "     db_create - creates database. You only need to call this once at the begging of the project"
+    echo "     db_delete - deletes database"
+    echo "     db_shutdown - shutdown database"
+    echo "     db_start - start already instantiated database"
+    echo "     files_copy - copy model files to file bucket ${BUCKET_NAME}"
+    echo "     image_delete - delete all images from our GCP container registry"
+    echo "     image_deploy - specify a new version of container to deploy to k8 cluster"
+    echo "     image_upload - tag docker image and upload. Requires additional <version to tag image> <docker image id>"
+    echo "     setup - initialize project"
+    echo "     teardown - opposite of setup - will teardown or shutdown gcp resources for the project"
+    echo "              currently, this does the following: db shutdown, file bucket delete, shutdown k8 cluster"
 }
 
 
-version="v1"
-#while getopts cdist:u o
-#do    case "$o" in
-#    c)    copy="x";;
-#    d)    create_cluster="x";;
-#    i)    init="x";;
-#    s)    shutdown_cluster="x";;
-#    t)    tag="x" && image_id="$OPTARG";;
-#    u)    update_image="x";;
-#    [?])    usage && exit 1;;
-#    esac
-#done
-#shift $((OPTIND-1))
+version="latest"
 
 if [ $# -gt 0 ]; then
     command=$1
@@ -57,26 +50,26 @@ fi
 
 echo "version: $version"
 
-tag() {
+image_upload() {
     # push docker container
     # https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app
     # docker build -t gcr.io/${PROJECT_ID}/hello-app:v1 .
     if [ "x$version" == "x" -o "x$image_id" == "x" ]; then
-        echo -e "ERROR: tag requireds <version> and <image_id> parameters"
+        echo -e "ERROR: image_upload requireds <version> and <image_id> parameters"
         usage
         exit 1
     fi
 
-    docker tag $image_id ${IMAGE_REPO}:$version
+    docker tag $image_id ${IMAGE_NAME}:$version
 
     gcloud auth configure-docker --quiet
 
-    echo -e "\npushing docker image: ${IMAGE_REPO}:$version"
-    docker push ${IMAGE_REPO}:$version
+    echo -e "\npushing docker image: ${IMAGE_NAME}:$version"
+    docker push ${IMAGE_NAME}:$version
 }
 
 
-init() {
+setup() {
     # update gcloud tools
     gcloud components update
 
@@ -84,34 +77,59 @@ init() {
     gcloud config set project ${PROJECT_ID}
     gcloud config set compute/zone ${ZONE}
 
-    gsutil ls gs://${BUCKET_NAME}
-    if [ $? -eq 1 ]; then
-        # create bucket
-        echo -e "${BUCKET_NAME} not found. Creating file bucket"
-        gsutil mb gs://${BUCKET_NAME}/
-        echo -e "set bucket read permission to public read"
-        gsutil defacl set public-read gs://${BUCKET_NAME}
-    fi
+
+    bucket_create
+    files_copy
+    db_start
 
 
 }
 
-copy() {
+teardown() {
+
+    # completely tear down the project
+    #   1. shutdown k8 cluster
+    #   2. delete file buckets
+    #   3. shutdown database
+
+    cluster_shutdown
+    bucket_delete
+    image_delete
+    db_shutdown
+
+}
+
+files_copy() {
     # copy model files to GCP
     gsutil cp models/* gs://${BUCKET_NAME}
     gsutil cp config/* gs://${BUCKET_NAME}
 }
 
-delete_bucket() {
+bucket_create() {
+    gsutil ls gs://${BUCKET_NAME}
+    if [ $? -eq 1 ]; then
+        # create bucket
+        echo -e "${BUCKET_NAME} not found. Creating file bucket"
+        gsutil mb gs://${BUCKET_NAME}/
+
+        # TODO: lock this down so it's not public
+        echo -e "set bucket read permission to public read"
+        gsutil defacl set public-read gs://${BUCKET_NAME}
+    fi
+}
+
+bucket_delete() {
 
     # tear down the GCP bucket
     echo -e "deleting storage bucket: ${BUCKET_NAME}"
-    gsutil rm -r gs://$BUCKET_NAME
+    gsutil rm -r gs://${BUCKET_NAME}
+    # this bucket is automatically created by GCP for app engine even though we don't use it
+    gsutil rm -r gs://artifacts.${PROJECT_ID}.appspot.com
 
 }
 
 
-shutdown_cluster() {
+cluster_shutdown() {
 
     echo -e "deleting service: ${DEPLOYMENT_NAME}"
     kubectl delete service ${DEPLOYMENT_NAME}
@@ -122,7 +140,7 @@ shutdown_cluster() {
 }
 
 
-create_cluster() {
+cluster_create() {
     if [ x$version == "x" ]; then
         "ERROR: missing version"
         usage
@@ -144,7 +162,7 @@ create_cluster() {
     sleep 3
 
     echo -e "\ncreating deployment: ${DEPLOYMENT_NAME}"
-    kubectl create deployment ${DEPLOYMENT_NAME} --image=${IMAGE_REPO}:$version
+    kubectl create deployment ${DEPLOYMENT_NAME} --image=${IMAGE_NAME}:$version
     if [ $? -eq 1 ]; then
         echo -e "ERROR: failed to create deployment"
         exit 1
@@ -186,19 +204,28 @@ create_cluster() {
 }
 
 # update a deployment with new image
-update_image() {
+image_deploy() {
     echo -e "Run and update the following command"
-    echo -e "kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_REPO}:$version"
-    kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_REPO}:$version
+    echo -e "kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_NAME}:$version"
+    kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_NAME}:$version
 }
 
-#create_cluster() {
-#
-#    gcloud container clusters create ${CLUSTER_NAME} --num-nodes=1
-#
-#}
 
-create_database() {
+# delete our image and all tags associated with image to clean our our registry
+# reference: https://cloud.google.com/container-registry/docs/managing
+image_delete() {
+
+    # don't need to do this since we already know the image name
+    # gcloud container images list --repository=${REPO_HOSTNAME}/${PROJECT_ID}
+    tag=`gcloud container images list-tags ${IMAGE_NAME} | tail -1 | awk '{print $2}'`
+    if [ "x${tag}" == "x" ]; then
+        echo -e "\nWARNING: unable to get tagged image - skipping registry cleanup"
+    else
+        gcloud container images delete ${IMAGE_NAME}:${tag} --force-delete-tags
+    fi
+}
+
+db_create() {
     # reference: https://cloud.google.com/sql/docs/mysqlo/create-instance
 
     # get my IP address
@@ -247,7 +274,8 @@ create_database() {
 
 }
 
-delete_database() {
+db_delete() {
+
     # deletes database from GCP
     # https://cloud.google.com/sql/docs/mysql/delete-instance
     echo -e "deleting database..."
@@ -255,23 +283,47 @@ delete_database() {
 
 }
 
+db_shutdown() {
 
-if [ "x${command}" == "xcopy" ]; then
-    copy
-elif [ "x${command}" == "xcreate_db" ]; then
-    create_database
-elif [ "x${command}" == "xdelete_db" ]; then
-    delete_database
-elif [ "x${command}" == "xinit" ]; then
-    init
-elif [ "x${command}" == "xshutdown_cluster" ]; then
-    shutdown_cluster
-elif [ "x${command}" == "xtag" ]; then
-    tag
-elif [ "x${command}" == "xcreate_cluster" ]; then
-    create_cluster
-elif [ "x${command}" == "xupdate_image" ]; then
-    update_image
+    # reference: https://cloud.google.com/sql/docs/mysql/start-stop-restart-instance
+    echo -e "shutting down database..."
+    gcloud sql instances patch $DB_INSTANCE_NAME --activation-policy NEVER
+
+}
+
+db_start() {
+
+    # reference: https://cloud.google.com/sql/docs/mysql/start-stop-restart-instance
+    echo -e "staring database..."
+    gcloud sql instances patch $DB_INSTANCE_NAME --activation-policy ALWAYS
+
+}
+
+
+if [ "x${command}" == "xfiles_copy" ]; then
+    files_copy
+elif [ "x${command}" == "xcluster_create" ]; then
+    cluster_create
+elif [ "x${command}" == "xcluster_shutdown" ]; then
+    cluster_shutdown
+elif [ "x${command}" == "xdb_create" ]; then
+    db_create
+elif [ "x${command}" == "xdb_delete" ]; then
+    db_delete
+elif [ "x${command}" == "xdb_shutdown" ]; then
+    db_shutdown
+elif [ "x${command}" == "xdb_start" ]; then
+    db_start
+elif [ "x${command}" == "ximage_delete" ]; then
+    image_delete
+elif [ "x${command}" == "ximage_deploy" ]; then
+    image_deploy
+elif [ "x${command}" == "ximage_upload" ]; then
+    image_upload
+elif [ "x${command}" == "xsetup" ]; then
+    setup
+elif [ "x${command}" == "xteardown" ]; then
+    teardown
 else
     echo -e "command $command not found"
     usage

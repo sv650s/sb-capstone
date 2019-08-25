@@ -14,6 +14,7 @@ import tensorflow as tf
 from config import Config
 from util.model_util import ModelFactory
 from logging.config import dictConfig
+import traceback2 as traceback
 
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 
@@ -56,6 +57,7 @@ class PredictionHistory(db.Model):
     class_predicted = db.Column(db.Integer, nullable=False)
     class_predicted_raw = db.Column(db.String(100), nullable=False)  # json of softmax output
     model_version = db.Column(db.String(10), nullable=False)
+    model_name = db.Column(db.String(64), nullable=False)
     created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
     status = db.Column(db.String(32), nullable=False)
 
@@ -63,14 +65,14 @@ class PredictionHistory(db.Model):
         return f'<ID: {self.id}\tEXPECTED: {self.class_expected}\tPREDICTED: {self.class_predicted}'
 
     def to_json(self):
-        return render_template('response.json',
+        return clean_response(render_template('response.json',
                                status=self.status,
                                review_raw=self.input_raw,
                                review_preprocessed=self.input_preprocessed,
                                review_encoded=self.input_encoded,
                                truth=self.class_expected,
                                rating=self.class_predicted,
-                               prediction_raw=self.class_predicted_raw)
+                               prediction_raw=self.class_predicted_raw))
 
     def __str__(self):
         return self.to_json()
@@ -80,6 +82,15 @@ app.logger.info("creating database...")
 db.create_all()
 db.session.commit()
 app.logger.info("finished creating database...")
+
+
+def clean_response(response: str):
+    """
+    Strip \n from reponses
+    :param response:
+    :return:
+    """
+    return response.replace('\n', '')
 
 
 def get_factory():
@@ -94,7 +105,7 @@ def get_cache_response():
                                    timestamp=datetime.now().strftime(TIMESTAMP),
                                    size=len(model_names),
                                    model_names=json.dumps(model_names))
-    return json_reponse
+    return clean_response(json_reponse)
 
 
 # Create a URL route in our application for "/"
@@ -105,6 +116,7 @@ def get_cache_response():
 #     localhost:5000/
 #
 #     :return:        the rendered template 'home.html'
+
 #     """
 #     return f"Welcome to Capstone Service - Version {app.config['VERSION']}!\n"
 
@@ -118,13 +130,10 @@ class ModelCache(Resource):
         return cache(), 200
 
 
-
-
 @api.route('/model/<string:model>/<string:version>')
 @api.doc(params={'model': 'model name - ie, GRU',
                  'version': 'model version - ie, v1.0'})
 class ModelPrediction(Resource):
-
     # input model for predict function
     predict_model = api.model("predict", {
         "review": fields.String(title="Review", required=True),
@@ -135,7 +144,7 @@ class ModelPrediction(Resource):
     def post(self, model, version):
         input = api.payload
         app.logger.debug(f'input {input}')
-        return predict_reviews(model, version, input['review'], input['product_rating']), 200
+        return predict_reviews(model, version, input['review'], input['product_rating'])
 
 
 @api.route('/prediction/history')
@@ -173,35 +182,65 @@ def predict_reviews(model, version, text, truth):
 
     # TODO: un-hard code this - get this from the URL
     classifier = get_factory().get_model(model, version)
+    json_response = None
     if classifier:
-        y_unencoded, y_raw, text_preprocessed, text_encoded = classifier.predict(text)
-        y_dict = convert_predictions_to_dict(y_raw.ravel())
+        try:
+            y_unencoded, y_raw, text_preprocessed, text_encoded = classifier.predict(text)
+            y_dict = convert_predictions_to_dict(y_raw.ravel())
 
-    json_response = render_template('response.json',
-                                    status="SUCCESS",
-                                    review_raw=text,
-                                    review_preprocessed=text_preprocessed,
-                                    truth=truth,
-                                    review_encoded=json.dumps(text_encoded.ravel().tolist()),
-                                    rating=y_unencoded,
-                                    prediction_raw=json.dumps(y_dict),
-                                    timestamp=datetime.now().strftime(TIMESTAMP))
+            status = "SUCCESS"
+            json_response = render_template('response.json',
+                                            status=status,
+                                            review_raw=text,
+                                            review_preprocessed=text_preprocessed,
+                                            truth=truth,
+                                            review_encoded=json.dumps(text_encoded.ravel().tolist()),
+                                            rating=y_unencoded,
+                                            prediction_raw=json.dumps(y_dict),
+                                            model=model,
+                                            version=version,
+                                            timestamp=datetime.now().strftime(TIMESTAMP))
+
+            # save response to DB
+            history = PredictionHistory(input_raw=text,
+                                        input_preprocessed=text_preprocessed,
+                                        input_encoded=json.dumps(text_encoded.ravel().tolist()),
+                                        class_expected=truth,
+                                        class_predicted=y_unencoded,
+                                        class_predicted_raw=json.dumps(y_dict),
+                                        model_name=model,
+                                        model_version=version,  # get this from the URL
+                                        status=status)
+
+            db.session.add(history)
+            db.session.commit()
+            response_code = 200
+
+        except:
+            error_message = traceback.format_exc()
+            json_response = render_template('response.json',
+                                            status="FAILED",
+                                            error_message=error_message,
+                                            review_raw=text,
+                                            truth=truth,
+                                            model=model,
+                                            version=version,
+                                            timestamp=datetime.now().strftime(TIMESTAMP))
+            response_code = 400
+    else:
+        json_response = render_template('response.json',
+                                        status="FAILED",
+                                        error_message="Model not found",
+                                        review_raw=text,
+                                        truth=truth,
+                                        model=model,
+                                        version=version,
+                                        timestamp=datetime.now().strftime(TIMESTAMP))
+        response_code = 404
+
     app.logger.debug(json_response)
 
-    # save response to DB
-    history = PredictionHistory(input_raw=text,
-                                input_preprocessed=text_preprocessed,
-                                input_encoded=json.dumps(text_encoded.ravel().tolist()),
-                                class_expected=truth,
-                                class_predicted=y_unencoded,
-                                class_predicted_raw=json.dumps(y_dict),
-                                model_version="v1.0",  # get this from the URL
-                                status="SUCCESS")
-
-    db.session.add(history)
-    db.session.commit()
-
-    return json_response
+    return clean_response(json_response), response_code
 
 
 # @api.route('/history/api/v1.0', methods=['GET'])

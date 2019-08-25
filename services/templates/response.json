@@ -1,11 +1,17 @@
 {
   "status": "{{ status }}",
   "timestamp": "{{ timestamp }}",
-  "prediction": {
-    "star_rating": "{{ rating }}",
-    "raw": {{ prediction_raw }}
-  },
+  {% if status == "SUCCESS" %}
+    "prediction": {
+      "star_rating": "{{ rating }}",
+      "raw": {{ prediction_raw }}
+    },
+  {% elif status == "FAILED" %}
+      "error_message": {{ error_message }},
+  {% endif %}
   "input": {
+    "model": "{{ model }}",
+    "version": "{{ version }}",
     "raw": "{{ review_raw }}",
     "truth": "{{ truth }}",
     "preprocessed": "{{ review_preprocessed }}",
