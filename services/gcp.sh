@@ -17,10 +17,10 @@ usage() {
     echo "Usage: $0 <cmd> [cmd params]"
     echo "Available cmd's"
     echo "     cluster_create - create a k8 cluster and deploy container to this cluster. The container needs to exist. You should run <image_upload> job before"
-    echo "     cluster_shutdown - shutdown project"
+    echo "     cluster_stop - shutdown project"
     echo "     db_create - creates database. You only need to call this once at the begging of the project"
     echo "     db_delete - deletes database"
-    echo "     db_shutdown - shutdown database"
+    echo "     db_stop - shutdown database"
     echo "     db_start - start already instantiated database"
     echo "     files_copy - copy model files to file bucket ${BUCKET_NAME}"
     echo "     image_delete - delete all images from our GCP container registry"
@@ -28,7 +28,7 @@ usage() {
     echo "     image_upload - tag docker image and upload. Requires additional <version to tag image> <docker image id>"
     echo "     setup - initialize project"
     echo "     teardown - opposite of setup - will teardown or shutdown gcp resources for the project"
-    echo "              currently, this does the following: db shutdown, file bucket delete, shutdown k8 cluster"
+    echo "              currently, this does the following: db stop, file bucket delete, stop k8 cluster"
 }
 
 
@@ -90,12 +90,12 @@ teardown() {
     # completely tear down the project
     #   1. shutdown k8 cluster
     #   2. delete file buckets
-    #   3. shutdown database
+    #   3. stop database
 
-    cluster_shutdown
+    cluster_stop
     bucket_delete
     image_delete
-    db_shutdown
+    db_stop
 
 }
 
@@ -129,7 +129,7 @@ bucket_delete() {
 }
 
 
-cluster_shutdown() {
+cluster_stop() {
 
     echo -e "deleting service: ${DEPLOYMENT_NAME}"
     kubectl delete service ${DEPLOYMENT_NAME}
@@ -283,7 +283,7 @@ db_delete() {
 
 }
 
-db_shutdown() {
+db_stop() {
 
     # reference: https://cloud.google.com/sql/docs/mysql/start-stop-restart-instance
     echo -e "shutting down database..."
@@ -304,14 +304,14 @@ if [ "x${command}" == "xfiles_copy" ]; then
     files_copy
 elif [ "x${command}" == "xcluster_create" ]; then
     cluster_create
-elif [ "x${command}" == "xcluster_shutdown" ]; then
-    cluster_shutdown
+elif [ "x${command}" == "xcluster_stop" ]; then
+    cluster_stop
 elif [ "x${command}" == "xdb_create" ]; then
     db_create
 elif [ "x${command}" == "xdb_delete" ]; then
     db_delete
-elif [ "x${command}" == "xdb_shutdown" ]; then
-    db_shutdown
+elif [ "x${command}" == "xdb_stop" ]; then
+    db_stop
 elif [ "x${command}" == "xdb_start" ]; then
     db_start
 elif [ "x${command}" == "ximage_delete" ]; then

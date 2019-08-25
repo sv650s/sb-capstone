@@ -179,30 +179,32 @@ class Classifier(object):
         :param json_file: filepath for the json configuration
         :return: model
         """
-        assert path.exists(json_file), f"Unable to find {json_file}"
 
-        with open(json_file, 'r') as file:
-            config_str = file.read()
+        classifier = None
+        if path.exists(json_file):
 
-        config = json.loads(config_str)
+            with open(json_file, 'r') as file:
+                config_str = file.read()
 
-        app.logger.debug(f"json_config {pprint(config)}")
+            config = json.loads(config_str)
 
-        name = config["name"]
-        version = config["version"]
+            app.logger.debug(f"json_config {pprint(config)}")
 
-        model_json = config["model"]
-        model_weights_json = config["weights"]
-        model = model_loader.load_model(model_json, model_weights_json, ModelLoader.get_custom_objects(config["custom_objects"]))
+            name = config["name"]
+            version = config["version"]
 
-        tokenizer_path = config["tokenizer"]
-        tokenizer = model_loader.load_tokenizer(tokenizer_path)
+            model_json = config["model"]
+            model_weights_json = config["weights"]
+            model = model_loader.load_model(model_json, model_weights_json, ModelLoader.get_custom_objects(config["custom_objects"]))
 
-        preprocessor_module = ".".join(config['preprocessor'].split(".")[:-1])
-        preprocessor_class = config['preprocessor'].split(".")[-1]
-        preprocessor = model_loader.load_preprocessor(preprocessor_module, preprocessor_class)
+            tokenizer_path = config["tokenizer"]
+            tokenizer = model_loader.load_tokenizer(tokenizer_path)
 
-        classifier = Classifier(name, version, model, tokenizer, preprocessor, app.config['MAX_FEATURES'])
+            preprocessor_module = ".".join(config['preprocessor'].split(".")[:-1])
+            preprocessor_class = config['preprocessor'].split(".")[-1]
+            preprocessor = model_loader.load_preprocessor(preprocessor_module, preprocessor_class)
+
+            classifier = Classifier(name, version, model, tokenizer, preprocessor, app.config['MAX_FEATURES'])
 
         return classifier
 

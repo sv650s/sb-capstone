@@ -22,7 +22,7 @@ TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-vii-error-handling
 
 
-# configure loging
+# configure logging
 dictConfig({
     'version': 1,
     'formatters': {'default': {
@@ -43,7 +43,7 @@ dictConfig({
 # app = Flask(__name__, template_folder="templates")
 app = Flask(__name__)
 app.config.from_object(Config)
-api = Api(app, version=app.config['VERSION'], title='Vince Capstone Service',
+api = Api(app, version=app.config['VERSION'], title="Vince's Amazon Review Classifier",
           description='Classification model for reviews')
 db = SQLAlchemy(app)
 
@@ -65,32 +65,34 @@ class PredictionHistory(db.Model):
         return f'<ID: {self.id}\tEXPECTED: {self.class_expected}\tPREDICTED: {self.class_predicted}'
 
     def to_json(self):
-        return clean_response(render_template('response.json',
+        """
+        returns json representation of prediction history
+        :return:
+        """
+        return json.loads(str(self))
+
+    def __str__(self):
+        """
+        Returns a json string representation of the history object
+        :return:
+        """
+        return render_template('response.json',
                                status=self.status,
                                review_raw=self.input_raw,
                                review_preprocessed=self.input_preprocessed,
-                               review_encoded=self.input_encoded,
                                truth=self.class_expected,
+                               review_encoded=self.input_encoded,
                                rating=self.class_predicted,
-                               prediction_raw=self.class_predicted_raw))
-
-    def __str__(self):
-        return self.to_json()
+                               prediction_raw=self.class_predicted_raw,
+                               model=self.model_name,
+                               version=self.model_version,
+                               timestamp=self.created.strftime(TIMESTAMP))
 
 
 app.logger.info("creating database...")
 db.create_all()
 db.session.commit()
 app.logger.info("finished creating database...")
-
-
-def clean_response(response: str):
-    """
-    Strip \n from reponses
-    :param response:
-    :return:
-    """
-    return response.replace('\n', '')
 
 
 def get_factory():
@@ -105,53 +107,52 @@ def get_cache_response():
                                    timestamp=datetime.now().strftime(TIMESTAMP),
                                    size=len(model_names),
                                    model_names=json.dumps(model_names))
-    return clean_response(json_reponse)
+    return json_reponse
 
-
-# Create a URL route in our application for "/"
-# @api.route('/')
-# def home():
-#     """
-#     This function just responds to the browser ULR
-#     localhost:5000/
-#
-#     :return:        the rendered template 'home.html'
-
-#     """
-#     return f"Welcome to Capstone Service - Version {app.config['VERSION']}!\n"
 
 @api.route('/model/cache', endpoint='model')
 class ModelCache(Resource):
 
+    @api.response(200, 'Success')
+    @api.doc(description="Clear our model cache")
     def delete(self):
-        return clear_models(), 200
+        return json.loads(clear_models()), 200
 
+    @api.response(200, 'Success')
+    @api.doc(description="List all models in the cache")
     def get(self):
-        return cache(), 200
+        return json.loads(cache()), 200
 
 
-@api.route('/model/<string:model>/<string:version>')
+@api.route('/predict/<string:model>/<string:version>')
 @api.doc(params={'model': 'model name - ie, GRU',
                  'version': 'model version - ie, v1.0'})
 class ModelPrediction(Resource):
-    # input model for predict function
+    # expected input
     predict_model = api.model("predict", {
         "review": fields.String(title="Review", required=True),
         "product_rating": fields.Integer(title="class rating - 1 to 5")
     })
 
     @api.expect(predict_model)
+    @api.response(201, 'Success')
+    @api.response(400, 'Error with prediction')
+    @api.response(404, 'Cannot find model')
+    @api.doc(description="Run the provided review through our model to see it's prediction")
+    # @api.marshal_with(model)
     def post(self, model, version):
         input = api.payload
         app.logger.debug(f'input {input}')
         return predict_reviews(model, version, input['review'], input['product_rating'])
 
 
-@api.route('/prediction/history')
+@api.route('/predict/history')
 class ModelHistory(Resource):
 
+    @api.response(200, 'Success')
+    @api.doc(description='Retrieves a history of predictions')
     def get(self):
-        return get_history(), 200
+        return json.loads(get_history()), 200
 
 
 # @api.route('/models/api/v1.0/clear_cache', methods=['PUT'])
@@ -182,25 +183,14 @@ def predict_reviews(model, version, text, truth):
 
     # TODO: un-hard code this - get this from the URL
     classifier = get_factory().get_model(model, version)
-    json_response = None
+    # json_response = None
+    history = None
     if classifier:
         try:
             y_unencoded, y_raw, text_preprocessed, text_encoded = classifier.predict(text)
             y_dict = convert_predictions_to_dict(y_raw.ravel())
 
             status = "SUCCESS"
-            json_response = render_template('response.json',
-                                            status=status,
-                                            review_raw=text,
-                                            review_preprocessed=text_preprocessed,
-                                            truth=truth,
-                                            review_encoded=json.dumps(text_encoded.ravel().tolist()),
-                                            rating=y_unencoded,
-                                            prediction_raw=json.dumps(y_dict),
-                                            model=model,
-                                            version=version,
-                                            timestamp=datetime.now().strftime(TIMESTAMP))
-
             # save response to DB
             history = PredictionHistory(input_raw=text,
                                         input_preprocessed=text_preprocessed,
@@ -211,36 +201,38 @@ def predict_reviews(model, version, text, truth):
                                         model_name=model,
                                         model_version=version,  # get this from the URL
                                         status=status)
-
             db.session.add(history)
             db.session.commit()
-            response_code = 200
+
+            json_response = history.to_json()
+
+            response_code = 201
 
         except:
             error_message = traceback.format_exc()
-            json_response = render_template('response.json',
-                                            status="FAILED",
-                                            error_message=error_message,
-                                            review_raw=text,
-                                            truth=truth,
-                                            model=model,
-                                            version=version,
-                                            timestamp=datetime.now().strftime(TIMESTAMP))
+            json_response = json.loads(render_template('response.json',
+                                                       status="FAILED",
+                                                       error_message=error_message,
+                                                       review_raw=text,
+                                                       truth=truth,
+                                                       model=model,
+                                                       version=version,
+                                                       timestamp=datetime.now().strftime(TIMESTAMP)))
             response_code = 400
     else:
-        json_response = render_template('response.json',
-                                        status="FAILED",
-                                        error_message="Model not found",
-                                        review_raw=text,
-                                        truth=truth,
-                                        model=model,
-                                        version=version,
-                                        timestamp=datetime.now().strftime(TIMESTAMP))
+        json_response = json.loads(render_template('response.json',
+                                                   status="FAILED",
+                                                   error_message="Model not found",
+                                                   review_raw=text,
+                                                   truth=truth,
+                                                   model=model,
+                                                   version=version,
+                                                   timestamp=datetime.now().strftime(TIMESTAMP)))
         response_code = 404
 
     app.logger.debug(json_response)
 
-    return clean_response(json_response), response_code
+    return json_response, response_code
 
 
 # @api.route('/history/api/v1.0', methods=['GET'])
