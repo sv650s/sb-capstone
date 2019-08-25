@@ -6,7 +6,7 @@
     "truth": {{ truth }}{%- if status == "SUCCESS" %},
     "preprocessed": "{{ review_preprocessed }}",
     "encoded": {{ review_encoded }}
-{%- endif %}
+  {%- endif %}
   },
   {%- if status == "SUCCESS" %}
   "prediction": {

@@ -45,7 +45,7 @@ dictConfig({
 app = Flask(__name__)
 app.config.from_object(Config)
 api = Api(app, version=app.config['VERSION'], title="Vince's Amazon Review Classifier",
-          description='Classification model for reviews')
+          description='Predict product rating based on user review input')
 db = SQLAlchemy(app)
 
 
@@ -132,17 +132,16 @@ class ModelPrediction(Resource):
     # expected input
     predict_model = api.model("predict", {
         "review": fields.String(title="Review", required=True),
-        "product_rating": fields.Integer(title="class rating - 1 to 5")
+        "product_rating": fields.Integer(title="class rating - 1 to 5", required=True)
     })
 
-    @api.expect(predict_model)
+    @api.expect(predict_model, validate=True)
     @api.response(201, 'Success')
     @api.response(400, 'Error while predicting results')
     @api.response(404, 'Cannot find model')
     @api.doc(description="Run the provided review through our model to see it's prediction")
     # @api.marshal_with(model)
     def post(self, model, version):
-        # TODO: need to do error handling for input
         input = api.payload
         app.logger.debug(f'input {input}')
         return predict_reviews(model, version, input['review'], input['product_rating'])
