@@ -14,4 +14,4 @@ class Config(object):
     DEFAULT_MODEL_CONFIG = "config/GRU-v1.0.json"
     MODEL_CONFIG_DIR = "config"
     # env variable will be set by docker-compose file - default is for local development
-    MODEL_LOADER_CLASS = os.environ.get("MODEL_LOADER_CLASS", default="util.model_util.LocalModelLoader")
+    MODEL_BUILDER_CLASS = os.environ.get("MODEL_BUILDER_CLASS", default="util.model_util.LocalModelBuilder")

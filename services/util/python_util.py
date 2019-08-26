@@ -10,7 +10,7 @@ def load_class(classpath: str):
     return getattr(importlib.import_module(".".join(classpath.split(".")[:-1])), classpath.split(".")[-1])
 
 
-def load_instance(classpath: str):
+def load_instance(classpath: str, *args):
     logger.info(f"creating instance of class from {classpath}")
     class_ = load_class(classpath)
-    return class_()
+    return class_(*args)

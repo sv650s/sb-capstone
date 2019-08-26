@@ -15,21 +15,64 @@ from pprint import pprint
 import util.gcp_file_util as gu
 import util.python_util as pu
 
+
 # TODO: figure out why logging doens't work without app.app.logger
 # logger = logging.getLogger(__name__)
 
 
+class ModelBuilder(object):
 
-class ModelLoader(object):
+    def __init__(self, model_name, version):
+        self.model_name = model_name
+        self.version = version
 
-    def load_model(self, model_file: str, weights_file: str = None, custom_objects = None):
+    def load_model(self, model_file: str, weights_file: str = None, custom_objects=None):
         pass
 
     def load_tokenizer(self, tokenizer_file: str):
         pass
 
-    def get_config(self, filename):
+    def get_config(self):
         pass
+
+    def get_config_filename(self):
+        """
+        Based on name and version, get the config filename without path
+        :return:
+        """
+        filename = f'{self.model_name}-{self.version}.json'
+        app.logger.debug(f"got filename: {filename}")
+        return filename
+
+    def build(self):
+        json_file = self.get_config()
+        classifier = None
+
+        if path.exists(json_file):
+            with open(json_file, 'r') as file:
+                config_str = file.read()
+
+            config = json.loads(config_str)
+
+            app.logger.debug(f"json_config {pprint(config)}")
+
+            name = config["name"]
+            version = config["version"]
+
+            model_json = config["model"]
+            model_weights_json = config["weights"]
+            model = self.load_model(model_json,
+                                    model_weights_json,
+                                    ModelBuilder.get_custom_objects(config["custom_objects"]))
+
+            tokenizer_path = config["tokenizer"]
+            tokenizer = self.load_tokenizer(tokenizer_path)
+
+            preprocessor = pu.load_instance(config['preprocessor'])
+
+            classifier = Classifier(name, version, model, tokenizer, preprocessor, app.config['MAX_FEATURES'])
+
+        return classifier
 
     @staticmethod
     def get_custom_objects(d: dict):
@@ -44,40 +87,50 @@ class ModelLoader(object):
         return ret_d
 
 
-class LocalModelLoader(ModelLoader):
+class LocalModelBuilder(ModelBuilder):
+
     # TODO: make loaders ignositic of flask app - somehow pass in the model dir dynamically
+    def __init__(self, name, version):
+        super().__init__(name, version)
+        self.model_dir = app.config["LOCAL_MODEL_DIR"]
+        self.config_dir = app.config["MODEL_CONFIG_DIR"]
 
     def load_tokenizer(self, tokenizer_file: str):
         app.logger.info(f"loading tokenizer from {tokenizer_file}")
-        with open(f'{app.config["LOCAL_MODEL_DIR"]}/{tokenizer_file}', 'rb') as file:
+        with open(f'{self.model_dir}/{tokenizer_file}', 'rb') as file:
             tokenizer = pickle.load(file)
         return tokenizer
 
-    def load_model(self, model_file: str, weights_file: str = None, custom_objects = None):
+    def load_model(self, model_file: str, weights_file: str = None, custom_objects=None):
         app.logger.info(f"loading model from {model_file}")
-        with open(f'{app.config["LOCAL_MODEL_DIR"]}/{model_file}') as json_file:
+        with open(f'{self.model_dir}/{model_file}') as json_file:
             json_config = json_file.read()
         model = keras.models.model_from_json(json_config,
                                              custom_objects=custom_objects)
         app.logger.info(f"loading model weights from {weights_file}")
-        model.load_weights(f'{app.config["LOCAL_MODEL_DIR"]}/{weights_file}')
+        model.load_weights(f'{self.model_dir}/{weights_file}')
 
         return model
 
-    def get_config(self, filename):
-        json_file = f'{app.config["MODEL_CONFIG_DIR"]}/{filename}'
+    def get_config(self):
+        json_file = f'{self.config_dir}/{self.get_config_filename()}'
         app.logger.debug(f"config json_file {json_file}")
         return json_file
 
 
-class GCPModelLoader(ModelLoader):
+class GCPModelBuilder(ModelBuilder):
 
-    def __init__(self):
-        super()
+    def __init__(self, name, version):
+        super().__init__(name, version)
         self.model_dir = app.config['MODEL_CACHE_DIR']
         self.bucket_name = app.config['BUCKET_NAME']
 
     def _download_file(self, filename):
+        """
+        download file from gcp to local dir then return the filepath of the config file
+        :param filename:
+        :return:
+        """
         app.logger.info(f'downloaded {filename} to {self.model_dir}')
         store_path = f'{self.model_dir}/{filename}'
         gu.download_blob(self.bucket_name,
@@ -85,9 +138,7 @@ class GCPModelLoader(ModelLoader):
                          store_path)
         return store_path
 
-
     def load_model(self, model_file: str, weights_file: str, custom_objects: dict = None):
-
         self._download_file(model_file)
         app.logger.info(f"loading model from {model_file}")
         with open(f'{self.model_dir}/{model_file}') as json_file:
@@ -108,8 +159,8 @@ class GCPModelLoader(ModelLoader):
             tokenizer = pickle.load(file)
         return tokenizer
 
-    def get_config(self, filename):
-        return self._download_file(filename)
+    def get_config(self):
+        return self._download_file(self.get_config_filename())
 
 
 class Classifier(object):
@@ -161,47 +212,6 @@ class Classifier(object):
                                                  truncating='post')
         app.logger.debug(f'padded x: {sequence_padded}')
         return sequence_padded
-
-    @staticmethod
-    def get_config_filename(name: str, version: str):
-        filename = f'{name}-{version}.json'
-        app.logger.debug(f"got filename: {filename}")
-        return filename
-
-    @staticmethod
-    def from_json(json_file: str, model_loader: ModelLoader):
-        """
-        Recreates a model based on json configuration
-
-        :param json_file: filepath for the json configuration
-        :return: model
-        """
-
-        classifier = None
-        if path.exists(json_file):
-
-            with open(json_file, 'r') as file:
-                config_str = file.read()
-
-            config = json.loads(config_str)
-
-            app.logger.debug(f"json_config {pprint(config)}")
-
-            name = config["name"]
-            version = config["version"]
-
-            model_json = config["model"]
-            model_weights_json = config["weights"]
-            model = model_loader.load_model(model_json, model_weights_json, ModelLoader.get_custom_objects(config["custom_objects"]))
-
-            tokenizer_path = config["tokenizer"]
-            tokenizer = model_loader.load_tokenizer(tokenizer_path)
-
-            preprocessor = pu.load_instance(config['preprocessor'])
-
-            classifier = Classifier(name, version, model, tokenizer, preprocessor, app.config['MAX_FEATURES'])
-
-        return classifier
 
     def predict(self, text):
         """
@@ -305,16 +315,17 @@ class ModelFactory(object):
                 # TOOD: figure out how to change behavior using some type of inheritance
                 app.logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
 
-                # dynamically create loader based configuration
-                loader_classpath = app.config["MODEL_LOADER_CLASS"]
-                app.logger.info(f"Creating loader from {loader_classpath}")
-                loader = pu.load_instance(loader_classpath)
-                app.logger.debug(f"created loader {loader}")
+                # dynamically create builder based configuration
+                builder_classpath = app.config["MODEL_BUILDER_CLASS"]
+                app.logger.info(f"Creating builder from {builder_classpath}")
+                builder = pu.load_instance(builder_classpath, name, version)
+                app.logger.debug(f"created builder {builder}")
 
-                json_file = loader.get_config(Classifier.get_config_filename(name, version))
-                app.logger.debug(f"model_config_json {json_file}")
+                # json_file = builder.get_config(Classifier.get_config_filename(name, version))
+                # app.logger.debug(f"model_config_json {json_file}")
 
-                model = Classifier.from_json(json_file, loader)
+                # model = Classifier.build_from_json(json_file, builder)
+                model = builder.build()
                 app.logger.debug(f'Finished loading model {model}')
                 if model:
                     ModelFactory._model_cache.put(model)
@@ -324,7 +335,6 @@ class ModelFactory(object):
     @staticmethod
     def put(model: Classifier):
         ModelFactory._model_cache.put(model)
-
 
     @staticmethod
     def clear():

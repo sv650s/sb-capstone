@@ -17,7 +17,7 @@ RUN apt-get update && \
 ARG version
 ARG gcp_project_id
 ARG gcp_bucket_name
-ARG model_loader_class
+ARG model_builder_class
 ARG google_application_credentials
 ARG db_ip
 
@@ -26,7 +26,7 @@ ENV VERSION $version
 ENV PROJECT_ID $gcp_project_id
 ENV BUCKET_NAME $gcp_bucket_name
 ENV GOOGLE_APPLICATION_CREDENTIALS $google_application_credentials
-ENV MODEL_LOADER_CLASS $model_loader_class
+ENV MODEL_BUILDER_CLASS $model_builder_class
 ENV DB_IP $db_ip
 
 
