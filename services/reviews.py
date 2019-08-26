@@ -204,6 +204,7 @@ def predict_reviews(model_name, version, text, truth):
 
         except:
             error_message = traceback.format_exc()
+            app.logger.error(error_message)
             json_response = json.loads(render_template('response.json',
                                                        status="FAILED",
                                                        error_message="Model not found",

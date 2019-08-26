@@ -27,13 +27,16 @@ class ModelBuilder(object):
         self.version = version
 
     def load_model(self, model_file: str, weights_file: str = None, custom_objects=None):
-        pass
+        raise Exception("abstract method. not yet implemented")
 
     def load_tokenizer(self, tokenizer_file: str):
-        pass
+        raise Exception("abstract method. not yet implemented")
+
+    def load_encoder(self, encoder: str):
+        raise Exception("abstract method. not yet implemented")
 
     def get_config(self):
-        pass
+        raise Exception("abstract method. not yet implemented")
 
     def get_config_filename(self):
         """
@@ -69,8 +72,10 @@ class ModelBuilder(object):
             tokenizer = self.load_tokenizer(tokenizer_path)
 
             preprocessor = pu.load_instance(config['preprocessor'])
+            preprocessor.tokenizer = tokenizer
+            preprocessor.max_features = app.config['MAX_FEATURES']
 
-            classifier = Classifier(name, version, model, tokenizer, preprocessor, app.config['MAX_FEATURES'])
+            classifier = Classifier(name, version, model, tokenizer, preprocessor)
 
         return classifier
 
@@ -111,6 +116,9 @@ class LocalModelBuilder(ModelBuilder):
         model.load_weights(f'{self.model_dir}/{weights_file}')
 
         return model
+
+    def load_encoder(self, encoder: str):
+        pass
 
     def get_config(self):
         json_file = f'{self.config_dir}/{self.get_config_filename()}'
@@ -159,6 +167,9 @@ class GCPModelBuilder(ModelBuilder):
             tokenizer = pickle.load(file)
         return tokenizer
 
+    def load_encoder(self, encoder: str):
+        pass
+
     def get_config(self):
         return self._download_file(self.get_config_filename())
 
@@ -178,7 +189,10 @@ class Classifier(object):
     # TODO: make feature_encoder required
     def __init__(self, name: str,
                  version: str,
-                 model, tokenizer, preprocessor, max_features, feature_encoder=None, label_encoder=t2):
+                 model,
+                 tokenizer,
+                 preprocessor,
+                 label_encoder=t2):
         """
 
         :param name:
@@ -195,23 +209,11 @@ class Classifier(object):
         self.model = model
         self.tokenizer = tokenizer
         self.preprocessor = preprocessor
-        self.feature_encoder = feature_encoder
         self.label_encoder = label_encoder
-        self.max_features = max_features
+        self.max_features = None
 
     def __str__(self):
         return Classifier.get_key(self.name, self.version)
-
-    # TODO: dynamically load padding as part of preprocessing
-    def pad_text(self, text: str):
-        s = self.tokenizer.texts_to_sequences(text)
-        app.logger.debug(f's: {s}')
-        sequence_padded = sequence.pad_sequences(s,
-                                                 maxlen=self.max_features,
-                                                 padding='post',
-                                                 truncating='post')
-        app.logger.debug(f'padded x: {sequence_padded}')
-        return sequence_padded
 
     def predict(self, text):
         """
@@ -222,18 +224,12 @@ class Classifier(object):
         :param text:
         :return:
         """
-        app.logger.debug(f"Preprocessing text [{text}]")
-        text_preprocessed = self.preprocessor.normalize_text(text)
-        app.logger.debug(f"Preprocessed text [{text_preprocessed}]")
-
-        # TODO: figure refactor out feaure encoder
-        text_encoded = self.pad_text([text_preprocessed])
-        # text_encoded = self.feature_encoder.encode(text_preprocessed)
-        app.logger.debug(f"Encoded text [{text_preprocessed}]")
+        text_preprocessed, text_encoded = self.preprocessor.preprocess(text)
 
         y_raw = self.model.predict(text_encoded)
         app.logger.debug(f"y_raw [{y_raw}]")
 
+        # dynamically load unencoder
         y_unencoded = self.label_encoder.unencode(y_raw)[0]
         app.logger.debug(f"y_unencoded [{y_unencoded}]")
 
