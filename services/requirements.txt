@@ -9,4 +9,5 @@ pandas
 pymysql
 scikit-learn
 tensorflow==2.0.0b1
+traceback2
 Werkzeug

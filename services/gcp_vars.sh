@@ -10,6 +10,4 @@ export REGION="us-west1"
 export ZONE="us-west1-a"
 export DB_MACHINE_TYPE="db-f1-micro"
 export DB_INSTANCE_NAME="${PROJECT_ID}-mysql-v1"
-#export DB_INSTANCE_NAME="${PROJECT_ID}-mysql-`date "+%Y%m%d"`"
 export DB_IP="35.230.77.154"
-

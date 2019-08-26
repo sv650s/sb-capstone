@@ -16,7 +16,7 @@ source gcp_vars.sh
 usage() {
     echo "Usage: $0 <cmd> [cmd params]"
     echo "Available cmd's"
-    echo "     cluster_create - create a k8 cluster and deploy container to this cluster. The container needs to exist. You should run <image_upload> job before"
+    echo "     cluster_start - create a k8 cluster and deploy container to this cluster. The container needs to exist. You should run <image_upload> job before"
     echo "     cluster_stop - shutdown project"
     echo "     db_create - creates database. You only need to call this once at the begging of the project"
     echo "     db_delete - deletes database"
@@ -140,7 +140,7 @@ cluster_stop() {
 }
 
 
-cluster_create() {
+cluster_start() {
     if [ x$version == "x" ]; then
         "ERROR: missing version"
         usage
@@ -302,8 +302,8 @@ db_start() {
 
 if [ "x${command}" == "xfiles_copy" ]; then
     files_copy
-elif [ "x${command}" == "xcluster_create" ]; then
-    cluster_create
+elif [ "x${command}" == "xcluster_start" ]; then
+    cluster_start
 elif [ "x${command}" == "xcluster_stop" ]; then
     cluster_stop
 elif [ "x${command}" == "xdb_create" ]; then

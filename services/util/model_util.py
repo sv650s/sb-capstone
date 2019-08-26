@@ -13,6 +13,7 @@ from os import path
 import json
 from pprint import pprint
 import util.gcp_file_util as gu
+import util.python_util as pu
 
 # TODO: figure out why logging doens't work without app.app.logger
 # logger = logging.getLogger(__name__)
@@ -27,12 +28,6 @@ class ModelLoader(object):
     def load_tokenizer(self, tokenizer_file: str):
         pass
 
-    # TODO: dynamically load this
-    def load_preprocessor(self, module: str, cls: str):
-        app.logger.info(f"loading preprocessor from {module}.{cls}")
-        pclass_ = getattr(importlib.import_module(module), cls)
-        return pclass_()
-
     def get_config(self, filename):
         pass
 
@@ -45,7 +40,7 @@ class ModelLoader(object):
         """
         ret_d = {}
         for k, v in d.items():
-            ret_d[k] = getattr(importlib.import_module(".".join(v.split(".")[:-1])), v.split(".")[-1])
+            ret_d[k] = pu.load_class(v)
         return ret_d
 
 
@@ -169,7 +164,9 @@ class Classifier(object):
 
     @staticmethod
     def get_config_filename(name: str, version: str):
-        return f'{name}-{version}.json'
+        filename = f'{name}-{version}.json'
+        app.logger.debug(f"got filename: {filename}")
+        return filename
 
     @staticmethod
     def from_json(json_file: str, model_loader: ModelLoader):
@@ -200,9 +197,7 @@ class Classifier(object):
             tokenizer_path = config["tokenizer"]
             tokenizer = model_loader.load_tokenizer(tokenizer_path)
 
-            preprocessor_module = ".".join(config['preprocessor'].split(".")[:-1])
-            preprocessor_class = config['preprocessor'].split(".")[-1]
-            preprocessor = model_loader.load_preprocessor(preprocessor_module, preprocessor_class)
+            preprocessor = pu.load_instance(config['preprocessor'])
 
             classifier = Classifier(name, version, model, tokenizer, preprocessor, app.config['MAX_FEATURES'])
 
@@ -298,6 +293,7 @@ class ModelFactory(object):
         :param version:
         :return:
         """
+        app.logger.info(f"Getting model name: {name} version: {version}")
         model = None
         try:
             model = ModelFactory._model_cache.get(name, version)
@@ -310,12 +306,10 @@ class ModelFactory(object):
                 app.logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
 
                 # dynamically create loader based configuration
-                loader_module = app.config["MODEL_LOADER_MODULE"]
-                loader_class = app.config["MODEL_LOADER_CLASS"]
-                app.logger.info(f"Creating loader from {loader_module}.{loader_class}")
-                pclass_ = getattr(importlib.import_module(loader_module), loader_class)
-                # TODO: dynamically load parameters from config
-                loader = pclass_()
+                loader_classpath = app.config["MODEL_LOADER_CLASS"]
+                app.logger.info(f"Creating loader from {loader_classpath}")
+                loader = pu.load_instance(loader_classpath)
+                app.logger.debug(f"created loader {loader}")
 
                 json_file = loader.get_config(Classifier.get_config_filename(name, version))
                 app.logger.debug(f"model_config_json {json_file}")

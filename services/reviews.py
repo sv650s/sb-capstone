@@ -97,7 +97,6 @@ app.logger.info("finished creating database...")
 
 
 def get_factory():
-    # return getattr(importlib.import_module(app.config['MODEL_FACTORY_MODULE']), app.config['MODEL_FACTORY_CLASS'])
     return ModelFactory
 
 
@@ -156,7 +155,6 @@ class ModelHistory(Resource):
         return get_history_json()
 
 
-# @api.route('/models/api/v1.0/clear_cache', methods=['PUT'])
 def clear_model_cache():
     """
     Reset and clear all cached models
@@ -166,15 +164,21 @@ def clear_model_cache():
     return get_model_cache_json()
 
 
-
-# @api.route('/models/api/v1.0/gru', methods=['POST'])
-def predict_reviews(model, version, text, truth):
+def predict_reviews(model_name, version, text, truth):
+    """
+    Call our model based on the name and version and review text
+    :param model_name:
+    :param version:
+    :param text:
+    :param truth:
+    :return:
+    """
     # if not request.args or not 'review' in request.args or not 'truth' in request.args:
     #     abort(400)
     app.logger.info(f'Tensorflow version: {tf.__version__}')
 
     # TODO: un-hard code this - get this from the URL
-    classifier = get_factory().get_model(model, version)
+    classifier = get_factory().get_model(model_name, version)
     # json_response = None
     prediction = None
     if classifier:
@@ -190,7 +194,7 @@ def predict_reviews(model, version, text, truth):
                                     class_expected=truth,
                                     class_predicted=y_unencoded,
                                     class_predicted_raw=json.dumps(y_dict),
-                                    model_name=model,
+                                    model_name=model_name,
                                     model_version=version,  # get this from the URL
                                     status=status)
             db.session.add(prediction)
@@ -205,7 +209,7 @@ def predict_reviews(model, version, text, truth):
                                                        error_message="Model not found",
                                                        review_raw=text,
                                                        truth=truth,
-                                                       model=model,
+                                                       model=model_name,
                                                        version=version,
                                                        timestamp=datetime.now().strftime(TIMESTAMP)))
             abort(400, error_message, custom=json_response)
@@ -215,7 +219,7 @@ def predict_reviews(model, version, text, truth):
                                        error_message="Model not found",
                                        review_raw=text,
                                        truth=truth,
-                                       model=model,
+                                       model=model_name,
                                        version=version,
                                        timestamp=datetime.now().strftime(TIMESTAMP))
         app.logger.debug(f'template_str {template_str}')
@@ -228,7 +232,6 @@ def predict_reviews(model, version, text, truth):
     return json_response, 201
 
 
-# @api.route('/history/api/v1.0', methods=['GET'])
 def get_history_json():
     """
     returns json representation of history object
