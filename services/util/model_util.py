@@ -2,13 +2,13 @@
 # This is a factory class that abstracts how we load the model. It is implemented as a singleton so it should
 # be thread safe
 #
+import logging
 from flask import current_app as app
 import tensorflow.keras as keras
 import pickle
 import util.tf2_util as t2
 import importlib
 from tensorflow.keras.preprocessing import sequence
-import logging
 from os import path
 import json
 from pprint import pprint
@@ -17,7 +17,7 @@ import util.python_util as pu
 
 
 # TODO: figure out why logging doens't work without app.app.logger
-# logger = logging.getLogger(__name__)
+# app.logger = logging.getLogger(__name__)
 
 
 class ModelBuilder(object):
@@ -35,7 +35,7 @@ class ModelBuilder(object):
     def load_encoder(self, encoder: str):
         raise Exception("abstract method. not yet implemented")
 
-    def get_config(self):
+    def get_json_config_filepath(self):
         raise Exception("abstract method. not yet implemented")
 
     def get_config_filename(self):
@@ -48,12 +48,13 @@ class ModelBuilder(object):
         return filename
 
     def build(self):
-        json_file = self.get_config()
+        json_file = self.get_json_config_filepath()
         classifier = None
 
         if path.exists(json_file):
             with open(json_file, 'r') as file:
                 config_str = file.read()
+                app.logger.debug(f'config_str {config_str}')
 
             config = json.loads(config_str)
 
@@ -75,7 +76,7 @@ class ModelBuilder(object):
             preprocessor.tokenizer = tokenizer
             preprocessor.max_features = app.config['MAX_FEATURES']
 
-            classifier = Classifier(name, version, model, tokenizer, preprocessor)
+            classifier = Classifier(name, version, model, preprocessor)
 
         return classifier
 
@@ -120,7 +121,7 @@ class LocalModelBuilder(ModelBuilder):
     def load_encoder(self, encoder: str):
         pass
 
-    def get_config(self):
+    def get_json_config_filepath(self):
         json_file = f'{self.config_dir}/{self.get_config_filename()}'
         app.logger.debug(f"config json_file {json_file}")
         return json_file
@@ -170,7 +171,7 @@ class GCPModelBuilder(ModelBuilder):
     def load_encoder(self, encoder: str):
         pass
 
-    def get_config(self):
+    def get_json_config_filepath(self):
         return self._download_file(self.get_config_filename())
 
 
@@ -190,7 +191,6 @@ class Classifier(object):
     def __init__(self, name: str,
                  version: str,
                  model,
-                 tokenizer,
                  preprocessor,
                  label_encoder=t2):
         """
@@ -207,7 +207,6 @@ class Classifier(object):
         self.name = name
         self.version = version
         self.model = model
-        self.tokenizer = tokenizer
         self.preprocessor = preprocessor
         self.label_encoder = label_encoder
         self.max_features = None
@@ -224,16 +223,16 @@ class Classifier(object):
         :param text:
         :return:
         """
-        text_preprocessed, text_encoded = self.preprocessor.preprocess(text)
+        text_preprocessed, text_sequence, sequence_padded = self.preprocessor.preprocess(text)
 
-        y_raw = self.model.predict(text_encoded)
+        y_raw = self.model.predict(sequence_padded)
         app.logger.debug(f"y_raw [{y_raw}]")
 
         # dynamically load unencoder
         y_unencoded = self.label_encoder.unencode(y_raw)[0]
         app.logger.debug(f"y_unencoded [{y_unencoded}]")
 
-        return y_unencoded, y_raw, text_preprocessed, text_encoded
+        return y_unencoded, y_raw, text_preprocessed, text_sequence
 
 
 class ModelCache(object):
@@ -314,13 +313,10 @@ class ModelFactory(object):
                 # dynamically create builder based configuration
                 builder_classpath = app.config["MODEL_BUILDER_CLASS"]
                 app.logger.info(f"Creating builder from {builder_classpath}")
+
                 builder = pu.load_instance(builder_classpath, name, version)
                 app.logger.debug(f"created builder {builder}")
 
-                # json_file = builder.get_config(Classifier.get_config_filename(name, version))
-                # app.logger.debug(f"model_config_json {json_file}")
-
-                # model = Classifier.build_from_json(json_file, builder)
                 model = builder.build()
                 app.logger.debug(f'Finished loading model {model}')
                 if model:

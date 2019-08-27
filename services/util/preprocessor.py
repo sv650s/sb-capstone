@@ -30,14 +30,14 @@ class TokenizedPreprocessor(Preprocessor):
         :param text:
         :return:
         """
-        s = self.tokenizer.texts_to_sequences(text)
-        logger.debug(f's: {s}')
-        sequence_padded = sequence.pad_sequences(s,
+        text_sequence = self.tokenizer.texts_to_sequences(text)
+        logger.debug(f's: {text_sequence}')
+        sequence_padded = sequence.pad_sequences(text_sequence,
                                                  maxlen=self.max_features,
                                                  padding='post',
                                                  truncating='post')
         logger.debug(f'padded x: {sequence_padded}')
-        return sequence_padded
+        return text_sequence, sequence_padded
 
 
     def preprocess(self, text: str):
@@ -46,10 +46,10 @@ class TokenizedPreprocessor(Preprocessor):
         text_normalized = self.normalizer.normalize_text(text)
         logger.debug(f"Preprocessed text [{text_normalized}]")
 
-        text_encoded = self.pad_text([text_normalized])
+        text_sequence, text_encoded = self.pad_text([text_normalized])
         logger.debug(f"Encoded text [{text_normalized}]")
 
-        return text_normalized, text_encoded
+        return text_normalized, text_sequence, text_encoded
 
 
 

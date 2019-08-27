@@ -16,17 +16,20 @@ source gcp_vars.sh
 usage() {
     echo "Usage: $0 <cmd> [cmd params]"
     echo "Available cmd's"
+    echo "     bucket_copy - copy model files to file bucket ${BUCKET_NAME}"
+    echo "     bucket_create - create file bucket ${BUCKET_NAME}"
+    echo "     bucket_delete -  delete file bucket ${BUCKET_NAME}"
     echo "     cluster_start - create a k8 cluster and deploy container to this cluster. The container needs to exist. You should run <image_upload> job before"
     echo "     cluster_stop - shutdown project"
     echo "     db_create - creates database. You only need to call this once at the begging of the project"
-    echo "     db_delete - deletes database"
+    echo "     db_delete - deletes database from GCP completely. GCP will not allow you to use the same name for 7 days"
     echo "     db_stop - shutdown database"
     echo "     db_start - start already instantiated database"
-    echo "     files_copy - copy model files to file bucket ${BUCKET_NAME}"
     echo "     image_delete - delete all images from our GCP container registry"
     echo "     image_deploy - specify a new version of container to deploy to k8 cluster"
     echo "     image_upload - tag docker image and upload. Requires additional <version to tag image> <docker image id>"
     echo "     setup - initialize project"
+    echo "     start_all - Calls setup, bucket_copy image_deploy, and cluster_start. Requires additional <version to tag image> <docker image id>"
     echo "     teardown - opposite of setup - will teardown or shutdown gcp resources for the project"
     echo "              currently, this does the following: db stop, file bucket delete, stop k8 cluster"
 }
@@ -79,7 +82,7 @@ setup() {
 
 
     bucket_create
-    files_copy
+    bucket_copy
     db_start
 
 
@@ -96,25 +99,28 @@ teardown() {
     bucket_delete
     image_delete
     db_stop
+    # TODO: 
 
 }
 
-files_copy() {
+bucket_copy() {
     # copy model files to GCP
     gsutil cp models/* gs://${BUCKET_NAME}
-    gsutil cp config/* gs://${BUCKET_NAME}
+
 }
 
 bucket_create() {
+    # references for bucket permissions
+    # initially I thought I had to set this but setting iam for the service acccount user
+    # give you access to private files in the file buckets - no further work needed
+    # https://cloud.google.com/storage/docs/gsutil/commands/iam
+    # https://cloud.google.com/storage/docs/gsutil/commands/acl
+
     gsutil ls gs://${BUCKET_NAME}
     if [ $? -eq 1 ]; then
         # create bucket
         echo -e "${BUCKET_NAME} not found. Creating file bucket"
         gsutil mb gs://${BUCKET_NAME}/
-
-        # TODO: lock this down so it's not public
-        echo -e "set bucket read permission to public read"
-        gsutil defacl set public-read gs://${BUCKET_NAME}
     fi
 }
 
@@ -193,7 +199,7 @@ cluster_start() {
     # get external IP of our instance
     instance_external_ip=`gcloud compute instances list | tail -1 | awk '{print $5}'`
     my_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
-    echo -e "\nadding external IP $external_ip to database"
+    echo -e "\nadding external IP $instance_external_ip and $my_ip to database"
     gcloud sql instances patch ${DB_INSTANCE_NAME} --authorized-networks=${instance_external_ip},${my_ip}
 
 
@@ -205,9 +211,10 @@ cluster_start() {
 
 # update a deployment with new image
 image_deploy() {
+    # reference: https://cloud.google.com/kubernetes-engine/docs/how-to/updating-apps
     echo -e "Run and update the following command"
-    echo -e "kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_NAME}:$version"
-    kubectl set image deployment/${DEPLOYMENT_NAME} ${SERVICE}=${IMAGE_NAME}:$version
+    echo -e "kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}=${IMAGE_NAME}:$version"
+    kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}=${IMAGE_NAME}:$version
 }
 
 
@@ -235,21 +242,24 @@ db_create() {
     # https://cloud.google.com/sql/docs/mysql/create-instance
     echo -e "creating database..."
     gcloud sql instances create ${DB_INSTANCE_NAME} --tier=${DB_MACHINE_TYPE} --region=${REGION} --authorized-networks=${my_ip}
-    if [ $? -gt 1 ]; then
+    if [ $? -gt 0 ]; then
         echo -e "error creating database"
+        exit 1
     fi
     # configure public IP for insance
     # https://cloud.google.com/sql/docs/mysql/configure-ip
     echo -e "setting username password..."
     gcloud sql users set-password root % --instance=${DB_INSTANCE_NAME} --password 'freel00k'
-    if [ $? -gt 1 ]; then
+    if [ $? -gt 0 ]; then
         echo -e "error setting password"
+        exit 1
     fi
 
     echo -e "\nconfiguring public ip access..."
     gcloud sql instances patch ${DB_INSTANCE_NAME} --assign-ip
-    if [ $? -gt 1 ]; then
+    if [ $? -gt 0 ]; then
         echo -e "error assigning IP"
+        exit 1
     fi
     gcloud sql instances describe ${DB_INSTANCE_NAME}
 #    gcloud sql instances patch ${db_instance_name} --authorized-networks=${my_ip}
@@ -257,8 +267,9 @@ db_create() {
     # configure instance to use SSL
     echo -e "\nrequire ssl connections to database..."
     gcloud sql instances patch ${DB_INSTANCE_NAME} --require-ssl
-    if [ $? -gt 1 ]; then
+    if [ $? -gt 0 ]; then
         echo -e "error configuring ssl"
+        exit 1
     fi
 
 
@@ -277,6 +288,7 @@ db_create() {
 db_delete() {
 
     # deletes database from GCP
+    # use with caution - GCP will not allow you to re-use the same db instance name for 7 days
     # https://cloud.google.com/sql/docs/mysql/delete-instance
     echo -e "deleting database..."
     gcloud sql instances delete ${DB_INSTANCE_NAME}
@@ -300,8 +312,41 @@ db_start() {
 }
 
 
-if [ "x${command}" == "xfiles_copy" ]; then
-    files_copy
+start_all() {
+    # check to see if we have the right parameters
+    if [ "x$version" == "x" -o "x$image_id" == "x" ]; then
+        echo -e "ERROR: start_all requireds <version> and <image_id> parameters"
+        usage
+        exit 1
+    fi
+    setup # initializes your gcloud environment and starts your database
+    if [ $? -gt 0 ]; then
+        echo -e "error setting up project"
+        exit 1
+    fi
+    bucket_copy # copy files to GCP file bucket if they are not already there
+    if [ $? -gt 0 ]; then
+        echo -e "error copying files to gcp bucket"
+        exit 1
+    fi
+    image_upload # copy files to GCP file bucket
+    if [ $? -gt 0 ]; then
+        echo -e "error putting image into registry"
+        exit 1
+    fi
+    cluster_start # creates your k8 cluster and deploys your container
+    if [ $? -gt 0 ]; then
+        echo -e "error starting k8 cluster"
+        exit 1
+    fi
+}
+
+if [ "x${command}" == "xbucket_copy" ]; then
+    bucket_copy
+elif [ "x${command}" == "xbucket_create" ]; then
+    bucket_create
+elif [ "x${command}" == "xbucket_delete" ]; then
+    bucket_delete
 elif [ "x${command}" == "xcluster_start" ]; then
     cluster_start
 elif [ "x${command}" == "xcluster_stop" ]; then
@@ -322,6 +367,8 @@ elif [ "x${command}" == "ximage_upload" ]; then
     image_upload
 elif [ "x${command}" == "xsetup" ]; then
     setup
+elif [ "x${command}" == "xstart_all" ]; then
+    start_all
 elif [ "x${command}" == "xteardown" ]; then
     teardown
 else

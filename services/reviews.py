@@ -3,10 +3,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from flask import Flask
-from flask import request, abort
+from flask import abort
 from flask import render_template, Blueprint
 from flask_sqlalchemy import SQLAlchemy
-from flask_restplus import Api, Resource, reqparse, fields
+from flask_restplus import Api, Resource, fields
 
 from datetime import datetime
 import json
@@ -16,6 +16,8 @@ from util.model_util import ModelFactory
 from logging.config import dictConfig
 import traceback2 as traceback
 from flask_restplus import abort
+from flask.logging import default_handler
+import logging
 
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 
@@ -40,6 +42,8 @@ dictConfig({
     }
 })
 
+
+
 # Create the application instance
 # app = Flask(__name__, template_folder="templates")
 app = Flask(__name__)
@@ -47,6 +51,19 @@ app.config.from_object(Config)
 api = Api(app, version=app.config['VERSION'], title="Vince's Amazon Review Classifier",
           description='Predict product rating based on user review input')
 db = SQLAlchemy(app)
+
+logging.basicConfig(level=logging.DEBUG)
+
+for logger in (
+    logging.getLogger('util.AmazonTextNormalizer'),
+    logging.getLogger('util.gcp_file_util'),
+    logging.getLogger('util.model_util'),
+    logging.getLogger('util.preprocessor'),
+    logging.getLogger('util.python_util'),
+    logging.getLogger('util.text_util'),
+    logging.getLogger('util.tf2_util')
+):
+    logger.addHandler(default_handler)
 
 
 class Prediction(db.Model):
@@ -137,12 +154,15 @@ class ModelPrediction(Resource):
     @api.expect(predict_model, validate=True)
     @api.response(201, 'Success')
     @api.response(400, 'Error while predicting results')
-    @api.response(404, 'Cannot find model')
+    @api.response(404, 'Validation error or cannot find model')
     @api.doc(description="Run the provided review through our model to see it's prediction")
     # @api.marshal_with(model)
     def post(self, model, version):
         input = api.payload
         app.logger.debug(f'input {input}')
+        if input['product_rating'] < 1 or input['product_rating'] > 5:
+            abort(400, 'product_rating must be between 1 and 5')
+
         return predict_reviews(model, version, input['review'], input['product_rating'])
 
 
@@ -183,14 +203,14 @@ def predict_reviews(model_name, version, text, truth):
     prediction = None
     if classifier:
         try:
-            y_unencoded, y_raw, text_preprocessed, text_encoded = classifier.predict(text)
+            y_unencoded, y_raw, text_preprocessed, text_sequence = classifier.predict(text)
             y_dict = convert_predictions_to_dict(y_raw.ravel())
 
             status = "SUCCESS"
             # save response to DB
             prediction = Prediction(input_raw=text,
                                     input_preprocessed=text_preprocessed,
-                                    input_encoded=json.dumps(text_encoded.ravel().tolist()),
+                                    input_encoded=json.dumps(text_sequence),
                                     class_expected=truth,
                                     class_predicted=y_unencoded,
                                     class_predicted_raw=json.dumps(y_dict),
@@ -245,7 +265,7 @@ def get_history_json():
     ]
     :return:
     """
-    results = Prediction.query.all()
+    results = Prediction.query.all().order_by(Prediction.created.desc())
 
     app.logger.debug(type(results))
     resp = '[ ' + ", ".join(str(result) for result in results) + " ]"
