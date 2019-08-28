@@ -63,12 +63,12 @@ image_upload() {
         exit 1
     fi
 
-    docker tag $image_id ${IMAGE_NAME}:$version
+    docker tag $image_id ${IMAGE_NAME_FULL}:$version
 
     gcloud auth configure-docker --quiet
 
-    echo -e "\npushing docker image: ${IMAGE_NAME}:$version"
-    docker push ${IMAGE_NAME}:$version
+    echo -e "\npushing docker image: ${IMAGE_NAME_FULL}:$version"
+    docker push ${IMAGE_NAME_FULL}:$version
 }
 
 
@@ -168,7 +168,7 @@ cluster_start() {
     sleep 3
 
     echo -e "\ncreating deployment: ${DEPLOYMENT_NAME}"
-    kubectl create deployment ${DEPLOYMENT_NAME} --image=${IMAGE_NAME}:$version
+    kubectl create deployment ${DEPLOYMENT_NAME} --image=${IMAGE_NAME_FULL}:$version
     if [ $? -eq 1 ]; then
         echo -e "ERROR: failed to create deployment"
         exit 1
@@ -213,8 +213,8 @@ cluster_start() {
 image_deploy() {
     # reference: https://cloud.google.com/kubernetes-engine/docs/how-to/updating-apps
     echo -e "Run and update the following command"
-    echo -e "kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}=${IMAGE_NAME}:$version"
-    kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}=${IMAGE_NAME}:$version
+    echo -e "kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}=${IMAGE_NAME_FULL}:$version"
+    kubectl set image deployment/${DEPLOYMENT_NAME} ${IMAGE_NAME}=${IMAGE_NAME_FULL}:$version
 }
 
 
@@ -224,11 +224,11 @@ image_delete() {
 
     # don't need to do this since we already know the image name
     # gcloud container images list --repository=${REPO_HOSTNAME}/${PROJECT_ID}
-    tag=`gcloud container images list-tags ${IMAGE_NAME} | tail -1 | awk '{print $2}'`
+    tag=`gcloud container images list-tags ${IMAGE_NAME_FULL} | tail -1 | awk '{print $2}'`
     if [ "x${tag}" == "x" ]; then
         echo -e "\nWARNING: unable to get tagged image - skipping registry cleanup"
     else
-        gcloud container images delete ${IMAGE_NAME}:${tag} --force-delete-tags
+        gcloud container images delete ${IMAGE_NAME_FULL}:${tag} --force-delete-tags
     fi
 }
 
