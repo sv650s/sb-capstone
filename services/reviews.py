@@ -285,7 +285,7 @@ def get_history_json():
     ]
     :return:
     """
-    results = Prediction.query.all().order_by(Prediction.created.desc())
+    results = Prediction.query.order_by(Prediction.created.desc()).all()
 
     app.logger.debug(type(results))
     resp = '[ ' + ", ".join(str(result) for result in results) + " ]"
