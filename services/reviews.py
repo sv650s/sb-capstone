@@ -6,6 +6,8 @@ from flask import Flask
 from flask import abort
 from flask import render_template, Blueprint
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import validates
+from sqlalchemy.types import Text
 from flask_restplus import Api, Resource, fields
 
 from datetime import datetime
@@ -67,17 +69,20 @@ for logger in (
 
 
 class Prediction(db.Model):
+
+    # set to 63535 later - this is equivalent to TEXT type in mysql, the rest willl be TINYTEXT type
+    MAX_REVIEW_LENGTH = 63535
     id = db.Column(db.Integer, primary_key=True)
-    input_raw = db.Column(db.String(255), nullable=False)
-    input_preprocessed = db.Column(db.String(255), nullable=True)
-    input_encoded = db.Column(db.String(1024), nullable=True)
+    input_raw = db.Column(Text, nullable=False)
+    input_preprocessed = db.Column(Text, nullable=True)
+    input_encoded = db.Column(Text, nullable=True)
     class_expected = db.Column(db.Integer, nullable=False)
     class_predicted = db.Column(db.Integer, nullable=False)
-    class_predicted_raw = db.Column(db.String(100), nullable=False)  # json of softmax output
-    model_version = db.Column(db.String(10), nullable=False)
-    model_name = db.Column(db.String(64), nullable=False)
+    class_predicted_raw = db.Column(db.String(256), nullable=False)  # json of softmax output
+    model_version = db.Column(db.String(256), nullable=False)
+    model_name = db.Column(db.String(256), nullable=False)
     created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
-    status = db.Column(db.String(32), nullable=False)
+    status = db.Column(db.String(256), nullable=False)
 
     def __repr__(self):
         return f'<ID: {self.id}\tEXPECTED: {self.class_expected}\tPREDICTED: {self.class_predicted}'
@@ -105,6 +110,21 @@ class Prediction(db.Model):
                                model=self.model_name,
                                version=self.model_version,
                                timestamp=self.created.strftime(TIMESTAMP))
+
+    @validates('class_predicted_raw', 'model_version', 'model_name', 'status')
+    def validate_string_fields(self, key, value):
+        """
+        Truncates string fields if it's longer that what we specified
+        :param key:
+        :param value:
+        :return:
+        """
+        max_len = getattr(self.__class__, key).prop.columns[0].type.length
+        app.logger.debug(f'max_len {max_len}')
+        app.logger.debug(f'len(value) {len(value)}')
+        if value and len(value) > max_len:
+            return value[:max_len]
+        return value
 
 
 app.logger.info("creating database...")
