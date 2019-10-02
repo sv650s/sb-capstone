@@ -99,7 +99,7 @@ teardown() {
     bucket_delete
     image_delete
     db_stop
-    # TODO: 
+    # TODO:
 
 }
 
@@ -340,6 +340,9 @@ start_all() {
         exit 1
     fi
 }
+
+# set current project for gcp
+gcloud config set project ${PROJECT_ID}
 
 if [ "x${command}" == "xbucket_copy" ]; then
     bucket_copy
