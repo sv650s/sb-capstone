@@ -1,0 +1,10 @@
+{
+  "name": "GRU",
+  "description": "1 Layer GRU with Attention",
+  "version": "v1.0",
+  "model": "amazon_reviews_us_Wireless_v1_00-preprocessed-110k-TF2-biGRU_1layer_attention-186-star_rating-model.json",
+  "weights": "amazon_reviews_us_Wireless_v1_00-preprocessed-110k-TF2-biGRU_1layer_attention-186-star_rating-weights.h5",
+  "tokenizer": "tf2-tokenizer.pkl",
+  "preprocessor": "util.preprocessor.TokenizedPreprocessor",
+  "custom_objects": { "AttentionLayer": "util.tf2_util.AttentionLayer" }
+}
