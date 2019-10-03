@@ -7,8 +7,8 @@ import pandas as pd
 import pickle
 import logging
 import util.file_util as fu
-from util.program_util import Keys
-from util.ConfigBasedProgram import TimedProgram, ConfigBasedProgram
+from util.time_util import Keys
+from util.program_util import TimedProgram, ConfigFileBasedProgram
 
 log = logging.getLogger(__name__)
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -53,6 +53,6 @@ class Pickler(TimedProgram):
 
 if __name__ == "__main__":
 
-    program = ConfigBasedProgram("Pickles a file based on configuration file", Pickler)
+    program = ConfigFileBasedProgram("Pickles a file based on configuration file", Pickler)
     program.add_argument("--load_pickle", help="test loading pickle file after writing", action='store_true')
     program.main()

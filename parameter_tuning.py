@@ -5,7 +5,7 @@ import logging
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from util.program_util import Timer, Keys, Status
+from util.time_util import Timer, Keys, Status
 import util.file_util as fu
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import classification_report, confusion_matrix
@@ -209,11 +209,7 @@ if __name__ == "__main__":
             trainer = LogisticRegression(random_state=0, solver='lbfgs',
                                          multi_class='auto',
                                          class_weight='balanced',
-<<<<<<< HEAD
                                          max_iter=args.lr_iter, n_jobs=int(args.n_jobs),
-=======
-                                         max_iter=args.lr_iter, n_jobs=args.n_jobs,
->>>>>>> 6ab2132fae464409e90008fdfacbfb2783bd3287
                                          verbose=1)
             report = run_cv(trainer, model_name, parameters, x_train, y_train, x_test, y_test, infile, report, timer,
                             n_iter=int(args.n_iter), use_random=True)

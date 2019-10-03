@@ -7,7 +7,7 @@ from datetime import datetime
 from gensim.models.word2vec import Word2Vec
 from gensim.models.fasttext import FastText
 from nltk import WordPunctTokenizer
-from util.program_util import Timer
+from util.time_util import Timer
 from nltk import WordPunctTokenizer
 
 log = logging.getLogger(__name__)

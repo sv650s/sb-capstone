@@ -7,7 +7,7 @@ import pandas as pd
 from nlp.feature_util import generate_bow_file, generate_tfidf_file, generate_word2vec_file, generate_fasttext_file
 import logging
 from pprint import pformat
-from util.ConfigBasedProgram import ConfigBasedProgram, TimedProgram
+from util.program_util import ConfigFileBasedProgram, TimedProgram
 
 log = logging.getLogger(__name__)
 OUTFILE = "outfile"
@@ -70,6 +70,6 @@ class GenerateFeatures(TimedProgram):
 
 
 if __name__ == "__main__":
-    prog = ConfigBasedProgram("Takes pre-processed files and generate feature files", GenerateFeatures)
+    prog = ConfigFileBasedProgram("Takes pre-processed files and generate feature files", GenerateFeatures)
     prog.add_argument("-o", "--outdir", help="output director", default="dataset/feature_files")
     prog.main()

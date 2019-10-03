@@ -1,5 +1,5 @@
 from sklearn.neighbors import KNeighborsClassifier
-from util.ClassifierRunner import ClassifierRunner, Keys, Status, Model
+from util.model_util import Keys, Status, Model
 from pandas import DataFrame
 import logging
 import pytest

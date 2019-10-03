@@ -1,7 +1,7 @@
 import pandas
 import logging
 import datetime
-from util.ConfigBasedProgram import TimedProgram, ConfigBasedProgram
+from util.program_util import TimedProgram, ConfigFileBasedProgram
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
 from keras.layers.normalization import BatchNormalization
