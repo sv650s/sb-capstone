@@ -2,6 +2,18 @@
 #
 # Generate feature files based on a config
 #
+# See config/template-feature_generator.csv for example
+#
+# Required columns
+#   data_dir - location of pre-processed files
+#   data_file - pre-processed files to use
+#   fn_name - this will be used to dynamically call imported feature_util functions (see import below)
+#   feature_columns - name of column where our features will be generated from
+#   y - list of columns that may contain your model labels
+#
+# Additional columns in the file should match parameter names for the nlp.feature_util function parameters
+# The program will parse out these columns and dynamically pass them into the function as parameters
+#
 import pandas as pd
 # leave this in - will be called by globals
 from nlp.feature_util import generate_bow_file, generate_tfidf_file, generate_word2vec_file, generate_fasttext_file
@@ -44,12 +56,15 @@ class GenerateFeatures(TimedProgram):
             # not defined
             args_pd = self.config_df.dropna()
             args_dict = args_pd.to_dict()
+
             # delete columns from config file that doesn't get passed to feature fn
             del args_dict["fn_name"]
             del args_dict["feature_columns"]
             del args_dict["y"]
             del args_dict["data_dir"]
             del args_dict["data_file"]
+
+            # these start status columns that the program will write - delete them if they are there
             if "status" in args_dict:
                 del args_dict["status"]
             if "status_date" in args_dict:
