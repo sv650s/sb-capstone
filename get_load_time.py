@@ -1,3 +1,12 @@
+"""
+Taks in  list of files from configuration. will load each configuration file and time how long it takes
+to load the file and record it into file_load_time_min column
+
+Required columns:
+    data_dir
+    infile
+"""
+
 import pandas as pd
 import logging
 from datetime import datetime
@@ -7,12 +16,13 @@ import traceback2
 
 
 
+
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s:%(lineno)d %(levelname)s - %(message)s'
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Takes word vector files (ie, BoW and TFIDF and generate feature files based on LDA')
-    parser.add_argument("config_file", help="file with parameters to drive the permutations")
+    parser = argparse.ArgumentParser(description='Reads in data files and records load time for the file in the original config file')
+    parser.add_argument("config_file", help="configuration file. Requires data_dir and infile columns")
     parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
 
     # get command line arguments
