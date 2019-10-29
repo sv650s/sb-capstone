@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-import run_classifiers as rc
+from tools import run_classifiers as rc
 import logging
 
 log = logging.getLogger(__name__)
