@@ -1,4 +1,8 @@
+"""
+Converts a TSV file to CSV file format
 
+This program has the capability of providing sampling so you can reduce the size of the file at the same time
+"""
 import argparse
 import logging
 from util.file_samplers import SimpleSampler

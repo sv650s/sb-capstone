@@ -69,7 +69,7 @@ def get_outfile_name(infile:str) -> str:
     # generate output file name
     # dir = re.findall(r'([\w/]+)/[\w-]+\.csv', INFILE)[0]
     # print(f'dir: {dir}')
-    basename = re.findall(r'/([\w-]+)\.csv', file)[0]
+    basename = re.findall(r'/([\w-]+)\.csv', infile)[0]
     log.debug(f'basename: {basename}')
     basename = basename.replace('preprocessed', f'lda{topic}')
     log.debug(f'basename: {basename}')

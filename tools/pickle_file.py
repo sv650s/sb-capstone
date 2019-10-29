@@ -1,6 +1,11 @@
 """
-Testing picking feature files and reading them back in to see if this might be a faster way of
+Wrote this utility to test picking feature files and reading them back in to see if this might be a faster way of
 processing
+
+For help and list of parameters, use:
+
+./pickle_file.py --help
+
 """
 
 import pandas as pd
