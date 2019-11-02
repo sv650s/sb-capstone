@@ -3,6 +3,9 @@
 # this is a one time program used to add star_rating column back into feature files
 # forgot to append the star_rating column to feature files so wrote this program to zip them together
 #
+import sys
+sys.path.append('../')
+
 import argparse
 import logging
 import pandas as pd

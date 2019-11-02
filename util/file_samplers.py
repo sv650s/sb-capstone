@@ -16,6 +16,11 @@ class Sampler:
 
 
 class SimpleSampler(Sampler):
+    """
+    Simple sampling means that we are going to keep every X entry. X is specified by the sample_rate in the constructor
+
+    Every X samples will be saved to the file
+    """
 
     def __init__(self, sample_rate:int, has_header:bool = True):
         super().__init__(has_header)

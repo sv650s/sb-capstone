@@ -2,11 +2,11 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 import pandas as pd
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing import sequence
-from keras.engine.topology import Layer
-from keras import backend as K
-import keras
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing import sequence
+from tensorflow.keras.layers import Layer
+#from tensorflow.keras.engine.topology import Layer
+from tensorflow.keras import backend as K
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 import util.file_util as fu

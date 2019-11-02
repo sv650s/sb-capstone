@@ -12,11 +12,11 @@ def convert_tsv_to_csv(infile: str, outfile: str, sampler = None):
     Read a tsv file line by line then covert it into a readable csv file
     :param infile: input TSV file
     :param outfile: output CSV file
-    :param sampling_rate: sepcify smapling rate to reduce file size. 1 is default = no sampling
+    :param sampler - Sampler to reduce the output file size
     :return:
     """
 
-    log.debug(f"Converting {infile} to {outfile} with sampling {sampler}")
+    log.info(f"Converting {infile} to {outfile} with sampling {sampler}")
 
     if os.path.isfile(infile):
 

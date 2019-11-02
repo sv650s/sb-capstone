@@ -2,6 +2,9 @@
 Reads in one of the feature files and creates and output csv with the distribution
 of star_ratings so that we can graph it in our notebook
 """
+import sys
+sys.path.append('../')
+
 
 import pandas as pd
 from imblearn.over_sampling import SMOTE

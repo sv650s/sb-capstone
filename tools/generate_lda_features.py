@@ -23,8 +23,9 @@
 # outfile - file to write the feature output to
 #
 
-# In[1]:
 
+import sys
+sys.path.append('../')
 
 from gensim import corpora, models
 import pyLDAvis
@@ -122,7 +123,7 @@ if __name__ == "__main__":
     config_df = pd.read_csv(args.config_file)
     log.debug(config_df.head())
     for index, row in config_df.iterrows():
-        infile = row["infile"]
+        data_file = row["data_file"]
         data_dir = row["data_dir"]
         dtype = row["dtype"]
         topics_str_list = str(row["topics"]).replace(" ", "").split(",")
@@ -142,12 +143,12 @@ if __name__ == "__main__":
             read_infile_start = datetime.now()
 
             # infile has a bunch of feature columns, last column is star_rating
-            log.info(f'Reading in {infile}')
+            log.info(f'Reading in {data_file}')
             if dtype and len(dtype) > 0:
-                in_df = pd.read_csv(f'{data_dir}/{infile}', dtype=np.dtype(dtype))
+                in_df = pd.read_csv(f'{data_dir}/{data_file}', dtype=np.dtype(dtype))
                 in_df = dfu.cast_column_type(in_df, CLASS_COLUMN, "uint8")
             else:
-                in_df = pd.read_csv(f'{data_dir}/{infile}')
+                in_df = pd.read_csv(f'{data_dir}/{data_file}')
 
             read_infile_end = datetime.now()
 
@@ -166,7 +167,7 @@ if __name__ == "__main__":
                     lda_end = datetime.now()
 
                     log.info(f"Feature shape: {features.shape}")
-                    outfile = f'{args.outdir}/{infile.split(".")[0]}-{lda}.csv'
+                    outfile = f'{args.outdir}/{data_file.split(".")[0]}-{lda}.csv'
                     log.info(f"outfile: {outfile}")
 
                     # do remove this later

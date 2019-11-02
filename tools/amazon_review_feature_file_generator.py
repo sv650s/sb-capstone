@@ -1,10 +1,13 @@
 #!/bin/python
+# TODO: remove this file - defunct and replaced with feature_generator.py
 #
 # Generate feature files based on a config
 #
+import sys
+sys.path.append('../')
+
 import argparse
 import pandas as pd
-from nlp.feature_util import generate_bow_file, generate_tfidf_file
 import logging
 import traceback2
 from pprint import pformat
@@ -26,7 +29,7 @@ TRUE_NAMES = ["yes", "Yes", "True", "true"]
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Takes pre-processed files and generate feature files')
     parser.add_argument("config_file", help="file with parameters to drive the permutations")
-    parser.add_argument("infile", help="data file to generate features from")
+    # parser.add_argument("infile", help="data file to generate features from")
     parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
     parser.add_argument("-c", "--column", help="column to generate features from", default="review_body")
     parser.add_argument("-o", "--outdir", help="output director", default="dataset/feature_files")

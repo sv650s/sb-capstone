@@ -1,5 +1,11 @@
-#
-#
+"""
+Originally I was playing with both Yelp and Amazon dataset. This was a program to pre-process the reviews
+on Yelp
+"""
+
+
+import sys
+sys.path.append('../')
 
 import os
 import getopt

@@ -1,8 +1,9 @@
 from pandas import DataFrame
 from pandas import Series
 import logging
-from . import text_util as tu
-from . import df_util as dfu
+import util.text_util as tu
+import util.df_util as dfu
+
 
 logger = logging.getLogger(__name__)
 # counter for debugging
@@ -22,7 +23,7 @@ class TextPreprocessor:
                  expand_contractions=True,
                  remove_special_chars=True,
                  stem_text=False,
-                 lemmatize_text=False,
+                 lemmatize_text=True,
                  remove_alphanumeric_words=True,
                  remove_stop_words=True,
                  retain_original_columns=False,
@@ -47,7 +48,6 @@ class TextPreprocessor:
         :param custom_postprocessor: pass it a custom function to run after processing
         """
         assert text_columns is not None, "text_column_name is required"
-        assert stem_text != True and lemmatize_text != True, "cannot stem and lemmatize text"
 
         self.text_columns = text_columns
         self.columns_to_drop = columns_to_drop
@@ -118,16 +118,16 @@ class TextPreprocessor:
                     text = tu.remove_alphanumeric_words(text)
                 if self.remove_stop_words:
                     text = tu.remove_stop_words(text)
-                if self.stem_text:
-                    text = tu.stem_text(text)
-                if self.lemmatize_text:
-                    text = tu.lemmatize_text(text)
                 if self.custom_postprocessor is not None:
                     if isinstance(self.custom_postprocessor, list):
                         for postprocessor in self.custom_postprocessor:
                             text = postprocessor(text)
                     else:
                         text = self.custom_postprocessor(text)
+                if self.stem_text:
+                    text = tu.stem_text(text)
+                if self.lemmatize_text:
+                    text = tu.lemmatize_text(text)
 
             logger.debug(f'clean text from column [{column}] [{text}]')
             row[column] = text

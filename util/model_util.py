@@ -11,10 +11,11 @@ import sys
 from util.dict_util import add_dict_to_dict
 from util.time_util import Keys, TimedReport, Status, TIME_FORMAT, DATE_FORMAT
 from sklearn.externals import joblib
+import numpy as np
 
 # set up logger
 log = logging.getLogger(__name__)
-
+MODEL_DIR = "../models"
 
 class Model(object):
     """
@@ -97,7 +98,7 @@ class Model(object):
 
             # TODO: add logic for CV's
 
-            model_filename = f'models/{datetime.now().strftime(DATE_FORMAT)}-{self.description}.jbl'
+            model_filename = f'{MODEL_DIR}/{datetime.now().strftime(DATE_FORMAT)}-{self.description}.jbl'
             self.report.record(Keys.MODEL_FILE, model_filename)
             self.report.start_timer(Keys.MODEL_SAVE_TIME_MIN)
             with open(model_filename, 'wb') as file:

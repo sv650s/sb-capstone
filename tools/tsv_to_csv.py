@@ -2,7 +2,12 @@
 Converts a TSV file to CSV file format
 
 This program has the capability of providing sampling so you can reduce the size of the file at the same time
+
+Example: python tsv_to_csv.py -s 180 ../dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00.tsv ../dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-50k.csv
 """
+import sys
+sys.path.append('../')
+
 import argparse
 import logging
 from util.file_samplers import SimpleSampler

@@ -1,3 +1,9 @@
+"""
+This is a test class - it is incomplete
+"""
+import sys
+sys.path.append('../')
+
 import pandas as pd
 import logging
 import sys

@@ -7,6 +7,9 @@ it is easier to use pandas to zip reports to match columns than to do this manua
 We will be taking one file and adding the entries from another file into this
 
 """
+import sys
+sys.path.append('../')
+
 
 import pandas as pd
 import logging

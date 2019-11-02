@@ -15,6 +15,7 @@ CV_TIME_MIN = "cv_time_min"
 MODEL_SAVE_TIME_MIN = "model_save_time_min"
 FEATURE_PICKLE_TIME_MIN = "feature_pickle_time_min"
 
+REPORT_DIR = '../reports'
 
 log = logging.getLogger(__name__)
 
@@ -119,16 +120,18 @@ class ConfigFileBasedProgram(object):
         self.parser = argparse.ArgumentParser(description=description)
         self.parser.add_argument("config_file", help="file with parameters to drive the permutations")
         self.parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
+        self.parser.add_argument("-r", "--reportdir", help="report directory, default ../reports", default="../reports")
 
         self.program = program
         self.config_df = None
         self.report_df = None
         self.report_file = None
         self.config_file = None
+        self.report_dir = None
 
     def get_report_file_name(self):
         _, config_basename = fu.get_dir_basename(self.config_file)
-        reportfile = f'reports/{config_basename}-report.csv'
+        reportfile = f'{self.report_dir}/{config_basename}-report.csv'
         log.debug(f'Report file: {reportfile}')
         return reportfile
 
@@ -168,6 +171,7 @@ class ConfigFileBasedProgram(object):
         log.info(f'Reading config file: {self.config_file}')
         self.config_df = pd.read_csv(self.config_file)
         self.report_df = pd.DataFrame()
+        self.report_dir = args.reportdir
         self.report_file = self.get_report_file_name()
 
         for index, row in self.config_df.iterrows():

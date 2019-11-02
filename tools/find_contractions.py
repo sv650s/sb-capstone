@@ -2,6 +2,9 @@
 This program parses through a text file and create a list of unique contractions
 Contractions is defined by words with ' in the middle
 '''
+import sys
+sys.path.append('../')
+
 import logging
 import argparse
 import os

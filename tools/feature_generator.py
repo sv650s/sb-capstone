@@ -14,9 +14,17 @@
 # Additional columns in the file should match parameter names for the nlp.feature_util function parameters
 # The program will parse out these columns and dynamically pass them into the function as parameters
 #
+# For generate_tfidf_file and generate_bow_file, the following columns are supported
+# 	lda_topics	min_df	max_df	min_ngram_range	max_ngram_range	max_features
+# For generate_word2vec_file and generate_fasttext_file, the following columns are supported
+# 	feature_size	window_context	min_word_count	sample	iterations
+#
+import sys
+sys.path.append('../')
+
 import pandas as pd
 # leave this in - will be called by globals
-from nlp.feature_util import generate_bow_file, generate_tfidf_file, generate_word2vec_file, generate_fasttext_file
+from util.nlp_util import generate_bow_file, generate_tfidf_file, generate_word2vec_file, generate_fasttext_file
 import logging
 from pprint import pformat
 from util.program_util import ConfigFileBasedProgram, TimedProgram
@@ -25,14 +33,17 @@ log = logging.getLogger(__name__)
 OUTFILE = "outfile"
 
 
-class GenerateWord2Vec(object):
-
-    def __init__(self, config_df: pd.DataFrame):
-        super.__init__(self)
-        self.config_df = config_df
+# class GenerateWord2Vec(object):
+#
+#     def __init__(self, config_df: pd.DataFrame):
+#         super.__init__(self)
+#         self.config_df = config_df
 
 
 class GenerateFeatures(TimedProgram):
+    """
+    Program to generate feature files from pre-processed file
+    """
 
     def execute(self):
         log.info("Execute")
@@ -47,8 +58,8 @@ class GenerateFeatures(TimedProgram):
 
         for feature_column in feature_columns:
             # get x column
-            x_df = df[feature_column]
-            y_df = df[y_columns]
+            x_df = df[feature_column].copy()
+            y_df = df[y_columns].copy()
 
             # had issues with min_df and max_df since it can be int or float - namely there is
             # functional difference if you pass in 1.0 vs 1
@@ -77,7 +88,7 @@ class GenerateFeatures(TimedProgram):
             log.info(f'generating file with following arguments: {pformat(args_dict)}')
             args_dict["x"] = x_df
             args_dict["y"] = y_df
-            args_dict["timer"] = self.report
+            # args_dict["timer"] = self.report
 
             # call function specified by the fn_name column
             outfile = globals()[function](**args_dict)
@@ -86,5 +97,5 @@ class GenerateFeatures(TimedProgram):
 
 if __name__ == "__main__":
     prog = ConfigFileBasedProgram("Takes pre-processed files and generate feature files", GenerateFeatures)
-    prog.add_argument("-o", "--outdir", help="output director", default="dataset/feature_files")
+    prog.add_argument("-o", "--outdir", help="output director", default="../dataset/feature_files")
     prog.main()

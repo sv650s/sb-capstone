@@ -1,5 +1,8 @@
 #
 #
+import sys
+sys.path.append('../')
+
 
 import os
 import argparse
@@ -88,8 +91,8 @@ def main():
     logger.info(f'original dataframe length: {len(df)}')
 
     logger.info(f'starting text pre-processing')
-    tp = TextPreprocessor(text_columns=["product_title", "review_headline", "review_body"],
-                          columns_to_drop=['marketplace', 'vine', 'verified_purchase'],
+    tp = TextPreprocessor(text_columns=["review_headline", "review_body"],
+                          columns_to_drop=['marketplace', 'vine', 'verified_purchase', 'customer_id', 'review_id', 'product_id', 'product_parent', 'product_title', 'product_category'],
                           stop_word_remove_list=STOP_WORDS_TO_REMOVE,
                           retain_original_columns=args.retain,
                           custom_preprocessor=[remove_amazon_tags, remove_http_links])

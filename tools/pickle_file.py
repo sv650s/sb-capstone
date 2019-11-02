@@ -7,6 +7,9 @@ For help and list of parameters, use:
 ./pickle_file.py --help
 
 """
+import sys
+sys.path.append('../')
+
 
 import pandas as pd
 import pickle

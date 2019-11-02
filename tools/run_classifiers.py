@@ -1,7 +1,11 @@
+import sys
+sys.path.append('../')
+
 from sklearn.neighbors import KNeighborsClassifier, RadiusNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
 from util.model_util import Model
 from imblearn.over_sampling import SMOTE
 import pandas as pd
@@ -14,7 +18,6 @@ from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
 from util.program_util import TimedProgram, ConfigFileBasedProgram
 from util.time_util import Keys, Status
-from DNN import DNN
 
 # configure logger so we can see output from the classes
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -22,6 +25,7 @@ TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
 log = logging.getLogger(__name__)
 
+RSTATE=1
 
 class TimedClassifier(TimedProgram):
     """
@@ -71,7 +75,7 @@ class TimedClassifier(TimedProgram):
         log.info(f'shape of x: {x.shape}')
         log.info(f'shape of y: {y.shape}')
 
-        return train_test_split(x, y, random_state=1, stratify=y)
+        return train_test_split(x, y, random_state=RSTATE, stratify=y)
 
     def execute(self):
 
@@ -113,11 +117,12 @@ class TimedClassifier(TimedProgram):
             log.debug(f'grouped: {grouped_df.head()}')
             log.debug(f'grouped: {grouped_df.shape}')
 
-            sm = SMOTE(random_state=2, sampling_strategy={1: int(round(grouped_df.iloc[0] * 1.67)),
-                                                          2: int(round(grouped_df.iloc[1] * 2.00)),
-                                                          3: int(round(grouped_df.iloc[2] * 1.67)),
-                                                          4: int(round(grouped_df.iloc[3] * 1.67))}
-                       )
+            # sm = SMOTE(random_state=RSTATE, sampling_strategy={1: int(round(grouped_df.iloc[0] * 1.67)),
+            #                                               2: int(round(grouped_df.iloc[1] * 2.00)),
+            #                                               3: int(round(grouped_df.iloc[2] * 1.67)),
+            #                                               4: int(round(grouped_df.iloc[3] * 1.67))}
+            #            )
+            sm = SMOTE(random_state=RSTATE, sampling_strategy='not majority')
 
             X_train_res, Y_train_res = sm.fit_sample(X_train, Y_train.ravel())
 
@@ -135,8 +140,17 @@ class TimedClassifier(TimedProgram):
             sm_desc = "nosmote"
         self.stop_timer(Keys.SMOTE_TIME_MIN)
 
-        if model_name == "RF":
-            classifier = RandomForestClassifier(random_state=1, n_jobs=self.n_jobs, verbose=1)
+        classifier = None
+        if model_name == "DT":
+            classifier = DecisionTreeClassifier(random_state=RSTATE)
+            parameters = {}
+
+        elif model_name == "DTB":
+            classifier = DecisionTreeClassifier(random_state=RSTATE, class_weight='balanced')
+            parameters = {"class_weight": "balanced"}
+
+        elif model_name == "RF":
+            classifier = RandomForestClassifier(random_state=RSTATE, n_jobs=self.n_jobs, verbose=1)
             parameters = {"n_jobs": self.n_jobs, "verbose": 1}
 
         elif model_name == "GB":
@@ -157,7 +171,7 @@ class TimedClassifier(TimedProgram):
             parameters = {"random_seed": 1}
 
         elif model_name == "LR":
-            classifier = LogisticRegression(random_state=0, solver='lbfgs',
+            classifier = LogisticRegression(random_state=RSTATE, solver='lbfgs',
                                             multi_class='auto',
                                             max_iter=self.lr_iter, n_jobs=self.n_jobs, C=self.lr_c,
                                             verbose=1)
@@ -166,8 +180,8 @@ class TimedClassifier(TimedProgram):
                           "max_iter": self.lr_iter,
                           "verbose": 1}
 
-        elif model_name == "LRB100":
-            classifier = LogisticRegression(random_state=0, solver='lbfgs',
+        elif model_name == "LRB":
+            classifier = LogisticRegression(random_state=RSTATE, solver='lbfgs',
                                             multi_class='auto',
                                             class_weight='balanced',
                                             max_iter=self.lr_iter, n_jobs=self.n_jobs, C=self.lr_c,
@@ -188,27 +202,24 @@ class TimedClassifier(TimedProgram):
             parameters = {"n_jobs": self.n_jobs,
                           "radius": self.radius}
 
-        elif model_name == "DNN":
-            classifier = DNN(num_input_features=X_train.shape[1])
-            parameters = {"batch_size": 128,
-                          "epoch": self.epochs,
-                          "verbose": 1}
 
 
-
-        model = Model(classifier,
-                      X_train,
-                      Y_train,
-                      X_test,
-                      Y_test,
-                      name=model_name,
-                      class_column=class_column,
-                      description=f'{description}-{sm_desc}',
-                      file=data_file,
-                      parameters=parameters
-                      )
-        report_dict, _ = model.run()
-        self.report.add_dict(report_dict)
+        if classifier is not None:
+            model = Model(classifier,
+                          X_train,
+                          Y_train,
+                          X_test,
+                          Y_test,
+                          name=model_name,
+                          class_column=class_column,
+                          description=f'{description}-{sm_desc}',
+                          file=data_file,
+                          parameters=parameters
+                          )
+            report_dict, _ = model.run()
+            self.report.add_dict(report_dict)
+        else:
+            log.error(f"Unable to create classifier for {model_name}")
 
 
 if __name__ == "__main__":

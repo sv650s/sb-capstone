@@ -24,6 +24,7 @@ dependencies:
   - unittest2=1.1.0
   - nltk=3.4.1
   - coverage=4.5.3
+  - pyldavis
   - pytest=4.4.1
   - pytest-cov=2.6.1
   - mock=2.0.0
