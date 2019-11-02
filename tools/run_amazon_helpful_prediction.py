@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 # I'm finding that running these models on my laptop takes forever and they are not finishing so I'm going to start
 # with a really small file just to validate my code
 #
-# datafile was generated from amazon_review_preprocessing.ipynb - this file has 1k reviews randomly chosen
+# datafile was generated from 1.0-amazon_review-preprocessing.ipynb - this file has 1k reviews randomly chosen
 # from original file
 KEEP_COLUMNS = ["helpful_votes", "total_votes", "helpful_votes", "review_headline", "review_body"]
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'

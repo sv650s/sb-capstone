@@ -62,9 +62,13 @@ def parse_description(x: pd.Series):
     x["config_ngram"] = np.NaN if x.description.split("-")[3] == "ngram_none" else x.description.split("-")[3]
     x["sample_size"] = x.description.split("-")[4]
     x["feature_size"] = x.description.split("-")[5]
-    x["lda"] = False if x.description.split("-")[6] == "nolda" else True
-    x["smote"] = False if x.description.split("-")[7] == "nosmote" else True
+    x["has_lda"] = False if x.description.split("-")[6] == "nolda" else True
+    x["lda_str"] = x.description.split("-")[6]
+    x["has_sampling"] = False if x.description.split("-")[7] == "sampling_none" else True
+    x["sampling_str"] = x.description.split("-")[7]
     x["label_column"] = x.description.split("-")[9]
+    x["feature_summary"] = f'{x.feature_engineering}-{x.config_ngram}'
+    x["feature_summary_sampling"] = f'{x.feature_engineering}-{x.config_ngram}-{x.sampling_str}'
     return x
 
 def preprocess_report(report: pd.DataFrame):
@@ -74,5 +78,5 @@ def preprocess_report(report: pd.DataFrame):
     :return:
     """
     report = calculate_metric(report)
-    report = report.apply(lambda x: parse_description(), axis = 1)
+    report = report.apply(lambda x: parse_description(x), axis = 1)
     return report

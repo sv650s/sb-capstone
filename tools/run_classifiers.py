@@ -8,6 +8,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from util.model_util import Model
 from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
 import pandas as pd
 import logging
 import util.file_util as fu
@@ -83,6 +84,7 @@ class TimedClassifier(TimedProgram):
         class_column = self.get_config("class_column")
         drop_columns = self.get_config("drop_columns")
         dtype = self.get_config("dtype")
+        sampling = self.get_config("sampling")
 
         # let's get the parameters to figure out which training models we need to run
         model_name = self.get_config("model_name")
@@ -105,9 +107,8 @@ class TimedClassifier(TimedProgram):
 
         # put these here so our columns are not messed up
         self.start_timer(Keys.SMOTE_TIME_MIN)
-        if self.args.smote:
-            sm_desc = "smote"
-
+        if sampling:
+            ## if we want to over sample or under sample
             log.debug(f'Y_train {Y_train.shape}')
             log.debug(f'Y_train {Y_train.head()}')
 
@@ -117,14 +118,14 @@ class TimedClassifier(TimedProgram):
             log.debug(f'grouped: {grouped_df.head()}')
             log.debug(f'grouped: {grouped_df.shape}')
 
-            # sm = SMOTE(random_state=RSTATE, sampling_strategy={1: int(round(grouped_df.iloc[0] * 1.67)),
-            #                                               2: int(round(grouped_df.iloc[1] * 2.00)),
-            #                                               3: int(round(grouped_df.iloc[2] * 1.67)),
-            #                                               4: int(round(grouped_df.iloc[3] * 1.67))}
-            #            )
-            sm = SMOTE(random_state=RSTATE, sampling_strategy='not majority')
+            if sampling == "smote":
+                sm_desc = sampling
+                sampler = SMOTE(random_state=RSTATE, sampling_strategy='not majority')
+            elif sampling == "random_under_sampling":
+                sm_desc = sampling
+                sampler = RandomUnderSampler(random_state=RSTATE, replacement=True)
 
-            X_train_res, Y_train_res = sm.fit_sample(X_train, Y_train.ravel())
+            X_train_res, Y_train_res = sampler.fit_resample(X_train, Y_train.ravel())
 
             X_train = pd.DataFrame(X_train_res, columns=X_train.columns)
             Y_train = pd.DataFrame(Y_train_res, columns=["star_rating"])
@@ -135,9 +136,9 @@ class TimedClassifier(TimedProgram):
 
             log.debug(dist.head())
             _, basename = fu.get_dir_basename(infile)
-            dist.to_csv(f'reports/{basename}-smotehist.csv')
+            dist.to_csv(f'../reports/{basename}-histogram-{sampling}.csv')
         else:
-            sm_desc = "nosmote"
+            sm_desc = "sampling_none"
         self.stop_timer(Keys.SMOTE_TIME_MIN)
 
         classifier = None
@@ -229,8 +230,6 @@ if __name__ == "__main__":
     program.add_argument("--n_jobs", help="number of cores to use. default -1", default=-1)
     program.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
     program.add_argument("--radius", help="radius for radius neighbor classification. default 30", default=30)
-    program.add_argument("-s", "--smote", help="if yes, will run the data with SMOTE. default False",
-                         action='store_true')
     program.add_argument("--lr_c", help="c parameter for LR. default 1.0", default=1.0)
     program.add_argument("--epochs", help="epoch for deep learning. Default 1", default=1)
     program.main()

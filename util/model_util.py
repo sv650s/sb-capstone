@@ -97,8 +97,7 @@ class Model(object):
             self.report.end_timer(Keys.TRAIN_TIME_MIN)
 
             # TODO: add logic for CV's
-
-            model_filename = f'{MODEL_DIR}/{datetime.now().strftime(DATE_FORMAT)}-{self.description}.jbl'
+            model_filename = f'{MODEL_DIR}/{self.description}.jbl'
             self.report.record(Keys.MODEL_FILE, model_filename)
             self.report.start_timer(Keys.MODEL_SAVE_TIME_MIN)
             with open(model_filename, 'wb') as file:
