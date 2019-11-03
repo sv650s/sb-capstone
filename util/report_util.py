@@ -26,7 +26,7 @@ def _harmonic_mean(data:pd.DataFrame, column_name) -> pd.DataFrame:
     :param column_name:
     :return:
     """
-    data[column_name] = 5 / (1/data["1_precision"] +
+    data[column_name] = 5 / (1/data["1_recall"] +
                                  1/data["2_recall"] +
                                  1/data["3_recall"] +
                                  1/data["4_recall"] +
@@ -41,7 +41,7 @@ def _geometric_mean(data:pd.DataFrame, column_name) -> pd.DataFrame:
     :param column_name:
     :return:
     """
-    data[column_name] = (data["1_precision"] +
+    data[column_name] = (data["1_recall"] +
                               data["2_recall"] +
                               data["3_recall"] +
                               data["4_recall"] +

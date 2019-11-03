@@ -14,8 +14,6 @@ class TestRunClassifiers(object):
         return pd.DataFrame(d)
 
 
-
-
     def test_create_training_data(self, in_df):
         x_train, x_test, y_train, y_test = rc.create_training_data(in_df, "b")
 

@@ -147,11 +147,11 @@
 <p id="t12" class="pln"><span class="str">    Read a tsv file line by line then covert it into a readable csv file</span><span class="strut">&nbsp;</span></p>
 <p id="t13" class="pln"><span class="str">    :param infile: input TSV file</span><span class="strut">&nbsp;</span></p>
 <p id="t14" class="pln"><span class="str">    :param outfile: output CSV file</span><span class="strut">&nbsp;</span></p>
-<p id="t15" class="pln"><span class="str">    :param sampling_rate: sepcify smapling rate to reduce file size. 1 is default = no sampling</span><span class="strut">&nbsp;</span></p>
+<p id="t15" class="pln"><span class="str">    :param sampler - Sampler to reduce the output file size</span><span class="strut">&nbsp;</span></p>
 <p id="t16" class="pln"><span class="str">    :return:</span><span class="strut">&nbsp;</span></p>
 <p id="t17" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
 <p id="t18" class="pln"><span class="strut">&nbsp;</span></p>
-<p id="t19" class="stm mis">    <span class="nam">log</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">f"Converting {infile} to {outfile} with sampling {sampler}"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t19" class="stm mis">    <span class="nam">log</span><span class="op">.</span><span class="nam">info</span><span class="op">(</span><span class="str">f"Converting {infile} to {outfile} with sampling {sampler}"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t20" class="pln"><span class="strut">&nbsp;</span></p>
 <p id="t21" class="stm mis">    <span class="key">if</span> <span class="nam">os</span><span class="op">.</span><span class="nam">path</span><span class="op">.</span><span class="nam">isfile</span><span class="op">(</span><span class="nam">infile</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
 <p id="t22" class="pln"><span class="strut">&nbsp;</span></p>
@@ -206,7 +206,7 @@
     <div class="content">
         <p>
             <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.3</a>,
-            created at 2019-10-10 11:51
+            created at 2019-11-02 16:36
         </p>
     </div>
 </div>

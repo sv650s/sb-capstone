@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from util.model_util import Model
 from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler
+from imblearn.under_sampling import RandomUnderSampler, NearMiss
 import pandas as pd
 import logging
 import util.file_util as fu
@@ -107,7 +107,7 @@ class TimedClassifier(TimedProgram):
 
         # put these here so our columns are not messed up
         self.start_timer(Keys.SMOTE_TIME_MIN)
-        if sampling:
+        if sampling is not None:
             ## if we want to over sample or under sample
             log.debug(f'Y_train {Y_train.shape}')
             log.debug(f'Y_train {Y_train.head()}')
@@ -124,6 +124,11 @@ class TimedClassifier(TimedProgram):
             elif sampling == "random_under_sampling":
                 sm_desc = sampling
                 sampler = RandomUnderSampler(random_state=RSTATE, replacement=True)
+            elif sampling == "nearmiss-2":
+                sm_desc = sampling
+                sampler = NearMiss(random_state=RSTATE, sampling_strategy='not minority', version=2, n_jobs=self.n_jobs)
+            else:
+                raise Exception(f"Sampling method not supported: {sampling}")
 
             X_train_res, Y_train_res = sampler.fit_resample(X_train, Y_train.ravel())
 
