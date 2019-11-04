@@ -31,4 +31,4 @@ domino*
 *.swp
 models
 logs
-
+syncTo*.sh

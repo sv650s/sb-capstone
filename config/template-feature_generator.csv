@@ -1,7 +1,8 @@
-﻿description,fn_name,lda_topics,min_df,max_df,min_ngram_range,max_ngram_range,max_features,feature_size,window_context,min_word_count,sample,iterations,feature_columns,y
-bow-df_default-ngram11,generate_bow_file,20,,,1,1,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-bow-df_default-ngram12,generate_bow_file,20,,,1,2,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-bow-df_default-ngram13,generate_bow_file,20,,,1,3,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-tfidf-df_default-ngram11,generate_tfidf_file,20,,,1,1,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-tfidf-df_default-ngram12,generate_tfidf_file,20,,,1,2,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-tfidf-df_default-ngram13,generate_tfidf_file,20,,,1,3,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
+data_dir,data_file,description,fn_name,lda_topics,min_df,max_df,min_ngram_range,max_ngram_range,max_features,feature_size,window_context,min_word_count,sample,iterations,feature_columns,y
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,bow-df_default-ngram11,generate_bow_file,,,,1,1,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,tfidf-df_default-ngram11,generate_tfidf_file,,,,1,1,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,bow-df_90-ngram22,generate_bow_file,,,,2,2,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,tfidf-df_90-ngram22,generate_tfidf_file,,,,2,2,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,word2vec_pretrained-df_none-ngram_none,generate_word2vec_file,,,,,,,100,5,5,0.001,5,review_body,"star_rating, helpful_votes, total_votes"
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,word2vec-df_none-ngram_none,generate_word2vec_file,,,,,,,100,5,5,0.001,5,review_body,"star_rating, helpful_votes, total_votes"
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,fasttext-df_none-ngram_none,generate_fasttext_file,,,,,,,100,5,5,0.001,5,review_body,"star_rating, helpful_votes, total_votes"

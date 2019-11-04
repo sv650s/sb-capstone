@@ -1,141 +1,193 @@
-import logging
+"""
+Abstract class for command line programs
+"""
+import pandas as pd
 from datetime import datetime
-import util.dict_util as du
+import argparse
+import logging
+import util.file_util as fu
+from util.time_util import Keys, Status, TimedReport, TIME_FORMAT, TRUE_LIST, LOG_FORMAT
+import traceback2
+import sys
 
-TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-DATE_FORMAT = '%Y-%m-%d'
-LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
-TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
+
+CV_TIME_MIN = "cv_time_min"
+MODEL_SAVE_TIME_MIN = "model_save_time_min"
+FEATURE_PICKLE_TIME_MIN = "feature_pickle_time_min"
+
+REPORT_DIR = '../reports'
 
 log = logging.getLogger(__name__)
 
 
-class Keys(object):
-    TRAIN_EXAMPLES = "train_examples"
-    TRAIN_FEATURES = "train_features"
-    TEST_EXAMPLES = "test_examples"
-    TEST_FEATURES = "test_features"
-    TRAIN_TIME_MIN = "train_time_min"
-    SCORE_TIME_MIN = "score_time_min"
-    PREDICT_TIME_MIN = "predict_time_min"
-    SMOTE_TIME_MIN = "smote_time_min"
-    VECTORIZER_TIME_MIN = "vectorizer_time_min"
-    LDA_TIME_MIN = "lda_time_min"
-    FILE_LOAD_TIME_MIN = "file_load_time_min"
-    TOTAL_TIME_MIN = "total_time_min"
-    STATUS = "status"
-    STATUS_DATE = "status_date"
-    MESSAGE = "message"
-    MODEL_NAME = "model_name"
-    MODEL_SAVE_TIME_MIN = "model_save_time_min"
-    MODEL_FILE = "model_file"
-    MODEL = "model"
-    FILE = "file"
-    DESCRIPTION = "description"
-    PARAMETERS = "param"
-    TRAIN_X = "X_train"
-    TRAIN_Y = "Y_train"
-    TEST_X = "X_test"
-    TEST_Y = "Y_test"
-    TIMER = "timer"
-    CM = "confusion_matrix"
-    CONFIG_FILE = "config_file"
+class TimedProgram(object):
+    """
+    Abstract program iteration.  This represents what to do with each row of configuration file
 
+    Required fields in config files are: data_dir and infile
+    """
 
-class Status(object):
-    FAILED = "failed"
-    SUCCESS = "success"
-    NEW = "new"
-
-
-class Timer(object):
-
-    def __init__(self):
-        self.timer_dict = {}
-        self.temp_dict = {}
-
-    def start_timer(self, key: str):
-        log.info(f'Start timer for: {key}')
-        self.temp_dict[key] = datetime.now()
-
-    def end_timer(self, key: str) -> float:
-        """
-        calculates the difference in minutes and return value
-        :param key:
-        :return:
-        """
-        log.info(f'End timer for: {key}')
-        end_time = datetime.now()
-        if key in self.temp_dict.keys():
-            start_time = self.temp_dict[key]
-            diff_mins = round((end_time - start_time).total_seconds() / 50, 2)
-            self.timer_dict[key] = diff_mins
-            log.info(f'Total time for {key}: {self.timer_dict[key]}')
-            self.timer_dict[Keys.TOTAL_TIME_MIN] = self.get_total_time()
+    def __init__(self, index, config_df, report=None, args=None):
+        log.debug(f"ProgramIteration constructor - index: {index}")
+        self.index = index
+        self.config_df = config_df
+        self.args = args
+        if report:
+            self.report = report
         else:
-            log.info(f'No timer for: {key}')
-            diff_mins = 0
+            self.report = TimedReport()
 
-        return diff_mins
-
-    def get_time(self, key: str) -> float:
+    def get_config(self, config: str) -> str:
         """
-        get time in minutes for particular event
-        :param key:
+        get string configuration
+        :param config:
         :return:
         """
-        if key in self.timer_dict.keys:
-            return self.timer_dict[key]
-        return 0.
+        if pd.notnull(self.config_df[config]):
+            return self.config_df[config]
+        else:
+            return None
 
-    def get_total_time(self) -> float:
-        total = 0.0
-        for key, val in self.timer_dict.items():
-            total += val
-        return total
+    def get_config_int(self, config: str) -> int:
+        """
+        get int config
+        :param config:
+        :return:
+        """
+        if pd.notnull(self.config_df[config]):
+            return int(self.config_df[config])
+        else:
+            return None
 
-    def merge_timers(self, other):
-        if other:
-            self.timer_dict.update(other.timer_dict)
+    def get_config_bool(self, config) -> bool:
+        """
+        gets a boolean type configuration
+        :param config:
+        :return:
+        """
+        if pd.notnull(self.config_df[config]):
+            return self.config_df[config] in TRUE_LIST
+        else:
+            return False
+
+    def get_config_list(self, config) -> list:
+        """
+        gets a list type config parameter. config is expected to be a comma separated list
+        :param config:
+        :return:
+        """
+        if pd.notnull(self.config_df[config]):
+            return self.config_df[config].replace(" ", "").split(",")
+        else:
+            return []
 
     def get_report_dict(self):
-        """
-        returns dictionary representation of the timer object
-        :return:
-        """
-        return self.timer_dict
-
-
-class TimedReport(Timer):
-    """
-    Extension of Timer object. This class allows you to record key-value pairs on top of timed events
-    """
-
-    def __init__(self):
-        Timer.__init__(self)
-        # have to keep this separate for now since timer_dict has logic to calculate total times
-        self.kv_dict = {}
+        return self.report.get_report_dict()
 
     def record(self, key: str, value: str):
-        log.debug(f'Recording key {key} value {value}')
-        self.kv_dict[key] = value
+        """
+        record key value into report
+        :param key:
+        :param value:
+        :return:
+        """
+        self.report.record(key, value)
 
-    def merge_reports(self, report):
-        if isinstance(report, TimedReport):
-            self.merge_timers(report)
-            self.kv_dict = du.add_dict_to_dict(self.kv_dict, report.kv_dict)
-        else:
-            raise Exception("report is not a TimedReport object")
+    def start_timer(self, key: str):
+        self.report.start_timer(key)
 
-    def add_dict(self, rdict: dict):
-        self.kv_dict.update(rdict)
+    def stop_timer(self, key: str):
+        self.report.end_timer(key)
 
-    def add_and_flatten_dict(self, rdict: dict):
-        self.kv_dict = du.add_dict_to_dict(self.kv_dict, rdict)
+    def get_infile(self):
+        """
+        convenience method to get infile
+        :return:
+        """
+        self.report.record("file", self.get_config("data_file"))
+        return f'{self.get_config("data_dir")}/{self.get_config("data_file")}'
 
-    def get_report_dict(self):
-        # make a copy so we can call this any time
-        report = self.kv_dict.copy()
-        report.update(self.timer_dict)
-        log.debug(f'merged report {report}')
-        return report
+    def execute(self):
+        raise Exception(f"Not yet implemented. {__class__} must implement this method.")
+
+
+class ConfigFileBasedProgram(object):
+
+    def __init__(self, description: str, program: TimedProgram):
+        """
+        :param description:  description of program
+        :param program:  class of iteration object
+        """
+        self.description = description
+        self.parser = argparse.ArgumentParser(description=description)
+        self.parser.add_argument("config_file", help="file with parameters to drive the permutations")
+        self.parser.add_argument("-l", "--loglevel", help="log level ie, DEBUG", default="INFO")
+        self.parser.add_argument("-r", "--reportdir", help="report directory, default ../reports", default="../reports")
+
+        self.program = program
+        self.config_df = None
+        self.report_df = None
+        self.report_file = None
+        self.config_file = None
+        self.report_dir = None
+
+    def get_report_file_name(self):
+        _, config_basename = fu.get_dir_basename(self.config_file)
+        reportfile = f'{self.report_dir}/{config_basename}-report.csv'
+        log.debug(f'Report file: {reportfile}')
+        return reportfile
+
+    def add_argument(self, *args, **kwargs):
+        """
+        pass parameters to parser
+        :param args:
+        :return:
+        """
+        self.parser.add_argument(*args, **kwargs)
+
+    def record_success(self, index, report):
+        self.report_df = self.report_df.append(report, ignore_index=True)
+        self.report_df.loc[index, Keys.STATUS] = Status.SUCCESS
+        self.report_df.loc[index, Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+        self.report_df.loc[index, Keys.CONFIG_FILE] = self.config_file
+        self.report_df.to_csv(self.report_file, index=False)
+
+        self.config_df.loc[index, Keys.STATUS] = Status.SUCCESS
+        self.config_df.loc[index, Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+
+    def record_failure(self, index, err_message):
+        self.config_df.loc[index, Keys.STATUS] = Status.FAILED
+        self.config_df.loc[index, Keys.STATUS_DATE] = datetime.now().strftime(TIME_FORMAT)
+        self.config_df.loc[index, Keys.MESSAGE] = err_message
+
+    def main(self):
+        # get command line arguments
+        args = self.parser.parse_args()
+
+        # process argument
+        if args.loglevel is not None:
+            loglevel = getattr(logging, args.loglevel.upper(), None)
+        logging.basicConfig(format=LOG_FORMAT, level=loglevel)
+
+        self.config_file = args.config_file
+        log.info(f'Reading config file: {self.config_file}')
+        self.config_df = pd.read_csv(self.config_file)
+        self.report_df = pd.DataFrame()
+        self.report_dir = args.reportdir
+        self.report_file = self.get_report_file_name()
+
+        for index, row in self.config_df.iterrows():
+            try:
+                iteration = self.program(index, row, args=args)
+                iteration.execute()
+
+                self.record_success(index, iteration.get_report_dict())
+
+            except Exception as e:
+                traceback2.print_exc(file=sys.stdout)
+                log.error(str(e))
+                self.record_failure(index, str(e))
+
+            finally:
+                log.info(f'Finished iteration: {index}')
+                self.config_df.to_csv(self.config_file, index=False)

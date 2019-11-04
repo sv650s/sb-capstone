@@ -1,7 +1,7 @@
+
 from util.AmazonTextNormalizer import AmazonTextNormalizer
 from tensorflow.keras.preprocessing import sequence
 import logging
-
 
 logger = logging.getLogger(__name__)
 

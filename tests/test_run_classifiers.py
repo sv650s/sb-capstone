@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-import run_classifiers as rc
+from tools import run_classifiers as rc
 import logging
 
 log = logging.getLogger(__name__)
@@ -12,8 +12,6 @@ class TestRunClassifiers(object):
     def in_df(self):
         d = {"a": [1, 1, 1], "b": [2, 2, 2]}
         return pd.DataFrame(d)
-
-
 
 
     def test_create_training_data(self, in_df):

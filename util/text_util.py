@@ -7,6 +7,8 @@ from .contraction_map import CONTRACTION_MAP
 import unicodedata
 import sys
 import traceback
+from nltk.stem import WordNetLemmatizer
+
 
 # set up logger
 logger = logging.getLogger(__name__)
@@ -35,9 +37,17 @@ def stem_text(text: str) -> str:
     return ' '.join(stemmed_words)
 
 def lemmatize_text(text: str) -> str:
-    # TODO: implement this - currently points to stem_words
-    assert False, "Lemmatization is not yet implemented"
-    return stem_text(text)
+    """
+    lemmatize work
+    :param text:
+    :return:
+    """
+
+    logger.debug(f'lemmatizing text: {text}')
+    lemmatizer = WordNetLemmatizer()
+    word_list = nltk.word_tokenize(text)
+    lemmatized_output = ' '.join([lemmatizer.lemmatize(w) for w in word_list])
+    return lemmatized_output
 
 
 def remove_html_tags(text: str) -> str:
