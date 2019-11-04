@@ -107,7 +107,7 @@ def plot_score_histograms_v2(df: pd.DataFrame, args = None):
         # model_report = df[df[label_column].str.startswith(f'{model}-')]
         model_report = df[df[groupby] == group]
 
-        log.debug(model_report)
+        # log.debug(model_report)
 
         pos = list(range(len(model_report)))
         width = 0.15

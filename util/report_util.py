@@ -97,13 +97,18 @@ def load_report(filename: str):
         raise Exception(f'{filename} does not exist')
 
 
-def load_best_from_report(filename: str):
+def load_best_from_report(report):
     """
     Loads the best model from a report
-    :param filename:
+    :param report: report filename or data frame
     :return: Series object with the best results
     """
-    report = load_report(filename)
+    if isinstance(report, str):
+        report = load_report(report)
     # iloc return a Series object. Want to convert it back to a dataframe and reset the index
-    return report.iloc[report.eval_metric.idxmax(axis=0)]
-    # return pd.DataFrame(report.iloc[report.eval_metric.idxmax(axis=0)]).T.reset_index(drop=True)
+    # TODO: update hyperparameter notebook
+    # return report.iloc[report.eval_metric.idxmax(axis=0)]
+    type_dict = {idx: value for idx, value in report.dtypes.iteritems()}
+    return pd.DataFrame(report.iloc[report.eval_metric.idxmax(axis=0)]).T.reset_index(drop=True).astype(type_dict, copy=False)
+
+
