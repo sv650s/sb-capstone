@@ -2,15 +2,41 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import pandas as pd
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 import numpy as np
+import logging
+
+log = logging.getLogger(__name__)
 
 
 # common utilities for various notebooks
 
 
 # function to print mutltiple histograms
-def plot_score_histograms(df: pd.DataFrame):
+def plot_score_histograms(df: pd.DataFrame, version = 1, **kwargs):
+    """
+    Wrapper function to call different versions of plot_score_historgrams
+
+    I did this so previous notebooks would not break. Version is default to 1
+    :param df: data to plot
+    :param version: version of the plotting function to call. Default is version 1
+    :param kwargs: arguments for the plotting function. Only used for version 2
+    :return:
+    """
+    if version == 1:
+        plot_score_histograms_v1(df)
+    else:
+        plot_score_histograms_v2(df, kwargs)
+
+
+def plot_score_histograms_v1(df: pd.DataFrame):
+    """
+    Plot F1, precision and recall for various models
+
+    Use this for notebooks before 11/2019
+    :param df: 
+    :return: 
+    """
     if "label" not in df.columns:
         df["label"] = df.apply(lambda x: f'{x["model_name"]}-{x["description"]}', axis=1)
 
@@ -49,8 +75,81 @@ def plot_score_histograms(df: pd.DataFrame):
                 a[index].set_xlim(0, 1.0)
             index += 1
 
+def plot_score_histograms_v2(df: pd.DataFrame, args = None):
+    """
+    You should not call this function directly but use plot_score_historgrams and specify version = 2
+
+    Use this to plot F1 score, precision and recall for notebooks after 11/19
+
+    By default this will group the graphs by model_name and use feature_summary as the labels for each sub-graph
+
+    You can overwrite this behavior by passing in groupby and label
+
+    :param df:
+    :param args: dictionary with arugments - supports groupby and label
+    :return:
+    """
+    # if "label" not in df.columns:
+    #     df["label"] = df.apply(lambda x: f'{x["model_name"]}-{x["description"]}', axis=1)
+    if len(args.keys()) > 0:
+        if "label" in args.keys():
+            label = args["label"]
+        if "groupby" in args.keys():
+            groupby = args["groupby"]
+    else:
+        label = "feature_summary"
+        groupby = "model_name"
+
+    # models = df[[label_column]].unique()
+    f1_cols, precision_cols, recall_cols = get_score_columns(df)
+    for group in df[groupby].unique():
+        # model_report = df[df["label"].str.startswith(f'{model}-')]
+        # model_report = df[df[label_column].str.startswith(f'{model}-')]
+        model_report = df[df[groupby] == group]
+
+        log.debug(model_report)
+
+        pos = list(range(len(model_report)))
+        width = 0.15
+        f, a = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(20, len(model_report) * 1))
+        column_dict = {"F1": f1_cols, "Precision": precision_cols, "Recall": recall_cols}
+
+        # sort the report in reverse order so we see the models top down
+        report_reverse = model_report.sort_values(label, ascending=False)
+        # report_reverse = model_report.sort_values("label", ascending=False)
+
+        index = 0
+        for title, columns in column_dict.items():
+            columns_copy = columns.copy()
+            columns_copy.remove("label")
+            # sort in reverse order so it goes top-down and 5 is at the bottom
+            columns_copy.sort(reverse=True)
+
+            offset = 0
+            for col in columns_copy:
+                #         print(f'Plotting {col}')
+                a[index].barh([p + offset for p in pos],
+                              report_reverse[col],
+                              width,
+                              #                 align="edge",
+                              #                 alpha=0.5,
+                              tick_label=report_reverse[label].tolist(),
+                              # tick_label=report_reverse["label"].tolist(),
+                              orientation="horizontal")
+                offset += width
+                a[index].set_title(f'{title}-{group}')
+                a[index].set_xlim(0, 1.0)
+            index += 1
+
 
 def plot_macro_data(df: pd.DataFrame, cv=False):
+    """
+    Plots macro f1 score, precision, and recall against timed events for model - ie, training, predict, etc
+
+    :param df:
+    :param cv:
+    :return:
+    """
     if "label" not in df.columns:
         df["label"] = df.apply(lambda x: f'{x["model_name"]}-{x["description"]}', axis=1)
 
@@ -129,6 +228,15 @@ def display_model_summary(row: pd.Series):
 
 
 def plot_roc_auc(model_name, roc_auc, fpr, tpr):
+    """
+    Plots ROC_AUC curve
+
+    :param model_name: name of model - used to label the graph
+    :param roc_auc:
+    :param fpr:
+    :param tpr:
+    :return:
+    """
     for i in np.arange(0, len(fpr.keys()) - 2):
         plt.plot(fpr[str(i)], tpr[str(i)], label=f'Rating {i + 1}')
     plt.plot(fpr["micro"], tpr["micro"], label="Micro Average ROC",

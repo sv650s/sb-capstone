@@ -12,10 +12,41 @@ from util.dict_util import add_dict_to_dict
 from util.time_util import Keys, TimedReport, Status, TIME_FORMAT, DATE_FORMAT
 from sklearn.externals import joblib
 import numpy as np
+from sklearn.model_selection import train_test_split
+import json
 
 # set up logger
 log = logging.getLogger(__name__)
 MODEL_DIR = "../models"
+RSTATE=1
+
+
+def create_training_data(data: pd.DataFrame, class_column: str, drop_columns: str = None):
+    """
+    Make a copy of dataframe and:
+    1. split between features and predictions
+    2. drop any extra columns
+    3. create test and training sets
+    :param data: dataframe with data to split
+    :param class_column: use this column as labels for training
+    :param drop_columns: specify a comma delimited list of strings here if there are any extra columns to be dropped (optional)
+    :return: X_train, X_test, y_train, y_test
+    """
+    # make a copy so we can reuse original DF if need be
+    x = data.copy()
+
+    y = x[class_column]
+    x.drop(class_column, axis=1, inplace=True)
+
+    if drop_columns:
+        drop_list = drop_columns.replace(" ", "").split(",")
+        log.info(f"Dropping columns from features {drop_list}")
+        x.drop(drop_list, axis=1, inplace=True)
+
+    log.info(f'shape of x: {x.shape}')
+    log.info(f'shape of y: {y.shape}')
+
+    return train_test_split(x, y, random_state=RSTATE, stratify=y)
 
 class Model(object):
     """
@@ -82,19 +113,27 @@ class Model(object):
             Keys.TRAIN_FEATURES: train_col,
             Keys.TEST_EXAMPLES: test_row,
             Keys.TEST_FEATURES: test_col,
-            Keys.PARAMETERS: parameters
+            Keys.PARAMETERS: json.dumps(parameters)
         }
         self.report.add_dict(rdict)
         # do this here so ti doesn't get flattened
 
-    def run(self):
+    def run(self, fit: bool = True):
+        """
+        Fit and predict model
+        :param train: call fit function on model. Set to false when using pre-trained/CV models. Default is True
+        :return: report dictionary, y_predict
+        """
+        log.info('#' * 20)
         log.info(f'Running model: {str(self)}')
+        log.info('#' * 20)
 
         try:
 
-            self.report.start_timer(Keys.TRAIN_TIME_MIN)
-            self.model = self.model.fit(self.x_train, self.y_train)
-            self.report.end_timer(Keys.TRAIN_TIME_MIN)
+            if fit:
+                self.report.start_timer(Keys.TRAIN_TIME_MIN)
+                self.model = self.model.fit(self.x_train, self.y_train)
+                self.report.end_timer(Keys.TRAIN_TIME_MIN)
 
             # TODO: add logic for CV's
             model_filename = f'{MODEL_DIR}/{self.description}.jbl'
@@ -164,12 +203,12 @@ class Model(object):
 
     def get_confusion_matrix(self):
         """
-        Get confustion matrix and store in report
+        Get confustion matrix and store in report in json format
         :return:
         """
         if len(self.y_predict) > 0 and len(self.y_test) > 0:
             log.debug(f'getting confusion matrix for {self}')
-            cm = confusion_matrix(self.y_test, self.y_predict)
+            cm = json.dumps(confusion_matrix(self.y_test, self.y_predict).tolist())
             self.report.record(Keys.CM, cm)
 
 

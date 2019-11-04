@@ -3,18 +3,18 @@ sys.path.append('../')
 
 from sklearn.neighbors import KNeighborsClassifier, RadiusNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from util.model_util import Model
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE, ADASYN, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler, NearMiss
 import pandas as pd
 import logging
 import util.file_util as fu
 import util.df_util as dfu
+import util.model_util as mu
 import lightgbm as lgb
-import gc
 from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
 from util.program_util import TimedProgram, ConfigFileBasedProgram
@@ -26,6 +26,7 @@ TRUE_LIST = ["yes", "Yes", "YES", "y", "True", "true", "TRUE"]
 LOG_FORMAT = '%(asctime)s %(name)s.%(funcName)s[%(lineno)d] %(levelname)s - %(message)s'
 log = logging.getLogger(__name__)
 
+REPORT_DIR="../reports"
 RSTATE=1
 
 class TimedClassifier(TimedProgram):
@@ -48,35 +49,59 @@ class TimedClassifier(TimedProgram):
     def __init__(self, index, config_df, report=None, args=None):
         super(TimedClassifier, self).__init__(index, config_df, report, args)
         self.n_jobs = int(self.args.n_jobs)
-        self.lr_iter = int(self.args.lr_iter)
         self.neighbors = int(self.args.neighbors)
         self.radius = int(self.args.radius)
         self.lr_c = int(self.args.lr_c)
-        self.epochs = int(self.args.epochs)
 
-    def create_training_data(self, x: pd.DataFrame, class_column: str, drop_columns: str = None):
+    def sample_data(self, sampling_method: str, X_train, Y_train, base_file_name):
         """
-        Take dataframe and:
-        1. split between features and predictions
-        2. create test and training sets
-        :param x:
-        :param class_column:
-        :param drop_columns:
+        Creates sampler based in sampling method and return the resulting X and y
+
+        This method will also save the final distribution to a CSV file based on base_file_name
+
+        :param X_train: Original features
+        :param Y_train: Original labels
+        :param base_file_name: base file name to save the final distribution csv
         :return:
         """
+        ## if we want to over sample or under sample
+        log.debug(f'Y_train {Y_train.shape}')
+        log.debug(f'Y_train {Y_train.head()}')
 
-        y = x[class_column]
-        x.drop(class_column, axis=1, inplace=True)
+        grouped_df = Y_train.reset_index().groupby("star_rating").count()
 
-        if drop_columns:
-            drop_list = drop_columns.replace(" ", "").split(",")
-            log.info(f"Dropping columns from features {drop_list}")
-            x.drop(drop_list, axis=1, inplace=True)
+        log.info(f'Distribution before sampling with {sampling_method}\n{grouped_df}')
+        log.debug(f'grouped type: {type(grouped_df)}')
+        log.debug(f'grouped: {grouped_df.head()}')
+        log.debug(f'grouped: {grouped_df.shape}')
 
-        log.info(f'shape of x: {x.shape}')
-        log.info(f'shape of y: {y.shape}')
+        if sampling_method == "smote":
+            sampler = SMOTE(random_state=RSTATE, sampling_strategy='not majority', n_jobs=self.n_jobs)
+        elif sampling_method == "adasyn":
+            sampler = ADASYN(random_state=RSTATE, sampling_strategy='not majority', n_jobs=self.n_jobs)
+        elif sampling_method == "random_over_sampling":
+            sampler = RandomOverSampler(random_state=RSTATE, sampling_strategy='not majority')
+        elif sampling_method == "random_under_sampling":
+            sampler = RandomUnderSampler(random_state=RSTATE, replacement=True)
+        elif sampling_method == "nearmiss-2":
+            sampler = NearMiss(random_state=RSTATE, sampling_strategy='not minority', version=2, n_jobs=self.n_jobs)
+        else:
+            raise Exception(f"Sampling method not supported: {sampling_method}")
 
-        return train_test_split(x, y, random_state=RSTATE, stratify=y)
+        X_train_res, Y_train_res = sampler.fit_resample(X_train, Y_train.ravel())
+
+        X_train = pd.DataFrame(X_train_res, columns=X_train.columns)
+        Y_train = pd.DataFrame(Y_train_res, columns=["star_rating"])
+
+        # get distribution of samples after samping
+        dist = Y_train.reset_index().groupby("star_rating").count()
+
+        log.info(f'Distribution after sampling with {sampling_method}\n{dist}')
+
+        log.debug(dist.head())
+        dist.to_csv(f'{REPORT_DIR}/{base_file_name}-histogram-{sampling_method}.csv')
+        return X_train, Y_train
+
 
     def execute(self):
 
@@ -84,7 +109,8 @@ class TimedClassifier(TimedProgram):
         class_column = self.get_config("class_column")
         drop_columns = self.get_config("drop_columns")
         dtype = self.get_config("dtype")
-        sampling = self.get_config("sampling")
+        sampling_method = self.get_config("sampling")
+        max_iter = self.get_config_int("max_iter")
 
         # let's get the parameters to figure out which training models we need to run
         model_name = self.get_config("model_name")
@@ -103,45 +129,15 @@ class TimedClassifier(TimedProgram):
             df = pd.read_csv(infile)
         self.stop_timer(Keys.FILE_LOAD_TIME_MIN)
 
-        X_train, X_test, Y_train, Y_test = self.create_training_data(df, class_column, drop_columns)
+        X_train, X_test, Y_train, Y_test = mu.create_training_data(df, class_column, drop_columns)
 
         # put these here so our columns are not messed up
         self.start_timer(Keys.SMOTE_TIME_MIN)
-        if sampling is not None:
-            ## if we want to over sample or under sample
-            log.debug(f'Y_train {Y_train.shape}')
-            log.debug(f'Y_train {Y_train.head()}')
-
-            grouped_df = Y_train.reset_index().groupby("star_rating").count()
-
-            log.debug(f'grouped type: {type(grouped_df)}')
-            log.debug(f'grouped: {grouped_df.head()}')
-            log.debug(f'grouped: {grouped_df.shape}')
-
-            if sampling == "smote":
-                sm_desc = sampling
-                sampler = SMOTE(random_state=RSTATE, sampling_strategy='not majority')
-            elif sampling == "random_under_sampling":
-                sm_desc = sampling
-                sampler = RandomUnderSampler(random_state=RSTATE, replacement=True)
-            elif sampling == "nearmiss-2":
-                sm_desc = sampling
-                sampler = NearMiss(random_state=RSTATE, sampling_strategy='not minority', version=2, n_jobs=self.n_jobs)
-            else:
-                raise Exception(f"Sampling method not supported: {sampling}")
-
-            X_train_res, Y_train_res = sampler.fit_resample(X_train, Y_train.ravel())
-
-            X_train = pd.DataFrame(X_train_res, columns=X_train.columns)
-            Y_train = pd.DataFrame(Y_train_res, columns=["star_rating"])
-
-            row, col = df.shape
-
-            dist = Y_train.reset_index().groupby("star_rating").count()
-
-            log.debug(dist.head())
+        if sampling_method is not None:
             _, basename = fu.get_dir_basename(infile)
-            dist.to_csv(f'../reports/{basename}-histogram-{sampling}.csv')
+            # dist.to_csv(f'{REPORT_DIR}/{basename}-histogram-{sampling}.csv')
+            X_train, Y_train = self.sample_data(sampling_method, X_train, Y_train, basename)
+            sm_desc = sampling_method
         else:
             sm_desc = "sampling_none"
         self.stop_timer(Keys.SMOTE_TIME_MIN)
@@ -179,23 +175,23 @@ class TimedClassifier(TimedProgram):
         elif model_name == "LR":
             classifier = LogisticRegression(random_state=RSTATE, solver='lbfgs',
                                             multi_class='auto',
-                                            max_iter=self.lr_iter, n_jobs=self.n_jobs, C=self.lr_c,
+                                            max_iter=max_iter, n_jobs=self.n_jobs, C=self.lr_c,
                                             verbose=1)
             parameters = {"n_jobs": self.n_jobs,
                           "c": self.lr_c,
-                          "max_iter": self.lr_iter,
+                          "max_iter": max_iter,
                           "verbose": 1}
 
         elif model_name == "LRB":
             classifier = LogisticRegression(random_state=RSTATE, solver='lbfgs',
                                             multi_class='auto',
                                             class_weight='balanced',
-                                            max_iter=self.lr_iter, n_jobs=self.n_jobs, C=self.lr_c,
+                                            max_iter=max_iter, n_jobs=self.n_jobs, C=self.lr_c,
                                             verbose=1)
             parameters = {"n_jobs": self.n_jobs,
                           "c": self.lr_c,
                           "class_weight": 'balanced',
-                          "max_iter": self.lr_iter,
+                          "max_iter": max_iter,
                           "verbose": 1}
 
         elif model_name == "KNN":
@@ -208,6 +204,9 @@ class TimedClassifier(TimedProgram):
             parameters = {"n_jobs": self.n_jobs,
                           "radius": self.radius}
 
+        elif model_name == "SVC_RBF":
+            classifier = SVC(class_weight='balanced', verbose=1, random_state=1, decision_function_shape='ovo')
+            parameters = {"class_weight":"balanced", "verbose":1, "random_state":1, "decision_function":"ovo"}
 
 
         if classifier is not None:
@@ -231,10 +230,8 @@ class TimedClassifier(TimedProgram):
 if __name__ == "__main__":
     program = ConfigFileBasedProgram("Run classifiers no feature files", TimedClassifier)
     program.add_argument("--noreport", help="do not generate report", action='store_true')
-    program.add_argument("--lr_iter", help="number of iterations for LR. default 100", default=100)
-    program.add_argument("--n_jobs", help="number of cores to use. default -1", default=-1)
+    program.add_argument("--n_jobs", help="number of cores to use. default 6", default=6)
     program.add_argument("--neighbors", help="number of neighbors for KNN", default=5)
     program.add_argument("--radius", help="radius for radius neighbor classification. default 30", default=30)
     program.add_argument("--lr_c", help="c parameter for LR. default 1.0", default=1.0)
-    program.add_argument("--epochs", help="epoch for deep learning. Default 1", default=1)
     program.main()

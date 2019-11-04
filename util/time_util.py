@@ -114,13 +114,25 @@ class TimedReport(Timer):
     def __init__(self):
         Timer.__init__(self)
         # have to keep this separate for now since timer_dict has logic to calculate total times
+        # kv_dict is used to keep key value - ie, model_file
         self.kv_dict = {}
 
     def record(self, key: str, value: str):
+        """
+        records a key value into the report
+        :param key:
+        :param value:
+        :return:
+        """
         log.debug(f'Recording key {key} value {value}')
         self.kv_dict[key] = value
 
     def merge_reports(self, report):
+        """
+        merges another report into current report. key values from new report will be flatted and put on the same level as current report
+        :param report:
+        :return:
+        """
         if isinstance(report, TimedReport):
             self.merge_timers(report)
             self.kv_dict = du.add_dict_to_dict(self.kv_dict, report.kv_dict)
@@ -128,6 +140,14 @@ class TimedReport(Timer):
             raise Exception("report is not a TimedReport object")
 
     def add_dict(self, rdict: dict):
+        """
+        append to current report using a dictionary. all key values will be added to top level of report
+
+        exisitng keys will be overwritten with new values
+
+        :param rdict:
+        :return:
+        """
         self.kv_dict.update(rdict)
 
     def add_and_flatten_dict(self, rdict: dict):

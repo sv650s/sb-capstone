@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 class TimedProgram(object):
     """
     Abstract program iteration.  This represents what to do with each row of configuration file
+
+    Required fields in config files are: data_dir and infile
     """
 
     def __init__(self, index, config_df, report=None, args=None):

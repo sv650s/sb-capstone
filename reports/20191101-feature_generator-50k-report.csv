@@ -1,12 +1,16 @@
 file,outfile,status,status_date,config_file
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-tfidf-df_default-ngram22-49784-10000-nolda.csv,success,2019-11-02 00:00:03,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-bow-df_default-ngram22-49784-10000-nolda.csv,success,2019-11-02 00:15:04,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-tfidf-df_default-ngram11-49784-10000-nolda.csv,success,2019-11-02 00:33:26,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-bow-df_default-ngram11-49784-10000-nolda.csv,success,2019-11-02 00:48:35,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-word2vec_pretrained-df_none-ngram_none-47542-300-nolda.csv,success,2019-11-02 02:03:44,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-word2vec-df_none-ngram_none-47523-100-nolda.csv,success,2019-11-02 09:46:59,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-fasttext-df_none-ngram_none-47523-100-nolda.csv,success,2019-11-02 09:54:01,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-word2vec-df_none-ngram_none-47523-300-nolda.csv,success,2019-11-03 14:51:24,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-fasttext-df_none-ngram_none-47523-300-nolda.csv,success,2019-11-03 15:24:12,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-word2vec-df_none-ngram_none-47523-1000-nolda.csv,success,2019-11-03 17:10:31,../config/20191101-feature_generator-50k.csv
-amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,../dataset/feature_files/review_body-fasttext-df_none-ngram_none-47523-1000-nolda.csv,success,2019-11-03 19:11:08,../config/20191101-feature_generator-50k.csv
+amazon_reviews_us_Wireless_v1_00-50k-preprocessed.csv,"(        aa  aaa  abandon  abd  ability  able  abnormal  abrasion  abroad  absence  absent  absolute  absolutely  ...  zerolemon  zip  ziploc  ziplock  zipper  zippered  zombie  zone  zoom  zooming  zte  zumo  zune
+0      0.0  0.0      0.0  0.0      0.0  0.17       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+1      0.0  0.0      0.0  0.0      0.0  0.00       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+2      0.0  0.0      0.0  0.0      0.0  0.00       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+3      0.0  0.0      0.0  0.0      0.0  0.00       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+4      0.0  0.0      0.0  0.0      0.0  0.00       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+...    ...  ...      ...  ...      ...   ...       ...       ...     ...      ...     ...       ...         ...  ...        ...  ...     ...      ...     ...       ...     ...   ...   ...      ...  ...   ...   ...
+49779  0.0  0.0      0.0  0.0      0.0  0.00       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+49780  0.0  0.0      0.0  0.0      0.0  0.00       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+49781  0.0  0.0      0.0  0.0      0.0  0.09       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+49782  0.0  0.0      0.0  0.0      0.0  0.00       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+49783  0.0  0.0      0.0  0.0      0.0  0.00       0.0       0.0     0.0      0.0     0.0       0.0         0.0  ...        0.0  0.0     0.0      0.0     0.0       0.0     0.0   0.0   0.0      0.0  0.0   0.0   0.0
+
+[49784 rows x 10000 columns], 0.09, 0, 0, 0)",,,
+,,success,2019-11-03 20:39:45,../config/20191101-feature_generator-50k.csv

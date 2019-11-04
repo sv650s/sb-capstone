@@ -97,5 +97,5 @@ class GenerateFeatures(TimedProgram):
 
 if __name__ == "__main__":
     prog = ConfigFileBasedProgram("Takes pre-processed files and generate feature files", GenerateFeatures)
-    prog.add_argument("-o", "--outdir", help="output director", default="../dataset/feature_files")
+    prog.add_argument("-o", "--outdir", help="output director. Default ../dataset/feature_files", default="../dataset/feature_files")
     prog.main()

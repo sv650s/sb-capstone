@@ -95,6 +95,7 @@ def generate_bow_file(x: pd.DataFrame,
 
     lda_time = 0
     lda_file_time = 0
+    vectorize_file_time = 0
     if lda_topics is not None:
         lda_start_time = datetime.now()
         lda = generate_lda_feature(df, int(lda_topics))
@@ -107,9 +108,9 @@ def generate_bow_file(x: pd.DataFrame,
 
         lda_time = round((lda_file_start_time - lda_start_time).total_seconds() / 60, 2)
         lda_file_time = round((lda_file_end_time - lda_file_start_time).total_seconds() / 60, 2)
+        vectorize_file_time = round((lda_start_time - file_start_time).total_seconds() / 60, 2)
 
     vectorize_time = round((file_start_time - start_time).total_seconds() / 60, 2)
-    vectorize_file_time = round((lda_start_time - file_start_time).total_seconds() / 60, 2)
 
 
     return df, vectorize_time, vectorize_file_time, lda_time, lda_file_time
@@ -160,6 +161,7 @@ def generate_tfidf_file(x: pd.DataFrame,
 
     lda_time = 0
     lda_file_time = 0
+    vectorize_file_time = 0
     if lda_topics is not None:
         lda_start_time = datetime.now()
         lda = generate_lda_feature(df, int(lda_topics))
@@ -173,8 +175,9 @@ def generate_tfidf_file(x: pd.DataFrame,
         lda_time = round((lda_file_start_time - lda_start_time).total_seconds() / 60, 2)
         lda_file_time = round((lda_file_end_time - lda_file_start_time).total_seconds() / 60, 2)
 
+        vectorize_file_time = round((lda_start_time - file_start_time).total_seconds() / 60, 2)
+
     vectorize_time = round((file_start_time - start_time).total_seconds() / 60, 2)
-    vectorize_file_time = round((lda_start_time - file_start_time).total_seconds() / 60, 2)
 
     return df, vectorize_time, vectorize_file_time, lda_time, lda_file_time
 

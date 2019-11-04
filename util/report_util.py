@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
 import logging
+import os
 
 log = logging.getLogger(__name__)
 
+EVAL_COLS=["1_recall", "2_recall", "3_recall", "4_recall", "5_precision"]
 
-
-def calculate_metric(data:pd.DataFrame, column_name = "eval_metric") -> pd.DataFrame:
+def _calculate_metric(data:pd.DataFrame, column_name ="eval_metric") -> pd.DataFrame:
     """
     Calculates the geometric mean in the following manner so we can use one metric to evalute our models
         recall - star rating 2, 3, 4
@@ -26,11 +27,11 @@ def _harmonic_mean(data:pd.DataFrame, column_name) -> pd.DataFrame:
     :param column_name:
     :return:
     """
-    data[column_name] = 5 / (1/data["1_recall"] +
-                                 1/data["2_recall"] +
-                                 1/data["3_recall"] +
-                                 1/data["4_recall"] +
-                                 1/data["5_precision"])
+    data[column_name] = 5 / (1/data[EVAL_COLS[0]] +
+                                 1/data[EVAL_COLS[1]] +
+                                 1/data[EVAL_COLS[2]] +
+                                 1/data[EVAL_COLS[3]] +
+                                 1/data[EVAL_COLS[4]])
     return data
 
 def _geometric_mean(data:pd.DataFrame, column_name) -> pd.DataFrame:
@@ -41,15 +42,15 @@ def _geometric_mean(data:pd.DataFrame, column_name) -> pd.DataFrame:
     :param column_name:
     :return:
     """
-    data[column_name] = (data["1_recall"] +
-                              data["2_recall"] +
-                              data["3_recall"] +
-                              data["4_recall"] +
-                              data["5_precision"]) ** 1/5.
+    data[column_name] = (data[EVAL_COLS[0]] +
+                              data[EVAL_COLS[1]] +
+                              data[EVAL_COLS[2]] +
+                              data[EVAL_COLS[3]] +
+                              data[EVAL_COLS[4]]) ** 1/5.
     return data
 
 
-def parse_description(x: pd.Series):
+def _parse_description(x: pd.Series):
     """
     Unencode information from the description of each report entry
 
@@ -67,16 +68,42 @@ def parse_description(x: pd.Series):
     x["has_sampling"] = False if x.description.split("-")[7] == "sampling_none" else True
     x["sampling_str"] = x.description.split("-")[7]
     x["label_column"] = x.description.split("-")[9]
-    x["feature_summary"] = f'{x.feature_engineering}-{x.config_ngram}'
+    x["feature_summary"] = f'{x.feature_engineering}-{x.config_ngram}-{x.feature_size}'
     x["feature_summary_sampling"] = f'{x.feature_engineering}-{x.config_ngram}-{x.sampling_str}'
     return x
 
-def preprocess_report(report: pd.DataFrame):
+def _preprocess_report(report: pd.DataFrame):
     """
     This will be called by jupyter notebooks to parse our various information for a report
     :param report:
     :return:
     """
-    report = calculate_metric(report)
-    report = report.apply(lambda x: parse_description(x), axis = 1)
+    report = _calculate_metric(report)
+    report = report.apply(lambda x: _parse_description(x), axis = 1)
     return report
+
+
+def load_report(filename: str):
+    """
+    Loads report file and preprocessed the file so we can use in our notebooks
+
+    :param filename:
+    :return:
+    """
+    if os.path.exists(filename):
+        report = pd.read_csv(filename)
+        return _preprocess_report(report)
+    else:
+        raise Exception(f'{filename} does not exist')
+
+
+def load_best_from_report(filename: str):
+    """
+    Loads the best model from a report
+    :param filename:
+    :return: Series object with the best results
+    """
+    report = load_report(filename)
+    # iloc return a Series object. Want to convert it back to a dataframe and reset the index
+    return report.iloc[report.eval_metric.idxmax(axis=0)]
+    # return pd.DataFrame(report.iloc[report.eval_metric.idxmax(axis=0)]).T.reset_index(drop=True)
