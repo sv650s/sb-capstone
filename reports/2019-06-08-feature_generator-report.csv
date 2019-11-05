@@ -1,3 +1,0 @@
-file,model_save_time_min,outfile,tokenize_time_min,total_time_min,vectorize_time_min,status,status_date,feature_time_min
-amazon_reviews_us_Wireless_v1_00-csv-100-preprocessed.csv,0.0,dataset/feature_files/review_body-word2vec-100-200-nolda.csv,0.0,0.02,0.01,success,2019-06-08 18:25:03,
-amazon_reviews_us_Wireless_v1_00-csv-100-preprocessed.csv,0.01,dataset/feature_files/review_body-fasttext-100-200-nolda.csv,0.0,0.38,0.12,success,2019-06-08 18:25:03,0.0

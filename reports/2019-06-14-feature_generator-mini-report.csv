@@ -1,4 +1,0 @@
-file,model_save_time_min,outfile,tokenize_time_min,total_time_min,vectorize_time_min,status,status_date,config_file,feature_time_min
-amazon_reviews_us_Wireless_v1_00-csv-100k-preprocessed.csv,0.01,dataset/feature_files/review_body-word2vec30-111909-512-nolda.csv,0.04,15.15,7.51,success,2019-06-15 04:29:34,config/2019-06-14-feature_generator-mini.csv,
-amazon_reviews_us_Wireless_v1_00-csv-100k-preprocessed.csv,0.05,dataset/feature_files/review_body-fasttext30-111909-512-nolda.csv,0.04,722.1800000000001,105.64,success,2019-06-15 11:37:06,config/2019-06-14-feature_generator-mini.csv,405.0
-amazon_reviews_us_Wireless_v1_00-csv-100k-preprocessed.csv,0.01,dataset/feature_files/review_body-word2vec5-111909-512-nolda.csv,0.04,9.13,4.5,success,2019-06-15 17:18:32,config/2019-06-14-feature_generator-mini.csv,

@@ -1,3 +1,0 @@
-data_dir,infile,dtype,topics,status,save_time_lda20,lda_time_lda20,save_time_lda40,lda_time_lda40,save_time_lda60,lda_time_lda60,read_time
-dataset/feature_files,review_body-bow-df_default-ngram1-112043-47308.csv,uint32,"20, 40, 60",success,0.07,85.0,0.13,84.86,0.18,84.75,110.68
-dataset/feature_files,review_body-tfidf-df_default-ngram1-112043-47308.csv,float32,"20, 40, 60",success,0.06,83.47,0.12,83.68,0.18,77.27,123.41

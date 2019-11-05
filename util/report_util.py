@@ -7,47 +7,75 @@ log = logging.getLogger(__name__)
 
 EVAL_COLS=["1_recall", "2_recall", "3_recall", "4_recall", "5_precision"]
 
-def _calculate_metric(data:pd.DataFrame, column_name ="eval_metric") -> pd.DataFrame:
+def calculate_metric(data:pd.DataFrame, column_name ="eval_metric", dnn = False) -> pd.DataFrame:
     """
-    Calculates the geometric mean in the following manner so we can use one metric to evalute our models
-        recall - star rating 2, 3, 4
-        precision - star rating 1, and 5
+    Calculates the harmonic mean in the following manner so we can use one metric to evalute our models
+        recall - star rating 1, 2, 3, 4
+        precision - star rating 5
 
-    :param data: report df - must have 1_precision, 2_recall, 3_recall, 4_recall, and 5_precision columns
+    :param data: if it's a report df - must have 1_precision, 2_recall, 3_recall, 4_recall, and 5_precision columns.
+        Or you can pass in a classification dictionary
     :param column_name: name of column to put metric in. default eval_metric
+    :param dnn: indicates if we are calculating this for a DNN notebook as reports have different format
     :return:
     """
-    return _harmonic_mean(data, column_name)
+    if isinstance(data, pd.DataFrame):
+        if dnn:
+            log.info("Calculating metric for dnn report")
+            data[column_name] = data.classification_report.apply(lambda x:
+                                                                 _harmonic_mean([
+                                                                     x["1"]["recall"],
+                                                                     x["2"]["recall"],
+                                                                     x["3"]["recall"],
+                                                                     x["4"]["recall"],
+                                                                     x["5"]["precision"]
+                                                                 ]))
 
-def _harmonic_mean(data:pd.DataFrame, column_name) -> pd.DataFrame:
-    """
-    Calcuates one metric score using harmonic mean using precision for star 1 and 5, recall for stars 2, 3, 4
+        else:
+            log.info("Calculating metric for ML report")
+            data[column_name] = 5 / (1/data[EVAL_COLS[0]] +
+                                     1/data[EVAL_COLS[1]] +
+                                     1/data[EVAL_COLS[2]] +
+                                     1/data[EVAL_COLS[3]] +
+                                     1/data[EVAL_COLS[4]])
+    else:
+        log.info("calculating metric from dictionary")
+        m1 = data["1"]["recall"]
+        m2 = data["2"]["recall"]
+        m3 = data["3"]["recall"]
+        m4 = data["4"]["recall"]
+        m5 = data["5"]["precision"]
 
-    :param data:
-    :param column_name:
-    :return:
-    """
-    data[column_name] = 5 / (1/data[EVAL_COLS[0]] +
-                                 1/data[EVAL_COLS[1]] +
-                                 1/data[EVAL_COLS[2]] +
-                                 1/data[EVAL_COLS[3]] +
-                                 1/data[EVAL_COLS[4]])
+        if m1 > 0 and m2 > 0 and m3 > 0 and m4 > 0 and m5 > 0:
+            data = 5 / (1 / m1 +
+                        1 / m2 +
+                        1 / m3 +
+                        1 / m4 +
+                        1 / m5)
+        else:
+            data = 0
     return data
 
-def _geometric_mean(data:pd.DataFrame, column_name) -> pd.DataFrame:
+def _harmonic_mean(values: list):
     """
-    Calcuates one metric score using geometric mean using precision for star 1 and 5, recall for stars 2, 3, 4
+    Calculates the harmonic mean based on a list of values
 
-    :param data:
-    :param column_name:
+    if any of the items in the list is 0, function will return 0
+
+    :param values:
     :return:
     """
-    data[column_name] = (data[EVAL_COLS[0]] +
-                              data[EVAL_COLS[1]] +
-                              data[EVAL_COLS[2]] +
-                              data[EVAL_COLS[3]] +
-                              data[EVAL_COLS[4]]) ** 1/5.
-    return data
+    mean = 0
+    for v in values:
+        if v == 0:
+            break
+        mean += 1 / v
+    if mean > 0:
+        mean = len(values) / mean
+
+    return mean
+
+
 
 
 def _parse_description(x: pd.Series):
@@ -78,7 +106,7 @@ def _preprocess_report(report: pd.DataFrame):
     :param report:
     :return:
     """
-    report = _calculate_metric(report)
+    report = calculate_metric(report)
     report = report.apply(lambda x: _parse_description(x), axis = 1)
     return report
 
@@ -105,9 +133,6 @@ def load_best_from_report(report):
     """
     if isinstance(report, str):
         report = load_report(report)
-    # iloc return a Series object. Want to convert it back to a dataframe and reset the index
-    # TODO: update hyperparameter notebook
-    # return report.iloc[report.eval_metric.idxmax(axis=0)]
     type_dict = {idx: value for idx, value in report.dtypes.iteritems()}
     return pd.DataFrame(report.iloc[report.eval_metric.idxmax(axis=0)]).T.reset_index(drop=True).astype(type_dict, copy=False)
 

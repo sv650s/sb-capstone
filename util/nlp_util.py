@@ -91,7 +91,7 @@ def generate_bow_file(x: pd.DataFrame,
     df = pd.DataFrame(cv_matrix.toarray(), columns=vocab)
 
     file_start_time = datetime.now()
-    write_to_file(df, y, feature_column, description, False, int(lda_topics))
+    write_to_file(df, y, feature_column, description, False, lda_topics)
 
     lda_time = 0
     lda_file_time = 0

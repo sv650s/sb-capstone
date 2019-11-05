@@ -170,11 +170,12 @@ class ModelWrapper(object):
         self.embedding = embedding
         self.tokenizer = tokenizer
         self.description = description
+        self.tokenizer_file = None
         # dumping ground for anything else we want to store
         self.misc_items = {}
 
 
-    def fit(self, X_train, y_train, batch_size, epochs, validation_split=0.2, verbose=1, callbacks=None):
+    def fit(self, X_train, y_train, batch_size, epochs, validation_split=0.2, verbose=1, callbacks=None, class_weight = None):
         start_time = datetime.now()
         self.network_history = self.model.fit(X_train,
                                               y_train,
@@ -182,7 +183,8 @@ class ModelWrapper(object):
                                               epochs=epochs,
                                               validation_split=validation_split,
                                               callbacks=callbacks,
-                                              verbose=verbose)
+                                              verbose=verbose,
+                                              class_weight=class_weight)
         end_time = datetime.now()
         self.train_time_min = round((end_time - start_time).total_seconds() / 50, 2)
         self.X_train = X_train
@@ -414,13 +416,13 @@ class AttentionLayer(Layer):
         """
 
         self.supports_masking = True
-        self.init = keras.initializers.get('glorot_uniform')
+        self.init = K.initializers.get('glorot_uniform')
 
-        self.W_regularizer = keras.regularizers.get(W_regularizer)
-        self.b_regularizer = keras.regularizers.get(b_regularizer)
+        self.W_regularizer = K.regularizers.get(W_regularizer)
+        self.b_regularizer = K.regularizers.get(b_regularizer)
 
-        self.W_constraint = keras.constraints.get(W_constraint)
-        self.b_constraint = keras.constraints.get(b_constraint)
+        self.W_constraint = K.constraints.get(W_constraint)
+        self.b_constraint = K.constraints.get(b_constraint)
 
         self.bias = bias
         self.step_dim = step_dim

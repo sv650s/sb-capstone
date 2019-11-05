@@ -1,3 +1,0 @@
-infile,outfile,classfile
-dataset/feature_files/review_body-bow-df_90-ngram1-22414-52.csv,dataset/feature_files/review_body-bow-df_90-ngram1-22414-52-lda.csv,dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv
-dataset/feature_files/review_body-tfidf-df_90-ngram11-22414-52.csv,dataset/feature_files/review_body-tfidf-df_90-ngram11-22414-52-lda.csv,dataset/amazon_reviews/amazon_reviews_us_Wireless_v1_00-preprocessed-tiny.csv

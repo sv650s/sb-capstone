@@ -23,9 +23,13 @@ STOP_WORDS_TO_REMOVE=[
     'no',
     'not',
     'do',
+    'don',
+    "don't",
     'does',
     'did',
     'does',
+    'doesn',
+    "doesn't",
     'should',
     'very',
     'will'
@@ -65,7 +69,7 @@ def main():
     # set up argument parser
     parser = argparse.ArgumentParser()
     parser.add_argument("datafile", help="source data file")
-    parser.add_argument("-o", "--outdir", help="output directory", default="dataset/amazon_reviews")
+    parser.add_argument("-o", "--outdir", help="output directory. Default ../dataset/amazon_reviews", default="../dataset/amazon_reviews")
     parser.add_argument("-l", "--loglevel", help="log level", default="INFO")
     parser.add_argument("-r", "--retain", help="specifieds which columns to keep - NOT YET IMPLEMENTED", action="store_true", default=False)
     parser.add_argument("-c", "--convert", action='store_true',

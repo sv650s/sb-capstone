@@ -265,7 +265,9 @@ def plot_roc_auc(model_name, roc_auc, fpr, tpr):
     plt.title(f'{model_name} ROC AUC')
 
 
-def plot_network_history(network_history):
+def plot_network_history(network_history,
+                         accuracy_label:str = "acc",
+                         val_accuracy_label:str = "val_acc"):
     """
     Plots 2 graphs from network history
     1. epochs vs loss
@@ -286,8 +288,8 @@ def plot_network_history(network_history):
     ax1 = fig.add_subplot(gs[0, 1])
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
-    plt.plot(network_history.history['acc'])
-    plt.plot(network_history.history['val_acc'])
+    plt.plot(network_history.history[accuracy_label])
+    plt.plot(network_history.history[val_accuracy_label])
     plt.legend(['Training', 'Validation'], loc='upper left')
     plt.show()
 
