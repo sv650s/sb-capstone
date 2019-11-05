@@ -1,0 +1,3 @@
+data_dir,data_file,class_column,dtype,drop_columns,model_name,max_iter,sampling,status,status_date,message
+../dataset/feature_files,review_body-tfidf-df_none-ngram13-99567-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB,100,,success,2019-11-05 13:47:44,
+../dataset/feature_files,review_body-tfidf-df_none-ngram13-199134-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LRB,100,,success,2019-11-05 13:59:09,
