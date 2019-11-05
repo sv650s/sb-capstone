@@ -1,0 +1,7 @@
+file,outfile,status,status_date,config_file
+amazon_reviews_us_Wireless_v1_00-test.csv,../dataset/feature_files/review_body-word2vec_pretrained-df_none-ngram_none-89-100-nolda.csv,,,
+,,success,2019-11-02 11:46:53,../config/template-feature_generator.csv
+amazon_reviews_us_Wireless_v1_00-test.csv,../dataset/feature_files/review_body-word2vec-df_none-ngram_none-89-100-nolda.csv,,,
+,,success,2019-11-02 11:46:54,../config/template-feature_generator.csv
+amazon_reviews_us_Wireless_v1_00-test.csv,../dataset/feature_files/review_body-fasttext-df_none-ngram_none-89-100-nolda.csv,,,
+,,success,2019-11-02 11:47:06,../config/template-feature_generator.csv
