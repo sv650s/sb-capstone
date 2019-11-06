@@ -1,0 +1,137 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import pytest
+import pandas as pd
+import numpy as np
+import logging
+import json
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Dropout
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.models import load_model
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Conv1D, MaxPool1D, Embedding
+from tensorflow.keras.utils import model_to_dot
+
+from sklearn.model_selection import train_test_split
+
+from util.keras_util import ModelReport, ModelWrapper
+
+
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
+
+
+class TestModelReport(object):
+
+
+    def test_add_objects(self):
+        """
+        Test to make sure dics, lists, and ndarrays are jsonized before saving
+        :return:
+        """
+        d = {"a": 1}
+        l = [1, 2, 3]
+        npa = np.array([1, 2, 3,])
+
+        report = ModelReport("model_name")
+
+        report.add("dict", d)
+        assert isinstance(report.get("dict"), str), "returned object is not a string"
+        assert json.loads(report.get("dict")), "dict not saved in valid json format"
+        assert json.loads(report.get("dict"))["a"] == 1, "dict value should be 1"
+
+        report.add("list", l)
+        assert isinstance(report.get("list"), str), "returned object is not a string"
+        assert json.loads(report.get("list")), "list not saved in valid json format"
+        assert len(json.loads(report.get("list"))) == 3, "list length should be 3"
+
+        report.add("np.array", npa)
+        assert isinstance(report.get("np.array"), str), "returned object is not a string"
+        assert json.loads(report.get("np.array")), "np.array not saved in valid json format"
+        assert len(json.loads(report.get("np.array"))) == 3, "returned np.array does not have same length"
+
+
+
+# Testing ModelWrapper - datadir does not allow this to be a class for some reason
+@pytest.fixture()
+def feature_data():
+    df = pd.DataFrame({"a":[0, 1, 2], "b":[3, 4, 5]})
+    return df
+
+@pytest.fixture()
+def label_data():
+    return np.array([[0, 1, 0, 0, 0],
+                     [0, 1, 0, 0, 0],
+                     [1, 0, 0, 0, 0]])
+
+def test_model_wrapper(datadir, feature_data, label_data):
+    """
+    Test to make sure that we can save and load model_wrapper
+    :return:
+    """
+
+
+    model = Sequential()
+    model.add(Dense(1, input_shape = (feature_data.shape[1],), kernel_initializer="glorot_uniform"))
+    model.add(Activation('softmax'))
+    model.add(Dense(5, activation="relu"))
+
+    model.compile(optimizer=SGD(), loss="categorical_crossentropy", metrics=["accuracy"])
+
+    X_train, X_test, y_train, y_test = train_test_split(feature_data, label_data)
+
+    mw = ModelWrapper(model,
+                      "model_name",
+                      "architecture",
+                      "label_columns",
+                      "data/data_file_name.csv",
+                      embedding=0,
+                      )
+
+    network_history = mw.fit(X_train, y_train,
+                             batch_size=1,
+                             epochs=1,
+                             verbose=1
+                             )
+
+    mw.evaluate(X_test, y_test)
+    mw.save(datadir)
+
+    report = pd.read_csv(ModelWrapper.get_report_file_name(datadir))
+
+    cols = ["classification_report",
+    "roc_auc",
+    "loss",
+    "accuracy",
+    "confusion_matrix",
+    "file",
+    "tokenizer_file",
+    "max_sequence_length",
+    "embedding",
+    "model_file",
+    "model_json_file",
+    "weights_file",
+    "test_examples",
+    "test_features",
+    "train_examples",
+    "train_features",
+    "train_time_min",
+    "evaluate_time_min",
+    "predict_time_min",
+    "status",
+    "status_date"]
+
+    for col in cols:
+        assert col in report.columns, f"report missing column: {col}"
+        # check to make sure we have values everywhere
+        assert len(report[col]) > 0, f'{col} value is 0'
+
+
+
+
+
+
+

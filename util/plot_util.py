@@ -266,8 +266,8 @@ def plot_roc_auc(model_name, roc_auc, fpr, tpr):
 
 
 def plot_network_history(network_history,
-                         accuracy_label:str = "acc",
-                         val_accuracy_label:str = "val_acc"):
+                         accuracy_label:str = "categorical_accuracy",
+                         val_accuracy_label:str = "val_categorical_accuracy"):
     """
     Plots 2 graphs from network history
     1. epochs vs loss

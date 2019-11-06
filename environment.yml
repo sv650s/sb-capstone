@@ -27,6 +27,7 @@ dependencies:
   - pyldavis
   - pytest=4.4.1
   - pytest-cov=2.6.1
+  - pytest-datadir
   - mock=2.0.0
   - gensim
   - lightgbm
@@ -42,6 +43,7 @@ dependencies:
   - pymysql
   - mysqlclient
   - pydot
+  - urllib2
   - virtualenv
   - Werkzeug
   - pip:
