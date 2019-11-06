@@ -164,7 +164,8 @@ class ModelWrapper(object):
                  feature_set_name,
                  label_column,
                  data_file,
-                 embedding = None,
+                 sampling_type="none",
+                 embed_size = None,
                  tokenizer=None,
                  description=None):
         """
@@ -176,7 +177,8 @@ class ModelWrapper(object):
         :param feature_set_name: feature set name
         :param label_column: name of column to use as label
         :param data_file: datafile used
-        :param embedding: size of embedding. default is None
+        :param sampling_type: specify type of sampling - ie, smote, nearmiss-2. default none
+        :param embed_size: size of embedding. default is None
         :param tokenizer: tokenizer used to preprocess, default is None
         :param description: description of model. If not passed in, will automatically construct this
         """
@@ -186,7 +188,8 @@ class ModelWrapper(object):
         self.architecture = architecture
         self.label_column = label_column
         self.data_file = data_file
-        self.embedding = embedding
+        self.sampling_type = sampling_type
+        self.embed_size = embed_size
         self.tokenizer = tokenizer
         self.description = description
         self.tokenizer_file = None
@@ -334,7 +337,8 @@ class ModelWrapper(object):
         report.add("tokenizer_file", self.tokenizer_file)
         if self.X_train is not None:
             report.add("max_sequence_length", self.X_train.shape[1])
-        report.add("embedding", self.embedding)
+        report.add("sampling_type", self.sampling_type)
+        report.add("embedding", self.embed_size)
         report.add("model_file", self.model_file)
         report.add("model_json_file", self.model_json_file)
         report.add("weights_file", self.weights_file)
@@ -421,7 +425,7 @@ class ModelReport(object):
         else:
             report_df = pd.DataFrame()
 
-        report_df = report_df.append(self.to_df(), ignore_index=True)
+        report_df = report_df.append(self.to_df(), ignore_index=True, sort=False)
         print("Saving report file...")
         report_df.to_csv(report_file, index=False, quotechar="'")
         return report_df

@@ -106,7 +106,7 @@ def test_model_wrapper(datadir, feature_data, label_data):
                       "architecture",
                       "label_columns",
                       "data/data_file_name.csv",
-                      embedding=0,
+                      embed_size=0,
                       )
 
     network_history = mw.fit(X_train, y_train,
