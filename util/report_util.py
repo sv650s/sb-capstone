@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import logging
 import os
+import json
+import util.keras_util as ku
 
 log = logging.getLogger(__name__)
 
@@ -20,40 +22,27 @@ def calculate_metric(data:pd.DataFrame, column_name ="eval_metric", dnn = False)
     :return:
     """
     if isinstance(data, pd.DataFrame):
-        if dnn:
-            log.info("Calculating metric for dnn report")
-            data[column_name] = data.classification_report.apply(lambda x:
-                                                                 _harmonic_mean([
-                                                                     x["1"]["recall"],
-                                                                     x["2"]["recall"],
-                                                                     x["3"]["recall"],
-                                                                     x["4"]["recall"],
-                                                                     x["5"]["precision"]
-                                                                 ]))
-
-        else:
-            log.info("Calculating metric for ML report")
-            data[column_name] = 5 / (1/data[EVAL_COLS[0]] +
-                                     1/data[EVAL_COLS[1]] +
-                                     1/data[EVAL_COLS[2]] +
-                                     1/data[EVAL_COLS[3]] +
-                                     1/data[EVAL_COLS[4]])
+        log.info("Calculating metric for ML report")
+        data[column_name] = data.apply(lambda x: _harmonic_mean(
+            [
+                x[EVAL_COLS[0]],
+                x[EVAL_COLS[1]],
+                x[EVAL_COLS[2]],
+                x[EVAL_COLS[3]],
+                x[EVAL_COLS[4]],
+            ]
+        ), axis=1)
     else:
         log.info("calculating metric from dictionary")
+        log.debug(f'{data}')
         m1 = data["1"]["recall"]
         m2 = data["2"]["recall"]
         m3 = data["3"]["recall"]
         m4 = data["4"]["recall"]
         m5 = data["5"]["precision"]
+        log.info("got all values to calculate")
 
-        if m1 > 0 and m2 > 0 and m3 > 0 and m4 > 0 and m5 > 0:
-            data = 5 / (1 / m1 +
-                        1 / m2 +
-                        1 / m3 +
-                        1 / m4 +
-                        1 / m5)
-        else:
-            data = 0
+        data = _harmonic_mean([m1, m2, m3, m4, m5])
     return data
 
 def _harmonic_mean(values: list):
@@ -68,8 +57,10 @@ def _harmonic_mean(values: list):
     mean = 0
     for v in values:
         if v == 0:
+            mean = 0
             break
-        mean += 1 / v
+        else:
+            mean += 1 / v
     if mean > 0:
         mean = len(values) / mean
 
@@ -135,5 +126,32 @@ def load_best_from_report(report):
         report = load_report(report)
     type_dict = {idx: value for idx, value in report.dtypes.iteritems()}
     return pd.DataFrame(report.iloc[report.eval_metric.idxmax(axis=0)]).T.reset_index(drop=True).astype(type_dict, copy=False)
+
+
+def _preprocess_dnn_report_file(report: pd.DataFrame):
+    """
+
+    :param report:
+    :return:
+    """
+    # TODO: implement parsing out other attributes
+    report["eval_metric"] = report["classification_report"].apply(lambda x: calculate_metric(json.loads(x)))
+    return report
+
+
+
+def load_dnn_report(report_dir: str):
+    """
+    DNN report has a slightly different format
+
+    Use this function to load the file and pre-process it
+    :param report_dir: directory where report is stored
+    :return: report dataframe
+    """
+    report_file = ku.ModelWrapper.get_report_file_name(report_dir)
+    assert os.path.exists(report_file), f"report file missing {report_file}"
+    report = pd.read_csv(report_file, quotechar="'")
+    report = _preprocess_dnn_report_file(report)
+    return report
 
 

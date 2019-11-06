@@ -53,6 +53,24 @@ class TestModelReport(object):
         assert json.loads(report.get("np.array")), "np.array not saved in valid json format"
         assert len(json.loads(report.get("np.array"))) == 3, "returned np.array does not have same length"
 
+def test_load_model_report(shared_datadir):
+    """
+    Test loading a ModelReport from a file and make sure the final report has all columns in it
+    :param shared_datadir:
+    :return:
+    """
+    filename = f'{shared_datadir}/2019-11-dl_prototype-report.csv'
+    report = ModelReport.load_report(filename, 0)
+    assert report is not None, f'Report is None {report}'
+
+    s = pd.read_csv(filename, quotechar=",").iloc[0]
+    assert isinstance(s, pd.Series), f"s is not a Series: {type(s)}"
+    assert len(s) >= 1, f"Dataframe length is less than 1 {len(s)}"
+    log.debug(f'report keys: {report.report.keys()}')
+    for col, value in s.items():
+        assert col in list(report.report.keys()), f'{col} missing in ModelReport'
+
+
 
 
 # Testing ModelWrapper - datadir does not allow this to be a class for some reason

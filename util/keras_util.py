@@ -157,9 +157,32 @@ def preprocess_file(data_df, feature_column, label_column, max_sequence_length =
 
 class ModelWrapper(object):
 
-    def __init__(self, model, model_name, architecture, label_column, data_file, embedding, tokenizer=None, description=None):
+    def __init__(self,
+                 model,
+                 model_name,
+                 architecture,
+                 feature_set_name,
+                 label_column,
+                 data_file,
+                 embedding = None,
+                 tokenizer=None,
+                 description=None):
+        """
+        Constructor
+
+        :param model:  keras model
+        :param model_name:  string name of model
+        :param architecture:  architecture of model
+        :param feature_set_name: feature set name
+        :param label_column: name of column to use as label
+        :param data_file: datafile used
+        :param embedding: size of embedding. default is None
+        :param tokenizer: tokenizer used to preprocess, default is None
+        :param description: description of model. If not passed in, will automatically construct this
+        """
         self.model_name = model_name
         self.model = model
+        self.feature_set_name = feature_set_name
         self.architecture = architecture
         self.label_column = label_column
         self.data_file = data_file
@@ -244,14 +267,16 @@ class ModelWrapper(object):
         directory, inbasename = fu.get_dir_basename(self.data_file)
         if self.X_test is not None:
             # self.X_test might not be set yet
-            description = f"{inbasename}-{self.model_name}-{self.architecture}-{self.X_test.shape[0] + self.X_train.shape[0]}-{self.X_test.shape[1]}-{self.label_column}"
+            description = f"{self.model_name}-{self.architecture}-{self.feature_set_name}-sampling_{self.sampling_type}-{self.X_test.shape[0] + self.X_train.shape[0]}-{self.X_test.shape[1]}-{self.label_column}"
         else:
             description = self.model_name
         return description
 
     @staticmethod
-    def get_report_file_name(save_dir: str):
-        return  f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
+    def get_report_file_name(save_dir: str, use_date=True):
+        if use_date:
+            return  f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
+        return  f"{save_dir}/reports/dl_prototype-report.csv"
 
     def save(self, save_dir, save_history=False, save_format=None, append_report=True):
         description = self._get_description()
@@ -294,7 +319,7 @@ class ModelWrapper(object):
 
 
     def get_report(self):
-        if self.description:
+        if self.description is not None:
             report = ModelReport(self.model_name, self.architecture, self.description)
         else:
             report = ModelReport(self.model_name, self.architecture, self._get_description())
@@ -337,6 +362,24 @@ class ModelReport(object):
 
     # these columns will be json objects
     json_columns = ["classification_report", "fpr", "tpr", "confusion_matrix"]
+
+    @staticmethod
+    def load_report(filename: str, index: int):
+        """
+        Uses a specific row in a report file and re-create the ModelReport
+        :param filename:
+        :param index:
+        :return:
+        """
+        assert os.path.exists(filename), f'File not found: {filename}'
+        df = pd.read_csv(filename, quotechar=",").iloc[index]
+        report = ModelReport(df.model_name, df.architecture, df.description)
+
+        df = df.drop(["model_name", "architecture", "description"])
+        for col, value in df.items():
+            report.add(col, df[col])
+        return report
+
 
     def __init__(self, model_name, architecture: str, description=None):
         self.report = {}
