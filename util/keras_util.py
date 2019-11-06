@@ -157,6 +157,43 @@ def preprocess_file(data_df, feature_column, label_column, max_sequence_length =
 
 class ModelWrapper(object):
 
+    @staticmethod
+    def copy(mw):
+        """
+        Creates a deep copy of mw
+        :param cls:
+        :param mw:
+        :return:
+        """
+        mw_copy = ModelWrapper(mw.model,
+                               mw.model_name,
+                               mw.architecture,
+                               mw.feature_set_name,
+                               mw.label_column,
+                               mw.data_file,
+                               mw.sampling_type,
+                               mw.embed_size,
+                               mw.tokenizer,
+                               mw.description)
+        mw_copy.tokenizer_file = mw.tokenizer_file
+        mw_copy.train_time_min = mw.train_time_min
+        mw_copy.predict_time_min = mw.predict_time_min
+        mw_copy.evaluate_time_min = mw.evaluate_time_min
+        mw_copy.network_history = mw.network_history
+        mw_copy.weights_file = mw.weights_file
+        mw_copy.X_train = mw.X_train
+        mw_copy.X_test = mw.X_test
+        mw_copy.y_train = mw.y_train
+        mw_copy.y_test = mw.y_test
+        mw_copy.scores = mw.scores
+        mw_copy.confusion_matrix = mw.confusion_matrix
+        mw_copy.roc_auc = mw.roc_auc
+        mw_copy.fpr = mw.fpr
+        mw_copy.tpr = mw.tpr
+        mw_copy.crd = mw.crd
+        return mw_copy
+
+
     def __init__(self,
                  model,
                  model_name,
