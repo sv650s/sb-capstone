@@ -225,6 +225,7 @@ class ModelWrapper(object):
         self.architecture = architecture
         self.label_column = label_column
         self.data_file = data_file
+        self.batch_size = 0
         self.sampling_type = sampling_type
         self.embed_size = embed_size
         self.tokenizer = tokenizer
@@ -235,11 +236,18 @@ class ModelWrapper(object):
         self.evaluate_time_min = 0
         self.network_history = None
         self.weights_file = None
+        self.epochs = 0
         # dumping ground for anything else we want to store
         self.misc_items = {}
 
 
-    def fit(self, X_train, y_train, batch_size, epochs, validation_split=0.2, verbose=1, callbacks=None, class_weight = None):
+    def fit(self, X_train, y_train,
+            epochs,
+            batch_size = 32,
+            validation_split=0.2,
+            verbose=1,
+            callbacks=None,
+            class_weight = None):
         print(f'Number of training examples: {len(X_train)}')
         start_time = datetime.now()
         self.network_history = self.model.fit(X_train,
@@ -254,6 +262,8 @@ class ModelWrapper(object):
         self.train_time_min = round((end_time - start_time).total_seconds() / 50, 2)
         self.X_train = X_train
         self.y_train = y_train
+        self.batch_size = 128
+        self.epochs = len(self.network_history.history['loss'])
         return self.network_history
 
     def add(self, key, value):
@@ -318,7 +328,7 @@ class ModelWrapper(object):
             return  f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
         return  f"{save_dir}/reports/dl_prototype-report.csv"
 
-    def save(self, save_dir, save_history=False, save_format=None, append_report=True):
+    def save(self, save_dir, save_format=None, append_report=True):
         description = self._get_description()
         print(f"description: {description}")
 
@@ -327,8 +337,6 @@ class ModelWrapper(object):
         self.weights_file = f"{save_dir}/models/{description}-weights.h5"
         self.report_file = ModelWrapper.get_report_file_name(save_dir)
         self.tokenizer_file = f'{save_dir}/models/dl-tokenizer.pkl'
-        if save_history:
-            self.network_history_file = f'{save_dir}/models/{description}-history.pkl'
 
         print(f"Saving model file: {self.model_file}")
         self.model.save(self.model_file, save_format=save_format)
@@ -344,10 +352,6 @@ class ModelWrapper(object):
             self.model.save_weights(self.weights_file,
                     save_format=save_format)
 
-
-        if save_history and self.network_history is not None:
-            print(f"Saving network history file: {self.network_history_file}")
-            pickle.dump(self.network_history, open(self.network_history_file, 'wb'))
 
         if self.tokenizer is not None:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
@@ -370,10 +374,14 @@ class ModelWrapper(object):
         report.add("accuracy", self.scores[1])
         report.add("confusion_matrix", json.dumps(self.confusion_matrix.tolist()))
         report.add("file", self.data_file)
+        # too long to save in CSV
         # report.add("network_history_file", self.network_history_file)
+        # report.add("history", self.network_history.history)
         report.add("tokenizer_file", self.tokenizer_file)
         if self.X_train is not None:
             report.add("max_sequence_length", self.X_train.shape[1])
+        report.add("batch_size", self.batch_size)
+        report.add("epochs", self.epochs)
         report.add("sampling_type", self.sampling_type)
         report.add("embedding", self.embed_size)
         report.add("model_file", self.model_file)
@@ -453,7 +461,15 @@ class ModelReport(object):
         df = pd.DataFrame()
         return df.append(self.report, ignore_index=True, sort=False)
 
-    def save(self, report_file, append=False):
+    def save(self, report_file, append=True):
+        """
+        Saves a report to CSV format
+
+        :param self:
+        :param report_file: filepath of report
+        :param append: append to existing report. default True
+        :return:
+        """
         # check to see if report file exisits, if so load it and append
         exists = os.path.isfile(report_file)
         if append and exists:

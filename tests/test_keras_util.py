@@ -104,10 +104,12 @@ def test_model_wrapper(datadir, feature_data, label_data):
     mw = ModelWrapper(model,
                       "model_name",
                       "architecture",
+                      "feature_set_name",
                       "label_columns",
                       "data/data_file_name.csv",
                       embed_size=0,
                       )
+
 
     network_history = mw.fit(X_train, y_train,
                              batch_size=1,
@@ -121,26 +123,28 @@ def test_model_wrapper(datadir, feature_data, label_data):
     report = pd.read_csv(ModelWrapper.get_report_file_name(datadir))
 
     cols = ["classification_report",
-    "roc_auc",
-    "loss",
-    "accuracy",
-    "confusion_matrix",
-    "file",
-    "tokenizer_file",
-    "max_sequence_length",
-    "embedding",
-    "model_file",
-    "model_json_file",
-    "weights_file",
-    "test_examples",
-    "test_features",
-    "train_examples",
-    "train_features",
-    "train_time_min",
-    "evaluate_time_min",
-    "predict_time_min",
-    "status",
-    "status_date"]
+            "roc_auc",
+            "loss",
+            "accuracy",
+            "confusion_matrix",
+            "file",
+            "tokenizer_file",
+            "max_sequence_length",
+            "embedding",
+            "model_file",
+            "model_json_file",
+            "weights_file",
+            "sampling_type",
+            "epochs",
+            "test_examples",
+            "test_features",
+            "train_examples",
+            "train_features",
+            "train_time_min",
+            "evaluate_time_min",
+            "predict_time_min",
+            "status",
+            "status_date"]
 
     for col in cols:
         assert col in report.columns, f"report missing column: {col}"
