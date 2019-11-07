@@ -151,6 +151,8 @@ def preprocess_file(data_df, feature_column, label_column, max_sequence_length =
     # split our data into train and test sets
     print("Splitting data into training and test sets...")
     X_train, X_test, y_train, y_test = train_test_split(features_padded, y, random_state=1)
+    print(f'Training X shape {X_train.shape} y shape {y_train.shape}')
+    print(f'Test X shape {X_test.shape} y shape {y_test.shape}')
 
     return X_train, X_test, y_train, y_test, t
 
@@ -202,6 +204,7 @@ class ModelWrapper(object):
                  label_column,
                  data_file,
                  sampling_type="none",
+                 sample_weights=None,
                  embed_size = None,
                  tokenizer=None,
                  description=None):
@@ -227,6 +230,7 @@ class ModelWrapper(object):
         self.data_file = data_file
         self.batch_size = 0
         self.sampling_type = sampling_type
+        self.sample_weights = sample_weights
         self.embed_size = embed_size
         self.tokenizer = tokenizer
         self.description = description
@@ -382,6 +386,9 @@ class ModelWrapper(object):
             report.add("max_sequence_length", self.X_train.shape[1])
         report.add("batch_size", self.batch_size)
         report.add("epochs", self.epochs)
+        report.add("feature_set_name", self.feature_set_name)
+        if self.sample_weights is not None:
+            report.add("sample_weights", self.sample_weights)
         report.add("sampling_type", self.sampling_type)
         report.add("embedding", self.embed_size)
         report.add("model_file", self.model_file)

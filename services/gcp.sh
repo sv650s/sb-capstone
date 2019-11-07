@@ -84,8 +84,6 @@ setup() {
     bucket_create
     bucket_copy
     db_start
-
-
 }
 
 teardown() {
@@ -99,7 +97,6 @@ teardown() {
     bucket_delete
     image_delete
     db_stop
-    # TODO:
 
 }
 

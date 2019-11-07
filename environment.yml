@@ -49,5 +49,6 @@ dependencies:
   - pip:
     - tensorflow==2.0.0-beta1
     - mysql-connector
+    - jupyter_http_over_ws
 prefix: /Users/vinceluk/springboard-projects/capstone
 

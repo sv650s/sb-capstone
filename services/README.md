@@ -49,11 +49,12 @@ Optionally, you can use install virtualenv and create a python virtual environme
 
 ## One Time GCP Project Setup
 
+
 You will need to do the following to setup your GCP project:
 
 * Create your GCP project
 * Make sure billing is enabled
-** **Update** *gcp_var.sh* and set project name, project ID, zone, region
+    * **Update** *gcp_var.sh* and set project name, project ID, zone, region
 * Create your service account and put key (gcp-key.json) in credentials/ (see below)
 * Create your SSL certificates for database and place in credentials/
 
@@ -65,6 +66,11 @@ At the end of this, your *credentials/* should have the following files:
 * gcp-key.json
 
 
+Log into gcp account from terminal
+
+```bash
+gcloud auth login
+```
 
 ### Service Accounts
 Flask server uses GCP python libraries to access GCP resources. You will need to create a service account and grant at least the following roles:
@@ -211,11 +217,11 @@ NOTE: There are a few things not quite working - you will want to manually clean
 
 
 
-# Know Issues 
+# Known Issues 
 
 * gcp.sh is not releasing static IP's properly when you run *teardown* - you will have to manually remove these to avoid extra charges
 * cannot for the life of me to get logging working under flask despite many attempt. Some classes are not logging at all and some are. model_util is logging under the main flask app logger
 
-# Future Features
+# Future Updates
 * Currently, flask server communicates with Cloud MySQL over external IP. This offers flexibility switching between development and production, however, it is more ideal to connect to database over VPC when running on GCP
 * Flask server only logs to STDOUT current. Would like it to log to StackDriver when the container is running on GCP
