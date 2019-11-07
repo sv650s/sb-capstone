@@ -204,7 +204,6 @@ class ModelWrapper(object):
                  label_column,
                  data_file,
                  sampling_type="none",
-                 sample_weights=None,
                  embed_size = None,
                  tokenizer=None,
                  description=None):
@@ -230,7 +229,6 @@ class ModelWrapper(object):
         self.data_file = data_file
         self.batch_size = 0
         self.sampling_type = sampling_type
-        self.sample_weights = sample_weights
         self.embed_size = embed_size
         self.tokenizer = tokenizer
         self.description = description
@@ -263,6 +261,7 @@ class ModelWrapper(object):
                                               verbose=verbose,
                                               class_weight=class_weight)
         end_time = datetime.now()
+        self.class_weight = class_weight
         self.train_time_min = round((end_time - start_time).total_seconds() / 50, 2)
         self.X_train = X_train
         self.y_train = y_train
@@ -387,8 +386,8 @@ class ModelWrapper(object):
         report.add("batch_size", self.batch_size)
         report.add("epochs", self.epochs)
         report.add("feature_set_name", self.feature_set_name)
-        if self.sample_weights is not None:
-            report.add("sample_weights", self.sample_weights)
+        if self.class_weight is not None:
+            report.add("class_weights", self.class_weight)
         report.add("sampling_type", self.sampling_type)
         report.add("embedding", self.embed_size)
         report.add("model_file", self.model_file)
