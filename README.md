@@ -1,4 +1,4 @@
-# sb-capstone
+# Amazon Review Classification
 
 
 Addition packages to install:
