@@ -25,14 +25,7 @@ def calculate_metric(data:pd.DataFrame, column_name ="eval_metric", dnn = False)
     if isinstance(data, pd.DataFrame):
         log.info("Calculating metric for ML report")
         data[column_name] = data.apply(lambda x: _harmonic_mean(
-            [
-                x[EVAL_COLS[0]],
-                x[EVAL_COLS[1]],
-                x[EVAL_COLS[2]],
-                x[EVAL_COLS[3]],
-                x[EVAL_COLS[4]],
-            ]
-        ), axis=1)
+            [ x[col] for col in EVAL_COLS ] ), axis=1)
     elif isinstance(data, dict):
         log.info("calculating metric from dictionary")
         log.debug(f'{data}')
