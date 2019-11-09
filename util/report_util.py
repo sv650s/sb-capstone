@@ -132,12 +132,20 @@ def load_best_from_report(report):
 
 def _preprocess_dnn_report_file(report: pd.DataFrame):
     """
+    preprocess dnn report and parse out extra information that wasn't in the original report
+
+    columns it will create:
+        eval_metric - this will be calculated by calculate_metric function
+        sample_size = training_examples + test_examples
+        display_name = model_name + architecture
+
 
     :param report:
     :return:
     """
     # TODO: implement parsing out other attributes
     report["eval_metric"] = report["classification_report"].apply(lambda x: calculate_metric(json.loads(x)))
+    report["sample_size"] = report.train_examples + report.test_examples
     report["display_name"] = report["model_name"] + " (" + report["architecture"] + ")"
     return report
 

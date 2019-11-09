@@ -387,7 +387,7 @@ class ModelWrapper(object):
         report.add("epochs", self.epochs)
         report.add("feature_set_name", self.feature_set_name)
         if self.class_weight is not None:
-            report.add("class_weights", self.class_weight)
+            report.add("class_weight", self.class_weight)
         report.add("sampling_type", self.sampling_type)
         report.add("embedding", self.embed_size)
         report.add("model_file", self.model_file)
