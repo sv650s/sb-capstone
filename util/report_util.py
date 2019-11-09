@@ -4,6 +4,7 @@ import logging
 import os
 import json
 import util.keras_util as ku
+import util.dict_util as du
 
 log = logging.getLogger(__name__)
 
@@ -32,17 +33,18 @@ def calculate_metric(data:pd.DataFrame, column_name ="eval_metric", dnn = False)
                 x[EVAL_COLS[4]],
             ]
         ), axis=1)
-    else:
+    elif isinstance(data, dict):
         log.info("calculating metric from dictionary")
         log.debug(f'{data}')
-        m1 = data["1"]["recall"]
-        m2 = data["2"]["recall"]
-        m3 = data["3"]["recall"]
-        m4 = data["4"]["recall"]
-        m5 = data["5"]["precision"]
+        m = []
+        m.append(data["1"]["recall"])
+        m.append(data["2"]["recall"])
+        m.append(data["3"]["recall"])
+        m.append(data["4"]["recall"])
+        m.append(data["5"]["precision"])
         log.info("got all values to calculate")
 
-        data = _harmonic_mean([m1, m2, m3, m4, m5])
+        data = _harmonic_mean(m)
     return data
 
 def _harmonic_mean(values: list):
@@ -136,22 +138,44 @@ def _preprocess_dnn_report_file(report: pd.DataFrame):
     """
     # TODO: implement parsing out other attributes
     report["eval_metric"] = report["classification_report"].apply(lambda x: calculate_metric(json.loads(x)))
+    report["display_name"] = report["model_name"] + " (" + report["architecture"] + ")"
     return report
 
+def convert_dnn_report_format(report:pd.DataFrame):
+    """
+    DNN reports have a slighlty different format. Classification report is stored as a json instead of flattened in the report
+    We will convert the dnn format to standard format here
+    :param report:
+    :return:
+    """
+    new_report = pd.DataFrame()
+    for idx, row in report.iterrows():
+        d = row.to_dict()
+        cr_dict = json.loads(row.classification_report)
+        d = du.add_dict_to_dict(d, cr_dict)
+        new_report = new_report.append(d, ignore_index=True, sort=False)
+    return new_report
 
-
-def load_dnn_report(report_dir: str):
+def load_dnn_report(report_dir: str, report_file = None, convert_format = False):
     """
     DNN report has a slightly different format
 
     Use this function to load the file and pre-process it
     :param report_dir: directory where report is stored
+    :param report_file: filename of report
+    :param convert_format: convert it to standard format that ML models used. Default False
     :return: report dataframe
     """
-    report_file = ku.ModelWrapper.get_report_file_name(report_dir)
+    if report_file is None:
+        report_file = ku.ModelWrapper.get_report_file_name(report_dir)
+    else:
+        report_file = f'{report_dir}/{report_file}'
     assert os.path.exists(report_file), f"report file missing {report_file}"
     report = pd.read_csv(report_file, quotechar="'")
+    if convert_format:
+        report = convert_dnn_report_format(report)
     report = _preprocess_dnn_report_file(report)
     return report
+
 
 

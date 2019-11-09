@@ -5,6 +5,8 @@ import pandas as pd
 from tensorflow.keras.models import load_model
 import numpy as np
 import logging
+import json
+import util.dict_util as du
 
 log = logging.getLogger(__name__)
 
@@ -20,16 +22,18 @@ def plot_score_histograms(df: pd.DataFrame, version = 1, **kwargs):
     I did this so previous notebooks would not break. Version is default to 1
     :param df: data to plot
     :param version: version of the plotting function to call. Default is version 1
-    :param kwargs: arguments for the plotting function. Only used for version 2
+    :param kwargs: arguments for the plotting function. Only used for version 2. Supported params: label, groupby
     :return:
     """
     if version == 1:
-        plot_score_histograms_v1(df)
+        _plot_score_histograms_v1(df)
+    elif version == 2:
+        _plot_score_histograms_v2(df, kwargs)
     else:
-        plot_score_histograms_v2(df, kwargs)
+        raise Exception(f"version {version} not supported")
 
 
-def plot_score_histograms_v1(df: pd.DataFrame):
+def _plot_score_histograms_v1(df: pd.DataFrame):
     """
     Plot F1, precision and recall for various models
 
@@ -75,7 +79,7 @@ def plot_score_histograms_v1(df: pd.DataFrame):
                 a[index].set_xlim(0, 1.0)
             index += 1
 
-def plot_score_histograms_v2(df: pd.DataFrame, args = None):
+def _plot_score_histograms_v2(df: pd.DataFrame, args = None):
     """
     You should not call this function directly but use plot_score_historgrams and specify version = 2
 
@@ -89,57 +93,68 @@ def plot_score_histograms_v2(df: pd.DataFrame, args = None):
     :param args: dictionary with arugments - supports groupby and label
     :return:
     """
-    # if "label" not in df.columns:
-    #     df["label"] = df.apply(lambda x: f'{x["model_name"]}-{x["description"]}', axis=1)
-    if len(args.keys()) > 0:
+    # default values
+    label = "feature_summary"
+    groupby = None
+    if args is not None and len(args.keys()) > 0:
         if "label" in args.keys():
             label = args["label"]
         if "groupby" in args.keys():
             groupby = args["groupby"]
-    else:
-        label = "feature_summary"
-        groupby = "model_name"
 
     # models = df[[label_column]].unique()
-    f1_cols, precision_cols, recall_cols = get_score_columns(df)
-    for group in df[groupby].unique():
-        # model_report = df[df["label"].str.startswith(f'{model}-')]
-        # model_report = df[df[label_column].str.startswith(f'{model}-')]
-        model_report = df[df[groupby] == group]
+    if groupby is not None:
+        log.info(f"Grouping by {groupby}")
+        for group in df[groupby].unique():
+            model_report = df[df[groupby] == group]
+            _plot_score_histogram_group(model_report, label, group)
+    else:
+        _plot_score_histogram_group(df, label)
 
-        # log.debug(model_report)
 
-        pos = list(range(len(model_report)))
-        width = 0.15
-        f, a = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(20, len(model_report) * 1))
-        column_dict = {"F1": f1_cols, "Precision": precision_cols, "Recall": recall_cols}
+def _plot_score_histogram_group(report:pd.DataFrame, label:str, group:str = None):
+    """
+    Plots one grouping of score/histograms
+    :param report:
+    :return:
+    """
+    f1_cols, precision_cols, recall_cols = get_score_columns(report)
 
-        # sort the report in reverse order so we see the models top down
-        report_reverse = model_report.sort_values(label, ascending=False)
-        # report_reverse = model_report.sort_values("label", ascending=False)
+    pos = list(range(len(report)))
+    width = 0.15
+    f, a = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(20, len(report) * 1))
+    column_dict = {"F1": f1_cols, "Precision": precision_cols, "Recall": recall_cols}
 
-        index = 0
-        for title, columns in column_dict.items():
-            columns_copy = columns.copy()
-            columns_copy.remove("label")
-            # sort in reverse order so it goes top-down and 5 is at the bottom
-            columns_copy.sort(reverse=True)
+    # sort the report in reverse order so we see the models top down
+    report_reverse = report.sort_values(label, ascending=False)
+    # report_reverse = model_report.sort_values("label", ascending=False)
 
-            offset = 0
-            for col in columns_copy:
-                #         print(f'Plotting {col}')
-                a[index].barh([p + offset for p in pos],
-                              report_reverse[col],
-                              width,
-                              #                 align="edge",
-                              #                 alpha=0.5,
-                              tick_label=report_reverse[label].tolist(),
-                              # tick_label=report_reverse["label"].tolist(),
-                              orientation="horizontal")
-                offset += width
+    index = 0
+    for title, columns in column_dict.items():
+        columns_copy = columns.copy()
+        columns_copy.remove("label")
+        # sort in reverse order so it goes top-down and 5 is at the bottom
+        columns_copy.sort(reverse=True)
+
+        offset = 0
+        for col in columns_copy:
+            #         print(f'Plotting {col}')
+            a[index].barh([p + offset for p in pos],
+                          report_reverse[col],
+                          width,
+                          #                 align="edge",
+                          #                 alpha=0.5,
+                          tick_label=report_reverse[label].tolist(),
+                          # tick_label=report_reverse["label"].tolist(),
+                          orientation="horizontal")
+            offset += width
+            if group is not None:
                 a[index].set_title(f'{title}-{group}')
-                a[index].set_xlim(0, 1.0)
-            index += 1
+            else:
+                a[index].set_title(f'{title}')
+
+            a[index].set_xlim(0, 1.0)
+        index += 1
 
 
 def plot_macro_data(df: pd.DataFrame, cv=False):

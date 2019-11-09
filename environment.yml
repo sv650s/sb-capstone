@@ -30,6 +30,7 @@ dependencies:
   - pytest-datadir
   - mock=2.0.0
   - gensim
+  - joblib
   - lightgbm
   - imbalanced-learn=0.4
   - xgboost
@@ -43,7 +44,6 @@ dependencies:
   - pymysql
   - mysqlclient
   - pydot
-  - urllib2
   - virtualenv
   - Werkzeug
   - pip:

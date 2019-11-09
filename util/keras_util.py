@@ -39,7 +39,7 @@ def calculate_roc_auc(y_test: np.ndarray, y_predict: pd.DataFrame):
           so used to plt ROC curve for each class
           keys: 0 to {n_classes} + micro and macro
 
-    :param y_test: test labels
+    :param y_test: test labels. should be np array or dataframe
     :param y_predict: test predictions - this should either be an np.ndarray or DataFrame
     :return:
     """

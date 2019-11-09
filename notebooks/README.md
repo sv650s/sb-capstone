@@ -31,6 +31,7 @@ Sometime I re-run notebooks via the command line. You can do that using *runAllN
 
 
 ### Usage
+```bash
 $ ./runNotebooks.sh -h
 Use this script to run notebooks from the command line. By default, notebooks will be overwritten with the output (including errors)
 If -n is note specified, this will run all notebooks in the directory
@@ -39,3 +40,4 @@ Example:
   ./runNotebooks.sh
   ./runNotebooks.sh -n notebook.ipynb
   ./runNotebooks.sh -n 3*.ipynb
+```
