@@ -46,6 +46,8 @@ def preprocess_file(data_df,
                     feature_column,
                     label_column,
                     report_dir,
+                    test_size = None,
+                    random_state = 1,
                     max_sequence_length = 100,
                     use_oov_token=True,
                     sampler = None
@@ -93,7 +95,10 @@ def preprocess_file(data_df,
 
     # split our data into train and test sets
     print("Splitting data into training and test sets...")
-    X_train, X_test, y_train_unencoded, y_test_unencoded = train_test_split(features_padded, labels, random_state=1)
+    X_train, X_test, y_train_unencoded, y_test_unencoded = train_test_split(features_padded,
+                                                                            labels,
+                                                                            test_size=test_size,
+                                                                            random_state=random_state)
     print(f'Training X type {type(X_train)} y type {type(y_train_unencoded)}')
     print(f'Training X shape {X_train.shape} y shape {y_train_unencoded.shape}')
     print(f'Test X shape {X_test.shape} y shape {y_test_unencoded.shape}')
