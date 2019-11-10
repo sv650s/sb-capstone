@@ -90,27 +90,40 @@ def preprocess_file(data_df,
     print("Vocabulary size={}".format(len(t.word_index)))
     print("Number of Documents={}".format(t.document_count))
 
+
     # split our data into train and test sets
     print("Splitting data into training and test sets...")
     X_train, X_test, y_train_unencoded, y_test_unencoded = train_test_split(features_padded, labels, random_state=1)
+    print(f'Training X type {type(X_train)} y type {type(y_train_unencoded)}')
     print(f'Training X shape {X_train.shape} y shape {y_train_unencoded.shape}')
     print(f'Test X shape {X_test.shape} y shape {y_test_unencoded.shape}')
+
 
     if sampler is not None:
         print(f'Start sampling with {sampler.__class__.__name__}')
         X_train, y_train_unencoded = sampler.fit_resample(X_train, y_train_unencoded)
+        print(f'Resampled X type {type(X_train)} y type {type(y_train_unencoded)}')
         print(f'Resampled X shape {X_train.shape} y shape {y_train_unencoded.shape}')
 
-        dist = pd.DataFrame(y_train_unencoded).reset_index().groupby(0).count()
+        # sampling converts series to nparray. Have to convert it back for the rest of the code
+        y_train_unencoded = pd.DataFrame(y_train_unencoded)
+        dist = y_train_unencoded.reset_index().groupby(0).count()
         dist.to_csv(f'{report_dir}/{sampler.__class__.__name__}-{len(labels)}-histogram.csv')
 
         print(f'Resampled distribution:\n{dist}')
 
+
     print(f'Shape of y_train {y_train_unencoded.shape}')
     print("One hot enocde label data...")
+
+    categories = [sorted(labels.unique())]
+
     # have to convert back to array so it's not a sparse matrix
-    y_train = OneHotEncoder(categories='auto').fit_transform(np.reshape(y_train_unencoded, (len(y_train_unencoded), 1))).toarray()
-    y_test = OneHotEncoder(categories='auto').fit_transform(y_test_unencoded.values.reshape(-1, 1)).toarray()
+    y_train = OneHotEncoder(categories=categories).fit_transform(y_train_unencoded.values.reshape(-1, 1)).toarray()
+    # y_train = OneHotEncoder(categories=categories).fit_transform(
+    #     np.reshape(y_train_unencoded, (len(y_train_unencoded), 1))
+    y_test = OneHotEncoder(categories=categories).fit_transform(y_test_unencoded.values.reshape(-1, 1)
+                                                            ).toarray()
 
 
     return X_train, X_test, y_train, y_test, t

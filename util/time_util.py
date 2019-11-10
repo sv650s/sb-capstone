@@ -32,6 +32,7 @@ class Keys(object):
     MODEL = "model"
     FILE = "file"
     DESCRIPTION = "description"
+    ROC_AUC = "roc_auc"
     PARAMETERS = "param"
     TRAIN_X = "X_train"
     TRAIN_Y = "Y_train"

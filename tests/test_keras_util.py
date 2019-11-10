@@ -16,8 +16,10 @@ from tensorflow.keras.layers import Conv1D, MaxPool1D, Embedding
 from tensorflow.keras.utils import model_to_dot
 
 from sklearn.model_selection import train_test_split
+from imblearn.under_sampling import RandomUnderSampler
 
 from util.keras_util import ModelReport, ModelWrapper
+import util.keras_util as ku
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -76,13 +78,19 @@ def test_load_model_report(shared_datadir):
 # Testing ModelWrapper - datadir does not allow this to be a class for some reason
 @pytest.fixture()
 def feature_data():
-    df = pd.DataFrame({"a":[0, 1, 2], "b":[3, 4, 5]})
+    df = pd.DataFrame({"a":
+                           [ 0, 1, 2, 5, 10],
+                       "b":
+                           [3, 4, 5, 4, 6]
+                       })
     return df
 
 @pytest.fixture()
 def label_data():
     return np.array([[0, 1, 0, 0, 0],
-                     [0, 1, 0, 0, 0],
+                     [0, 0, 1, 0, 0],
+                     [0, 0, 0, 0, 1],
+                     [0, 0, 0, 1, 0],
                      [1, 0, 0, 0, 0]])
 
 def test_model_wrapper(datadir, feature_data, label_data):
@@ -152,7 +160,54 @@ def test_model_wrapper(datadir, feature_data, label_data):
         assert len(report[col]) > 0, f'{col} value is 0'
 
 
+@pytest.fixture()
+def data_df():
+    return pd.DataFrame({
+        "review_body": [
+            "this product is great", "this product is ok", "this product pretty bad", "the worst", "almost perfect"
+        ],
+        "star_rating": [
+            5, 3, 2, 1, 4
+        ]})
 
+
+
+def test_preprocessing_sampling(datadir, data_df):
+
+    sampler = RandomUnderSampler()
+
+    X_train, X_test, y_train, y_test, t = ku.preprocess_file(data_df, "review_body", "star_rating", report_dir=f'{datadir}/reports', sampler=sampler)
+    print(X_train.shape)
+    print(y_train.shape)
+
+    model = Sequential()
+    model.add(Dense(1, input_shape = (X_train.shape[1],), kernel_initializer="glorot_uniform"))
+    model.add(Activation('softmax'))
+    model.add(Dense(5, activation="relu"))
+
+    model.compile(optimizer=SGD(), loss="categorical_crossentropy", metrics=["accuracy"])
+
+    network = model.fit(X_train, y_train)
+
+    assert network is not None, "network is none"
+
+
+def test_preprocessing_nosampling(datadir, data_df):
+
+    X_train, X_test, y_train, y_test, t = ku.preprocess_file(data_df, "review_body", "star_rating", report_dir=f'{datadir}/reports')
+    print(X_train.shape)
+    print(y_train.shape)
+
+    model = Sequential()
+    model.add(Dense(1, input_shape = (X_train.shape[1],), kernel_initializer="glorot_uniform"))
+    model.add(Activation('softmax'))
+    model.add(Dense(5, activation="relu"))
+
+    model.compile(optimizer=SGD(), loss="categorical_crossentropy", metrics=["accuracy"])
+
+    network = model.fit(X_train, y_train)
+
+    assert network is not None, "network is none"
 
 
 

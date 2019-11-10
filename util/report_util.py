@@ -80,10 +80,10 @@ def _parse_description(x: pd.Series):
     x["has_lda"] = False if x.description.split("-")[6] == "nolda" else True
     x["lda_str"] = x.description.split("-")[6]
     x["has_sampling"] = False if x.description.split("-")[7] == "sampling_none" else True
-    x["sampling_str"] = x.description.split("-")[7]
+    x["sampling_type"] = x.description.split("-")[7]
     x["label_column"] = x.description.split("-")[9]
     x["feature_summary"] = f'{x.feature_engineering}-{x.config_ngram}-{x.feature_size}'
-    x["feature_summary_sampling"] = f'{x.feature_engineering}-{x.config_ngram}-{x.sampling_str}'
+    x["feature_summary_sampling"] = f'{x.feature_engineering}-{x.config_ngram}-{x.sampling_type}'
     return x
 
 def _preprocess_report(report: pd.DataFrame):

@@ -14,6 +14,7 @@ from sklearn.externals import joblib
 import numpy as np
 from sklearn.model_selection import train_test_split
 import json
+from util.metric_util import calculate_roc_auc
 
 # set up logger
 log = logging.getLogger(__name__)
@@ -178,6 +179,9 @@ class Model(object):
         """
         self.get_classification_report()
         self.get_confusion_matrix()
+        # TODO: this is not working - calculate roc_auc
+        # roc_auc, fpr, tpr = calculate_roc_auc(self.y_test, self.y_predict)
+        # self.report.record(Keys.ROC_AUD, roc_auc)
         return self.report.get_report_dict()
 
     def get_classification_report(self):
