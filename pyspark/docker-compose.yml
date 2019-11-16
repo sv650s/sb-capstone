@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+    pyspark-jupyter:
+        build:
+            context: ./
+            dockerfile: Dockerfile-pyspark-jupyter
+            args:
+                - user=jovyan
+        ports:
+            - 8888:8888
+        volumes:
+        # bind mount current directory
+        - ../notebooks:/home/jovyan/notebooks
+#        ports:
+#            - "49152-65535:49152-65535"
+

@@ -1,0 +1,10 @@
+FROM jupyter/pyspark-notebook:latest
+
+ARG $user
+
+#RUN sudo adduser --disabled-password jupyter
+#$user && mkdir /home/${user}/notebooks
+
+#WORKDIR /home/$USER
+
+
