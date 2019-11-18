@@ -1,0 +1,17 @@
+name: pyspark
+channels:
+  - defaults
+  - conda-forge
+  - anaconda
+dependencies:
+  - pandas
+  - python>=3.7.0
+  - traceback2
+  - numpy
+  - pip
+  - pyspark
+  - pyyaml
+  - scipy
+  - pydot
+prefix: /Users/pyspark/pyspark
+
