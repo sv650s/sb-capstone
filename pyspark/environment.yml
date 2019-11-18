@@ -4,14 +4,16 @@ channels:
   - conda-forge
   - anaconda
 dependencies:
-  - pandas
-  - python>=3.7.0
-  - traceback2
   - numpy
+  - jupyter
+  - jupyterlab
+  - pandas
   - pip
+  - pydot
   - pyspark
+  - python>=3.7.0
   - pyyaml
   - scipy
-  - pydot
+  - traceback2
 prefix: /Users/pyspark/pyspark
 
