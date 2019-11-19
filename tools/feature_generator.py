@@ -55,6 +55,8 @@ class GenerateFeatures(TimedProgram):
         infile = self.get_infile()
 
         df = pd.read_csv(infile)
+        # make sure we don't have any empty rows so it doesn't break the vectorizers
+        df.dropna(subset=feature_columns.extend(y_columns), inplace=True)
 
         for feature_column in feature_columns:
             # get x column

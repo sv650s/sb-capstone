@@ -28,6 +28,7 @@ The project uses the following GCP resources:
 Please install the following
 
 * [Google Cloud SDK](https://cloud.google.com/sdk/docs/downloads-interactive) - gcp.sh relies on this
+    * [Quickstart For MacOS](https://cloud.google.com/sdk/docs/quickstart-macos)
 * Docker CE
 * MySQL client
 ```bash

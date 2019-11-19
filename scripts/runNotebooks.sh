@@ -22,6 +22,7 @@ CLEAN="false"
 ALL="true"
 notebooks=""
 DEBUG_MSG=""
+NOTEBOOK_DIR="../notebooks"
 
 while getopts "chdn:" arg; do
   case $arg in
@@ -55,25 +56,31 @@ if [ $DEBUG == "true" ]; then
   rm ../reports/summary-test.csv
 fi
 
+(
+  cd $NOTEBOOK_DIR
 
-# notebooks starting with 4 are our regular ML classification notebooks
-for notebook in $notebooks; do
-    echo "" | tee -a $log_file
-    echo "`date` Running $notebook ${DEBUG_MSG}" | tee -a $log_file
-    if [ $DEBUG == "true" ]; then
-      # don't run inplace
-      jupyter nbconvert --to notebook --allow-errors --ExecutePreprocessor.timeout=3600 --execute $notebook 2>&1 | tee -a $log_file
-    else
-      jupyter nbconvert --to notebook --allow-errors --inplace --ExecutePreprocessor.timeout=3600 --execute $notebook 2>&1 | tee -a $log_file
-    fi
-    echo "`date` Finished running $notebook" | tee -a $log_file
-    echo "" | tee -a $log_file
+  # notebooks starting with 4 are our regular ML classification notebooks
+  for notebook in $notebooks; do
+      echo "" | tee -a $log_file
+      echo "`date` Running $notebook ${DEBUG_MSG}" | tee -a $log_file
+      if [ $DEBUG == "true" ]; then
+        # don't run inplace
+        jupyter nbconvert --to notebook --allow-errors --ExecutePreprocessor.timeout=3600 --execute $notebook 2>&1 | tee -a $log_file
+      else
+        jupyter nbconvert --to notebook --allow-errors --inplace --ExecutePreprocessor.timeout=3600 --execute $notebook 2>&1 | tee -a $log_file
+      fi
+      echo "`date` Finished running $notebook" | tee -a $log_file
+      echo "" | tee -a $log_file
 
-    if [ $CLEAN == "true" ]; then
-      echo "cleaning up temp notebook"
-      rm `echo $notebook | awk -F\. '{print $1}'`.nbconvert.ipynb
-    fi
-done
+      if [ $CLEAN == "true" ]; then
+        echo "cleaning up temp notebook"
+        rm `echo $notebook | awk -F\. '{print $1}'`.nbconvert.ipynb
+      fi
+  done
+
+)
+
+
 
 unset IPYNB_DEBUG
 

@@ -1,0 +1,26 @@
+#
+# Create docker image to run pyspark notebooks: https://hub.docker.com/r/jupyter/pyspark-notebook/dockerfile
+# This will start jupyter lab by default
+#
+FROM jupyter/pyspark-notebook
+
+ARG user
+ARG old_user
+
+USER root
+RUN deluser $old_user && \
+    useradd -m -s /bin/bash -N -u $NB_UID $user && \
+    fix-permissions /home/$user && \
+    conda install --quiet -y pyspark nltk && \
+    conda clean --all -f -y && \
+    python -m nltk.downloader -d nltk_data all
+
+ENV HOME=/home/$user \
+    NB_USER=$user \
+    JUPYTER_ENABLE_LAB=true \
+    PATH=$PATH:/usr/local/spark/bin
+
+USER $user
+WORKDIR $HOME
+
+

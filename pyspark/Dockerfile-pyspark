@@ -13,6 +13,8 @@ FROM openjdk:8-jdk-alpine
 ARG spark_version=2.4.4
 ARG hadoop_version=2.7
 ARG conda_version=4.3.14
+ARG user=jupyter
+ARG group=jupyter
 
 ENV HADOOP_VERSION $hadoop_version
 #ENV HADOOP_HOME /usr/hadoop-$HADOOP_VERSION
@@ -29,29 +31,15 @@ ENV PYSPARK_PYTHON python3
 ENV PYSPARK_DRIVER_PYTHON=python3
 
 ENV PATH $PATH:$JAVA_HOME/bin:$SPARK_HOME/bin
-#ENV PATH $PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$SPARK_HOME/bin
 
 # Conda envs
 ENV CONDA_DIR=/opt/conda CONDA_VER=${conda_version}
 ENV PATH=$CONDA_DIR/bin:$PATH SHELL=/bin/bash LANG=C.UTF-8
 
-
-# add specified user and group
-# get args from docker-compose file
-ARG user=pyspark
-ARG group=pyspark
-
 # create user and groups
 RUN addgroup -S $group && adduser -S $user -G $group
-
 COPY environment.yml /home/$user/
-# TODO: remove this later
-RUN echo "conda: `which conda`"
-RUN echo "`ls /opt/conda/bin`"
-RUN echo "`whoami`"
-RUN echo "`ls /home/$user`"
-RUN echo "`conda --help`"
-#RUN /opt/conda/bin/conda env create --file /home/$user/environment.yml
+
 # This hack is widely applied to avoid python printing issues in docker containers.
 # See: https://github.com/Docker-Hub-frolvlad/docker-alpine-python3/pull/13
 ENV PYTHONUNBUFFERED=1
@@ -65,7 +53,7 @@ RUN set -ex \
   && echo "*** Installing spark/hadoop ***" \
   && curl -sL --retry 3 "http://apache-mirror.8birdsvideo.com/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" | \
     tar -zx -C /usr \
-  && chown -R root:root $SPARK_HOME
+  && chown -R root:root $SPARK_HOME \
   \
   && echo "*** Installing mini conda ***" \
   && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
@@ -81,34 +69,23 @@ RUN set -ex \
   \
   && conda update conda \
   \
+  && echo "*** Installing conda packages ***" \
+  && conda env create --file /home/$user/environment.yml \
+  \
    # this will rollback wget ca-cert and curl
   && apk del .fetch-deps
-
-
+# TODO: add this back later
 # this removes glibc-2.28-r0.apk
-# if you run this it also removes conda for some reason
 #  && apk del .conda-deps
 
-# TODO: take this out later
-RUN echo "conda: `which conda`"
-RUN conda --version
 
-# TODO: take this out later
-RUN echo "conda: `which conda`"
 
-# create virtual env using conda
-RUN conda env create --file /home/$user/environment.yml
-
-# TODO: remove this
-RUN echo "`which bash`"
-
-# swicthc default shell to bash so conda can run
+# switch default shell to bash so conda can run
 SHELL [ "/bin/bash", "-c" ]
-
 USER $user
+WORKDIR /home/$user
 
 # TODO: change this later to test out pyspark
-#CMD jupyter lab
 CMD source activate pyspark && jupyter lab
 #CMD source activate pyspark && ${SPARK_HOME}/bin/pyspark
 

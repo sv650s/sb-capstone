@@ -4,6 +4,7 @@
 __pycache__
 *.pyc
 .pytest_cache/
+coverage_html_report/
 .coverage*
 .ipynb_checkpoints
 venv/
@@ -22,6 +23,7 @@ build/
 # nltk
 nltk_data/
 
+# domino
 .domino*
 .noLock
 .DS_Store
@@ -32,3 +34,5 @@ domino*
 models
 logs
 syncTo*.sh
+
+reports/*test.csv

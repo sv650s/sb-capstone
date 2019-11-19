@@ -48,6 +48,15 @@ def remove_amazon_tags(text: str) -> str:
     logger.debug(f"after processing amazon tags {text}")
     return text
 
+def post_processor_replace_numbers_with_words(text: str) -> str:
+    """
+    replace 1 to 5 with one to five so we can capture things like 5 stars
+    :param text:
+    :return:
+    """
+    # TODO: implement this
+    text = re.sub(r'\[\[.*?\]\]', ' ', text, re.I | re.A)
+
 def remove_http_links(text: str) -> str:
     """
     Amazon reviews sometimes have http tags that link to images. Want to remove these
