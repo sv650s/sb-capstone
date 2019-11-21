@@ -8,13 +8,11 @@ from datetime import datetime
 import logging
 import traceback2
 import sys
-from util.dict_util import add_dict_to_dict
-from util.time_util import Keys, TimedReport, Status, TIME_FORMAT, DATE_FORMAT
+from util.time_util import TimedReport, TIME_FORMAT, DATE_FORMAT
+from util.constants import Keys, Status
 from sklearn.externals import joblib
-import numpy as np
 from sklearn.model_selection import train_test_split
 import json
-from util.metric_util import calculate_roc_auc
 
 # set up logger
 log = logging.getLogger(__name__)

@@ -18,7 +18,7 @@ import lightgbm as lgb
 from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
 from util.program_util import TimedProgram, ConfigFileBasedProgram
-from util.time_util import Keys, Status
+from util.constants import Keys, Status
 
 # configure logger so we can see output from the classes
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'

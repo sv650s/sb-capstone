@@ -6,7 +6,8 @@ from datetime import datetime
 import argparse
 import logging
 import util.file_util as fu
-from util.time_util import Keys, Status, TimedReport, TIME_FORMAT, TRUE_LIST, LOG_FORMAT
+from util.time_util import TimedReport, TIME_FORMAT, TRUE_LIST, LOG_FORMAT
+from util.constants import Keys, Status
 import traceback2
 import sys
 

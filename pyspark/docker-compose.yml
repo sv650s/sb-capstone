@@ -2,22 +2,6 @@ version: "3.7"
 services:
     pyspark-jupyter:
         container_name: pyspark-juptyer
-#        build:
-#            context: ./
-#            dockerfile: Dockerfile-pyspark
-#            args:
-#                - user=pyspark
-#                - group=pyspark
-#                - spark_version=2.4.4
-#                - hadoop_version=2.7
-#                - conda_version=4.3.14
-#                #- conda_version=4.7.12.1
-#        ports:
-#            - 8888:8888
-#        volumes:
-#        # bind mount current directory
-#        - .:/home/jupyter
-#        - ../notebooks:/home/jupyter/notebooks
         build:
             context: ./
             dockerfile: Dockerfile-pyspark-jupyter
@@ -29,7 +13,10 @@ services:
         - ../notebooks:/home/jupyter/work
         - ../dataset:/home/jupyter/dataset
         - ../util:/home/jupyter/util
+        - ../models:/home/jupyter/models
         ports:
             - 8888:8888
+            - 7077:7077
+            - 8021:8021
 
 # spark master port: 7077 - web ui port 8080

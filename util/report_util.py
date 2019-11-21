@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 EVAL_COLS=["1_recall", "2_recall", "3_recall", "4_recall", "5_precision"]
 
-def calculate_metric(data:pd.DataFrame, column_name ="eval_metric", dnn = False) -> pd.DataFrame:
+def calculate_metric(data, column_name ="eval_metric", dnn = False) -> pd.DataFrame:
     """
     Calculates the harmonic mean in the following manner so we can use one metric to evalute our models
         recall - star rating 1, 2, 3, 4
@@ -37,7 +37,7 @@ def calculate_metric(data:pd.DataFrame, column_name ="eval_metric", dnn = False)
         m.append(data["5"]["precision"])
         log.info("got all values to calculate")
 
-        data = _harmonic_mean(m)
+        return _harmonic_mean(m)
     return data
 
 def _harmonic_mean(values: list):

@@ -8,7 +8,8 @@ import logging
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from util.time_util import Timer, Keys, Status
+from util.time_util import Timer
+from util.constants import Keys, Status
 import util.file_util as fu
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import classification_report, confusion_matrix
