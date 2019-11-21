@@ -34,6 +34,7 @@ class Timer(object):
             diff_mins = round((end_time - start_time).total_seconds() / 50, 2)
             self.timer_dict[key] = diff_mins
             log.info(f'Total time for {key}: {self.timer_dict[key]}')
+            # TODO: fix this - it's adding up multiple times
             self.timer_dict[Keys.TOTAL_TIME_MIN] = self.get_total_time()
         else:
             log.info(f'No timer for: {key}')

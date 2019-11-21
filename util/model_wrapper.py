@@ -135,10 +135,12 @@ class AbstractModelWrapper(ABC):
         # roc_auc, fpr, tpr = calculate_roc_auc(self.y_test, self.y_predict)
         # self.report.record(Keys.ROC_AUD, roc_auc)
 
-        self.report.record(Keys.TRAIN_EXAMPLES, self._get_train_examples())
-        self.report.record(Keys.TRAIN_FEATURES, self._get_train_columns())
-        self.report.record(Keys.TEST_EXAMPLES, self._get_test_examples())
-        self.report.record(Keys.TEST_FEATURES, self._get_test_columns())
+        train_size, train_cols, test_size, test_cols = self._get_sizes()
+
+        self.report.record(Keys.TRAIN_EXAMPLES, train_size)
+        self.report.record(Keys.TRAIN_FEATURES, train_cols)
+        self.report.record(Keys.TEST_EXAMPLES, test_size)
+        self.report.record(Keys.TEST_FEATURES, test_cols)
         # Keys.PARAMETERS: json.dumps(parameters)
 
         self._add_to_report()
@@ -177,7 +179,7 @@ class AbstractModelWrapper(ABC):
         """
         cm = self._calculate_confusion_matrix()
         if cm is not None:
-            self.report.record(Keys.CM, json.dumps(cm))
+            self.report.record(Keys.CM, json.dumps(cm.tolist()))
         # if len(self.y_predict) > 0 and len(self.y_test) > 0:
         #     log.debug(f'getting confusion matrix for {self}')
         #     cm = json.dumps(confusion_matrix(self.y_test, self.y_predict).tolist())
@@ -251,17 +253,11 @@ class AbstractModelWrapper(ABC):
         pass
 
     @abstractmethod
-    def _get_train_examples(self) -> int:
+    def _get_sizes(self) -> int:
+        """
+        Gets sizes for training and test sets
+
+        :return: training set size, number of test columns, test set size, # of test columns
+        """
         pass
 
-    @abstractmethod
-    def _get_train_columns(self) -> int:
-        pass
-
-    @abstractmethod
-    def _get_test_examples(self) -> int:
-        pass
-
-    @abstractmethod
-    def _get_test_columns(self) -> int:
-        pass

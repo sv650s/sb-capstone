@@ -34,17 +34,27 @@ def show_df(df: pyspark.sql.DataFrame,
 def classification_report(test_df: pyspark.sql.DataFrame,
                           truth_column: str,
                           prediction_column: str,
-                          classes: int) -> dict:
+                          n_classes: int) -> dict:
     """
     Calculates the same classification report that skelarn would without converting labels
     and predictions to pandas or numpy
 
+    precision = TP / (TP + FP)
+
+    recall = TP / (TP + FN)
+
+    F1 = 2 * (precision * recall) / (precision + recall)
+
+    weight average = sum(metric) / total support
+
+
     :param test_df: pyspark dataframe
     :param truth_column: name of truth column
     :param prediction_column: name of prediction column
-    :param classes: number of classes
+    :param n_classes: number of classes
     :return:
     """
+    log.info(f'truth_column: {truth_column} prediction_column: {prediction_column} classes {n_classes}')
     precisions = []
     recalls = []
     f1s = []
@@ -57,7 +67,7 @@ def classification_report(test_df: pyspark.sql.DataFrame,
     dr_dict = {}
 
     print()
-    for i in np.arange(1, classes + 1):
+    for i in np.arange(1, n_classes + 1):
         support = test_df.filter(f'{truth_column} == {i}').count()
 
         predicted = test_df.filter(f'{prediction_column} == {i}')
@@ -225,7 +235,7 @@ class PysparkModel(AbstractModelWrapper):
         :return:
         """
         self.predict_test = self.model.transform(self.test_df)
-        log.info(self.predict_test.printSchema())
+        log.debug(self.predict_test.printSchema())
         return self.predict_test
 
     def _get_model_file_extension(self):
@@ -241,9 +251,7 @@ class PysparkModel(AbstractModelWrapper):
         :param out_file:
         :return:
         """
-        log.debug(f'Saving model to file: {out_file}')
-        # with open(out_file, 'wb') as file:
-        #     self.model.save(file)
+        log.info(f'Saving model to file: {out_file}')
         self.model.write().overwrite().save(out_file)
 
     def _calculate_classification_report(self):
@@ -252,7 +260,7 @@ class PysparkModel(AbstractModelWrapper):
         from test data
         :return: dict with CR
         """
-        return classification_report(self.test_df,
+        return classification_report(self.predict_test,
                                      self.label_column,
                                      PysparkModel.PREDICTION_COL,
                                      self.n_classes)
@@ -262,19 +270,14 @@ class PysparkModel(AbstractModelWrapper):
         creates sklearn like confusion matrix
         :return: nparray representation of confusion matrix
         """
-        return confusion_matrix(self.test_df,
+        return confusion_matrix(self.predict_test,
                                 self.label_column,
                                 PysparkModel.PREDICTION_COL,
                                 self.n_classes)
 
-    def _get_train_examples(self) -> int:
-        return self.train_df.count()
+    def _get_sizes(self) -> int:
+        return self.train_df.count(), \
+                self.train_df.select(self.feature_column).limit(1).toPandas().features.values[0].size, \
+                self.test_df.count(), \
+                self.test_df.select(self.feature_column).limit(1).toPandas().features.values[0].size
 
-    def _get_train_columns(self) -> int:
-        return self.train_df.select(self.feature_column).limit(1).toPandas().features.values[0].size
-
-    def _get_test_examples(self) -> int:
-        return self.test_df.count()
-
-    def _get_test_columns(self) -> int:
-        return self.test_df.select(self.feature_column).limit(1).toPandas().features.values[0].size
