@@ -1,6 +1,8 @@
 import numpy as np
 import pyspark as pyspark
 import logging
+import sklearn.metrics as skmetrics
+import sklearn.utils as skutils
 
 from util.constants import Keys
 from util.model_wrapper import AbstractModelWrapper
@@ -192,6 +194,7 @@ class PysparkModel(AbstractModelWrapper):
                  label_column: str,
                  feature_column: str,
                  n_classes: int,
+                 pipeline: object,
                  name: str = None,
                  file: str = None,
                  description: str = "pyspark",
@@ -209,6 +212,7 @@ class PysparkModel(AbstractModelWrapper):
         :param file: data filename
         """
         super(PysparkModel, self).__init__(model,
+                                           "pyspark",
                                            label_column,
                                            description,
                                            name,
@@ -219,6 +223,7 @@ class PysparkModel(AbstractModelWrapper):
         self.test_df = test_df
         self.feature_column = feature_column
         self.n_classes = n_classes
+        self.pipeline = pipeline
 
     def _fit_model(self) -> object:
         """
@@ -245,7 +250,7 @@ class PysparkModel(AbstractModelWrapper):
         """
         return "pyspark"
 
-    def _save_model(self, out_file):
+    def _save_model(self, out_file: str):
         """
         saves the pyspark model
         :param out_file:
@@ -254,26 +259,42 @@ class PysparkModel(AbstractModelWrapper):
         log.info(f'Saving model to file: {out_file}')
         self.model.write().overwrite().save(out_file)
 
+        pipeline_file = out_file.replace(f'.{self._get_model_file_extension()}',
+                                         '.pipeline')
+        log.info(f'Saving pipeline to file: {pipeline_file}')
+        self.pipeline.write().overwrite().save(pipeline_file)
+        self.report.record(Keys.PIPELINE_FILE, pipeline_file)
+
     def _calculate_classification_report(self):
         """
         creates a classification report dictionary based on pyspark dataframe
         from test data
         :return: dict with CR
         """
-        return classification_report(self.predict_test,
-                                     self.label_column,
-                                     PysparkModel.PREDICTION_COL,
-                                     self.n_classes)
+        # return classification_report(self.predict_test,
+        #                              self.label_column,
+        #                              PysparkModel.PREDICTION_COL,
+        #                              self.n_classes)
+        return skmetrics.classification_report(
+            self.predict_test.select(self.label_column).toPandas()[self.label_column].tolist(),
+            self.predict_test.select(PysparkModel.PREDICTION_COL).toPandas()[PysparkModel.PREDICTION_COL].tolist(),
+            output_dict=True
+        )
 
     def _calculate_confusion_matrix(self) -> np.array:
         """
         creates sklearn like confusion matrix
         :return: nparray representation of confusion matrix
         """
-        return confusion_matrix(self.predict_test,
-                                self.label_column,
-                                PysparkModel.PREDICTION_COL,
-                                self.n_classes)
+        # return confusion_matrix(self.predict_test,
+        #                         self.label_column,
+        #                         PysparkModel.PREDICTION_COL,
+        #                         self.n_classes)
+
+        return skmetrics.confusion_matrix(
+            self.predict_test.select(self.label_column).toPandas()[self.label_column].tolist(),
+            self.predict_test.select(PysparkModel.PREDICTION_COL).toPandas()[PysparkModel.PREDICTION_COL].tolist()
+        )
 
     def _get_sizes(self) -> int:
         return self.train_df.count(), \

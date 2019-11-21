@@ -10,11 +10,12 @@ services:
                 - old_user=jovyan
         volumes:
         # bind mount current directory
-        - ../notebooks:/home/jupyter/work
+        - ../notebooks:/home/jupyter/notebooks
         - ../dataset:/home/jupyter/dataset
         - ../util:/home/jupyter/util
         - ../models:/home/jupyter/models
         - ../reports:/home/jupyter/reports
+        - ../scripts:/home/jupyter/scripts
         ports:
             - 8888:8888
             - 7077:7077

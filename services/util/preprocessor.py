@@ -1,18 +1,21 @@
 
+from abc import ABC, abstractmethod
 from util.AmazonTextNormalizer import AmazonTextNormalizer
 from tensorflow.keras.preprocessing import sequence
 import logging
 
 logger = logging.getLogger(__name__)
 
-class Preprocessor(object):
+
+class Preprocessor(ABC):
 
     def __init__(self):
         self.tokenizer = None
         self.normalizer = None
 
+    @abstractmethod
     def preprocess(self, text: str):
-        raise Exception("not yet implemented")
+        pass
 
 
 class TokenizedPreprocessor(Preprocessor):

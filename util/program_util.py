@@ -1,6 +1,7 @@
 """
 Abstract class for command line programs
 """
+from abc import ABC, abstractmethod
 import pandas as pd
 from datetime import datetime
 import argparse
@@ -21,7 +22,7 @@ REPORT_DIR = '../reports'
 log = logging.getLogger(__name__)
 
 
-class TimedProgram(object):
+class TimedProgram(ABC):
     """
     Abstract program iteration.  This represents what to do with each row of configuration file
 
@@ -108,8 +109,9 @@ class TimedProgram(object):
         self.report.record("file", self.get_config("data_file"))
         return f'{self.get_config("data_dir")}/{self.get_config("data_file")}'
 
+    @abstractmethod
     def execute(self):
-        raise Exception(f"Not yet implemented. {__class__} must implement this method.")
+        pass
 
 
 class ConfigFileBasedProgram(object):

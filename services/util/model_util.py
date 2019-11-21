@@ -2,6 +2,7 @@
 # This is a factory class that abstracts how we load the model. It is implemented as a singleton so it should
 # be thread safe
 #
+from abc import ABC, abstractmethod
 import logging
 from flask import current_app as app
 import tensorflow.keras as keras
@@ -20,23 +21,27 @@ import util.python_util as pu
 # app.logger = logging.getLogger(__name__)
 
 
-class ModelBuilder(object):
+class ModelBuilder(ABC):
 
     def __init__(self, model_name, version):
         self.model_name = model_name
         self.version = version
 
+    @abstractmethod
     def load_model(self, model_file: str, weights_file: str = None, custom_objects=None):
-        raise Exception("abstract method. not yet implemented")
+        pass
 
+    @abstractmethod
     def load_tokenizer(self, tokenizer_file: str):
-        raise Exception("abstract method. not yet implemented")
+        pass
 
+    @abstractmethod
     def load_encoder(self, encoder: str):
-        raise Exception("abstract method. not yet implemented")
+        pass
 
+    @abstractmethod
     def get_json_config_filepath(self):
-        raise Exception("abstract method. not yet implemented")
+        pass
 
     def get_config_filename(self):
         """

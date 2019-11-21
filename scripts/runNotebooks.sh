@@ -24,23 +24,28 @@ notebooks=""
 DEBUG_MSG=""
 NOTEBOOK_DIR="../notebooks"
 
-while getopts "chdn:" arg; do
+while getopts "chdn:b:" arg; do
   case $arg in
     h) usage && exit 0 ;;
     n) ALL="false" && notebooks=`ls $OPTARG` ;;
+    b) NOTEBOOK_DIR="$OPTARG" ;;
     d) DEBUG="true" ;;
     c) CLEAN="true" ;;
     ?) usage && exit 1 ;;
   esac
 done
 
+echo "NOTEBOOK_DIR: ${NOTEBOOK_DIR}"
+
 if [ $ALL == "false" -a "x$notebooks" == "x" ]; then
   echo "Notebook parameter required"
   usage
   exit 1
 elif [ $ALL == "true" ]; then
-  notebooks=`ls *.ipynb | grep -v nbconvert`
+  notebooks=`cd $NOTEBOOK_DIR && ls *.ipynb | grep -v nbconvert`
 fi
+
+echo "notebooks to run: ${notebooks}"
 
 log_file="$0.log"
 
@@ -53,7 +58,9 @@ if [ $DEBUG == "true" ]; then
   export IPYNB_DEBUG="True"
   echo "Running in DEBUG mode" | tee -a $log_file
   DEBUG_MSG="in DEBUG mode"
-  rm ../reports/summary-test.csv
+  if [ -f ../reports/summary-test.csv ]; then
+      rm ../reports/summary-test.csv
+  fi
 fi
 
 (

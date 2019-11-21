@@ -15,6 +15,7 @@ class AbstractModelWrapper(ABC):
 
     def __init__(self,
                  model: object,
+                 library: str,
                  label_column: str,
                  description: str = None,
                  name: str = None,
@@ -30,12 +31,14 @@ class AbstractModelWrapper(ABC):
             * description
         :param model: model object - must have fit and transform functions
         :param label_column: name of column to get labels
+        :param library: model library - ie, sklearn, pyspark
         :param description: description of model (optional)
         :param name: name of model. If not provided, will derive it from the classname (optional)
         :param file: data filename (optional)
         """
         self.report = TimedReport()
         self.model = model
+        self.library = library
         self.name = name
         self.label_column = label_column
         self.file = file
@@ -60,6 +63,7 @@ class AbstractModelWrapper(ABC):
         rdict = {
             Keys.MODEL_NAME: self.name,
             Keys.DESCRIPTION: self.description,
+            Keys.LIBRARY: self.library,
             Keys.FILE: self.file,
             # Keys.TRAIN_EXAMPLES: train_row,
             # Keys.TRAIN_FEATURES: train_col,
@@ -168,7 +172,10 @@ class AbstractModelWrapper(ABC):
         # c_report = classification_report(self.y_test, self.y_predict, output_dict=True)
         # c_report = _calculated_classification_report()
         # self.report.add_and_flatten_dict(c_report)
+        log.info("calculating classification report...")
+        self.report.start_timer(Keys.CR_TIME_MIN)
         cr = self._calculate_classification_report()
+        self.report.end_timer(Keys.CR_TIME_MIN)
         if cr is not None:
             self.report.record(Keys.CR, json.dumps(cr))
 
@@ -177,7 +184,10 @@ class AbstractModelWrapper(ABC):
         Get confustion matrix and store in report in json format
         :return:
         """
+        log.info("calculating confusion matrix...")
+        self.report.start_timer(Keys.CM_TIME_MIN)
         cm = self._calculate_confusion_matrix()
+        self.report.end_timer(Keys.CM_TIME_MIN)
         if cm is not None:
             self.report.record(Keys.CM, json.dumps(cm.tolist()))
         # if len(self.y_predict) > 0 and len(self.y_test) > 0:

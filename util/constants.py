@@ -19,6 +19,7 @@ class Keys(object):
     STATUS = "status"
     STATUS_DATE = "status_date"
     MESSAGE = "message"
+    LIBRARY = "library"
     MODEL_NAME = "model_name"
     MODEL_SAVE_TIME_MIN = "model_save_time_min"
     MODEL_FILE = "model_file"
@@ -34,6 +35,9 @@ class Keys(object):
     TIMER = "timer"
     CM = "confusion_matrix"
     CR = "classification_report"
+    CR_TIME_MIN = "cr_time_min"
+    CM_TIME_MIN = "cm_time_min"
+    PIPELINE_FILE = "pipeline_file"
     CONFIG_FILE = "config_file"
 
 
