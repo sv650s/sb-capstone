@@ -59,6 +59,8 @@ class AbstractModelWrapper(ABC):
         self.status_date = None
         self.message = None
         self.y_predict = None
+        self.classification_report = None
+        self.confusion_matrix = None
 
         rdict = {
             Keys.MODEL_NAME: self.name,
@@ -73,7 +75,7 @@ class AbstractModelWrapper(ABC):
         }
         self.report.add_dict(rdict)
 
-    def run(self, fit: bool = True, *args):
+    def run(self, fit: bool = True, get_report: bool = True):
         """
         Fit and predict model
         :param train: call fit function on model. Set to false when using pre-trained/CV models. Default is True
@@ -86,7 +88,7 @@ class AbstractModelWrapper(ABC):
         try:
             if fit:
                 self.report.start_timer(Keys.TRAIN_TIME_MIN)
-                self.model = self._fit_model(*args)
+                self.model = self._fit_model()
                 self.report.end_timer(Keys.TRAIN_TIME_MIN)
 
             model_filename = self._get_model_filename()
@@ -115,7 +117,10 @@ class AbstractModelWrapper(ABC):
             self.report.record(Keys.STATUS_DATE, datetime.now().strftime(TIME_FORMAT))
             log.info(f'Finished running model: {str(self)}')
 
-        return self.get_report_dict(), self.y_predict
+        if get_report:
+            return self.y_predict, self.get_report_dict()
+
+        return self.y_predict
 
     def __str__(self):
         """
@@ -128,7 +133,7 @@ class AbstractModelWrapper(ABC):
             f'\tstatus: {self.status}'
         # f'\twith parameters: {self.parameters}\n' \
 
-    def get_report_dict(self) -> dict:
+    def get_report_dict(self, recalculate: bool = False) -> dict:
         """
         Creates a 1 level dictionary that summarizes this model so we can add it to DF later
         :return:
@@ -151,7 +156,7 @@ class AbstractModelWrapper(ABC):
 
         return self.report.get_report_dict()
 
-    def _get_classification_report(self):
+    def _get_classification_report(self, recalculate: bool = False):
         """
         classification_report returns something like this:
             {'label 1': {'precision':0.5,
@@ -165,35 +170,26 @@ class AbstractModelWrapper(ABC):
         This function will take the results and flatten it into one level so we can write it to a DF
         :return:
         """
-        # log.debug(f'y_predict {self.y_predict}')
-        # log.debug(f'y_test {self.y_test}')
-        # if len(self.y_predict) > 0 and len(self.y_test) > 0:
-        #     log.debug(f'getting classificaiton report for {self}')
-        # c_report = classification_report(self.y_test, self.y_predict, output_dict=True)
-        # c_report = _calculated_classification_report()
-        # self.report.add_and_flatten_dict(c_report)
         log.info("calculating classification report...")
-        self.report.start_timer(Keys.CR_TIME_MIN)
-        cr = self._calculate_classification_report()
-        self.report.end_timer(Keys.CR_TIME_MIN)
-        if cr is not None:
-            self.report.record(Keys.CR, json.dumps(cr))
+        if self.classification_report is None or recalculate:
+            self.report.start_timer(Keys.CR_TIME_MIN)
+            self.classification_report = self._calculate_classification_report()
+            self.report.end_timer(Keys.CR_TIME_MIN)
+            if self.classification_report is not None:
+                self.report.record(Keys.CR, json.dumps(self.classification_report))
 
-    def _get_confusion_matrix(self):
+    def _get_confusion_matrix(self, recalculate: bool = False):
         """
         Get confustion matrix and store in report in json format
         :return:
         """
         log.info("calculating confusion matrix...")
-        self.report.start_timer(Keys.CM_TIME_MIN)
-        cm = self._calculate_confusion_matrix()
-        self.report.end_timer(Keys.CM_TIME_MIN)
-        if cm is not None:
-            self.report.record(Keys.CM, json.dumps(cm.tolist()))
-        # if len(self.y_predict) > 0 and len(self.y_test) > 0:
-        #     log.debug(f'getting confusion matrix for {self}')
-        #     cm = json.dumps(confusion_matrix(self.y_test, self.y_predict).tolist())
-        #     self.report.record(Keys.CM, cm)
+        if self.confusion_matrix is None or recalculate:
+            self.report.start_timer(Keys.CM_TIME_MIN)
+            self.confusion_matrix = self._calculate_confusion_matrix()
+            self.report.end_timer(Keys.CM_TIME_MIN)
+            if self.confusion_matrix is not None:
+                self.report.record(Keys.CM, json.dumps(self.confusion_matrix.tolist()))
 
     def _get_model_filename(self) -> str:
         """

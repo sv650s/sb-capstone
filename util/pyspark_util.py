@@ -224,6 +224,7 @@ class PysparkModel(AbstractModelWrapper):
         self.feature_column = feature_column
         self.n_classes = n_classes
         self.pipeline = pipeline
+        self.predict_test = None
 
     def _fit_model(self) -> object:
         """

@@ -25,5 +25,3 @@ COPY config/spark-defaults.conf /usr/local/spark/conf/
 
 USER $user
 WORKDIR $HOME
-
-

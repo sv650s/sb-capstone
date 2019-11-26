@@ -72,9 +72,9 @@ fi
       echo "`date` Running $notebook ${DEBUG_MSG}" | tee -a $log_file
       if [ $DEBUG == "true" ]; then
         # don't run inplace
-        jupyter nbconvert --to notebook --allow-errors --ExecutePreprocessor.timeout=3600 --execute $notebook 2>&1 | tee -a $log_file
+        jupyter nbconvert --to notebook --allow-errors --ExecutePreprocessor.timeout=10800 --execute $notebook 2>&1 | tee -a $log_file
       else
-        jupyter nbconvert --to notebook --allow-errors --inplace --ExecutePreprocessor.timeout=3600 --execute $notebook 2>&1 | tee -a $log_file
+        jupyter nbconvert --to notebook --allow-errors --inplace --ExecutePreprocessor.timeout=10800 --execute $notebook 2>&1 | tee -a $log_file
       fi
       echo "`date` Finished running $notebook" | tee -a $log_file
       echo "" | tee -a $log_file

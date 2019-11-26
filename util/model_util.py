@@ -117,7 +117,7 @@ class Model(object):
         self.report.add_dict(rdict)
         # do this here so ti doesn't get flattened
 
-    def run(self, fit: bool = True):
+    def run(self, fit: bool = True, report: bool = True):
         """
         Fit and predict model
         :param train: call fit function on model. Set to false when using pre-trained/CV models. Default is True
@@ -157,7 +157,10 @@ class Model(object):
             self.report.record(Keys.STATUS_DATE, datetime.now().strftime(TIME_FORMAT))
             log.info(f'Finished running model: {str(self)}')
 
-        return self.get_report_dict(), self.y_predict
+        # TODO: refactor old notebooks and swith ordering
+        if report:
+            return self.get_report_dict(), self.y_predict
+        return self.y_predict
 
     def __str__(self):
         """
