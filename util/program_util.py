@@ -29,7 +29,7 @@ class TimedProgram(ABC):
     Required fields in config files are: data_dir and infile
     """
 
-    def __init__(self, index, config_df, report=None, args=None):
+    def __init__(self, index, config_df: pd.Series, report=None, args=None):
         log.debug(f"ProgramIteration constructor - index: {index}")
         self.index = index
         self.config_df = config_df
@@ -56,7 +56,7 @@ class TimedProgram(ABC):
         :param config:
         :return:
         """
-        if pd.notnull(self.config_df[config]):
+        if config in self.config_df.index and pd.notnull(self.config_df[config]):
             return int(self.config_df[config])
         else:
             return None
