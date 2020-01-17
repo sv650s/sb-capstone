@@ -11,8 +11,10 @@ dependencies:
   - autopep8
   - pandas
   - unittest2
+  - joblib
   - jupyter
   - jupyterlab
+  - jupyter_contrib_nbextensions
   - pandas-datareader
   - matplotlib
   - seaborn

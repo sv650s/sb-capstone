@@ -83,7 +83,7 @@ def _plot_score_histograms_v2(df: pd.DataFrame, args = None):
     """
     You should not call this function directly but use plot_score_historgrams and specify version = 2
 
-    Use this to plot F1 score, precision and recall for notebooks after 11/19
+    Use this to plot F1 score, precision and recall for notebooks after 11/19 where classification report is stored as json
 
     By default this will group the graphs by model_name and use feature_summary as the labels for each sub-graph
 

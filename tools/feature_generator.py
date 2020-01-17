@@ -49,16 +49,21 @@ class GenerateFeatures(TimedProgram):
         log.info("Execute")
 
         feature_columns = self.get_config_list("feature_columns")
+        log.debug(f'feature_columns {feature_columns}')
         function = self.get_config("fn_name")
         y_columns = self.get_config_list("y")
 
         infile = self.get_infile()
+        log.debug(f'infile: {infile}')
 
         df = pd.read_csv(infile)
         # make sure we don't have any empty rows so it doesn't break the vectorizers
-        df.dropna(subset=feature_columns.extend(y_columns), inplace=True)
+        # make a copy of feature_column so we don't change this
+        df.dropna(subset=feature_columns.copy().extend(y_columns), inplace=True)
+        log.debug(f'feature_columns {feature_columns}')
 
         for feature_column in feature_columns:
+            log.info(f'Getting feature column: {feature_column}')
             # get x column
             x_df = df[feature_column].copy()
             y_df = df[y_columns].copy()

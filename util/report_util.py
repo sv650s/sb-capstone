@@ -73,7 +73,7 @@ def _parse_description(x: pd.Series):
     """
     x["feature_column"] = x.description.split("-")[0]
     x["feature_engineering"] = x.description.split("-")[1]
-    x["config_df"] = np.NaN if x.description.split("-")[2] == "df_none" or x.description.split("-")[2] == "df_default" else x.description.split("-")[2]
+    x["config_df"] = np.NaN if x.description.split("-")[2] == "df_none" or x.description.split("-")[2] == "df_none" else x.description.split("-")[2]
     x["config_ngram"] = np.NaN if x.description.split("-")[3] == "ngram_none" else x.description.split("-")[3]
     x["sample_size"] = x.description.split("-")[4]
     x["feature_size"] = x.description.split("-")[5]

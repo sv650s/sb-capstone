@@ -1,0 +1,13 @@
+"data_dir","data_file","class_column","dtype","drop_columns","model_name","max_iter","sampling","status","status_date","message"
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","LRB",100,,"success","2019-11-29 01:46:21",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","DTB",,,"success","2019-11-29 01:47:38",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","LRB",100,"smote","success","2019-11-29 01:56:47",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","DTB",,"smote","success","2019-11-29 02:01:51",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","LRB",100,"random_under_sampling","success","2019-11-29 02:02:47",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","DTB",,"random_under_sampling","success","2019-11-29 02:03:30",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","LRB",100,"nearmiss2","success","2019-11-29 02:06:29",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","DTB",,"nearmiss2","success","2019-11-29 02:09:16",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","LRB",100,"adasyn","success","2019-11-29 02:32:25",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","DTB",,"adasyn","success","2019-11-29 02:51:16",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","LRB",100,"random_over_sampling","success","2019-11-29 02:58:42",
+"../dataset/feature_files","review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv","star_rating",,"helpful_votes, total_votes, helpful_product","DTB",,"random_over_sampling","success","2019-11-29 03:02:36",
