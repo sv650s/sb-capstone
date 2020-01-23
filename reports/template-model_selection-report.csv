@@ -1,9 +1,0 @@
-1_f1-score,1_precision,1_recall,1_support,2_f1-score,2_precision,2_recall,2_support,3_f1-score,3_precision,3_recall,3_support,4_f1-score,4_precision,4_recall,4_support,5_f1-score,5_precision,5_recall,5_support,accuracy,best_estimator,best_index,best_params,best_score,file,macro avg_f1-score,macro avg_precision,macro avg_recall,macro avg_support,model_file,model_name,weighted avg_f1-score,weighted avg_precision,weighted avg_recall,weighted avg_support
-0.42857142857142855,0.40540540540540543,0.45454545454545453,33.0,0.0,0.0,0.0,18.0,0.052631578947368425,0.07142857142857142,0.041666666666666664,24.0,0.0,0.0,0.0,36.0,0.7318611987381703,0.6444444444444445,0.8467153284671532,137.0,0.532258064516129,"LGBMClassifier(boosting_type='gbdt', class_weight=None, colsample_bytree=1.0,
-               importance_type='split', learning_rate=0.1, max_depth=14,
-               min_child_samples=20, min_child_weight=0.001,
-               min_data_in_leaf=20, min_split_gain=0.0, n_estimators=100,
-               n_jobs=-1, num_leaves=115, objective='multiclass',
-               random_state=None, reg_alpha=0.0, reg_lambda=0.0, seed=1,
-               silent=True, subsample=1.0, subsample_for_bin=200000,
-               subsample_freq=0)",7.0,"{'max_depth': 14, 'min_data_in_leaf': 20, 'num_leaves': 115}",0.6305997884057184,review_body-bow-df_none-ngram12-992-10020-lda20.csv,0.24261284125139343,0.22425568425568426,0.2685854899358549,248.0,models/review_body-bow-df_none-ngram12-992-10020-lda20-lGBM-smote.pkl,lGBM,0.46641531961581983,0.4168611007320685,0.532258064516129,248.0

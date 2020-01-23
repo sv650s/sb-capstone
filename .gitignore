@@ -36,3 +36,10 @@ logs
 syncTo*.sh
 
 reports/*test.csv
+
+# don't track these template reports
+reports/template-feature_generator-report.csv
+reports/template-hyperparameter_tuning-report.csv
+reports/template-model_selection-report.csv
+reports/template-run_classifiers-report.csv
+reports/*feature_generator*.csv
