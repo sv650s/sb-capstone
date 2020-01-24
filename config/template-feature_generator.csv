@@ -1,8 +1,8 @@
-data_dir,data_file,description,fn_name,lda_topics,min_df,max_df,min_ngram_range,max_ngram_range,max_features,feature_size,window_context,min_word_count,sample,iterations,feature_columns,y
-../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,bow-df_default-ngram11,generate_bow_file,,,,1,1,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,tfidf-df_default-ngram11,generate_tfidf_file,,,,1,1,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,bow-df_90-ngram22,generate_bow_file,,,,2,2,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,tfidf-df_90-ngram22,generate_tfidf_file,,,,2,2,10000,,,,,,review_body,"star_rating, helpful_votes, total_votes"
-../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,word2vec_pretrained-df_none-ngram_none,generate_word2vec_file,,,,,,,100,5,5,0.001,5,review_body,"star_rating, helpful_votes, total_votes"
-../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,word2vec-df_none-ngram_none,generate_word2vec_file,,,,,,,100,5,5,0.001,5,review_body,"star_rating, helpful_votes, total_votes"
-../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test.csv,fasttext-df_none-ngram_none,generate_fasttext_file,,,,,,,100,5,5,0.001,5,review_body,"star_rating, helpful_votes, total_votes"
+data_dir,data_file,description,fn_name,lda_topics,min_df,max_df,min_ngram_range,max_ngram_range,max_features,feature_size,window_context,min_word_count,sample,iterations,feature_columns,y,status,status_date
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test-preprocessed.csv,bow-df_none-ngram11,generate_bow_file,,,,1.0,1.0,10000.0,,,,,,review_body,"star_rating, helpful_votes, total_votes",success,2020-01-11 19:11:35
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test-preprocessed.csv,tfidf-df_none-ngram11,generate_tfidf_file,,,,1.0,1.0,10000.0,,,,,,review_body,"star_rating, helpful_votes, total_votes",success,2020-01-11 19:11:36
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test-preprocessed.csv,bow-df_90-ngram22,generate_bow_file,,,,2.0,2.0,10000.0,,,,,,review_body,"star_rating, helpful_votes, total_votes",success,2020-01-11 19:11:37
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test-preprocessed.csv,tfidf-df_90-ngram22,generate_tfidf_file,,,,2.0,2.0,10000.0,,,,,,review_body,"star_rating, helpful_votes, total_votes",success,2020-01-11 19:11:39
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test-preprocessed.csv,word2vec_pretrained-df_none-ngram_none,generate_word2vec_file,,,,,,,100.0,5.0,5.0,0.001,5.0,review_body,"star_rating, helpful_votes, total_votes",success,2020-01-11 19:11:40
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test-preprocessed.csv,word2vec-df_none-ngram_none,generate_word2vec_file,,,,,,,100.0,5.0,5.0,0.001,5.0,review_body,"star_rating, helpful_votes, total_votes",success,2020-01-11 19:11:41
+../dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-test-preprocessed.csv,fasttext-df_none-ngram_none,generate_fasttext_file,,,,,,,100.0,5.0,5.0,0.001,5.0,review_body,"star_rating, helpful_votes, total_votes",success,2020-01-11 19:11:52

@@ -1,5 +1,6 @@
 import sys
 sys.path.append('../')
+import os
 
 from sklearn.neighbors import KNeighborsClassifier, RadiusNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
@@ -83,7 +84,7 @@ class TimedClassifier(TimedProgram):
             sampler = RandomOverSampler(random_state=RSTATE, sampling_strategy='not majority')
         elif sampling_method == "random_under_sampling":
             sampler = RandomUnderSampler(random_state=RSTATE, replacement=True)
-        elif sampling_method == "nearmiss-2":
+        elif sampling_method == "nearmiss2":
             sampler = NearMiss(random_state=RSTATE, sampling_strategy='not minority', version=2, n_jobs=self.n_jobs)
         else:
             raise Exception(f"Sampling method not supported: {sampling_method}")
@@ -120,6 +121,8 @@ class TimedClassifier(TimedProgram):
         log.debug(f'description {description}')
 
         infile = self.get_infile()
+        if not os.path.exists(infile):
+            raise Exception(f'File not found: {infile}. Cannot load datafile')
         log.info(f"loading file {infile}")
         self.start_timer(Keys.FILE_LOAD_TIME_MIN)
         if dtype and len(dtype) > 0:

@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 # TODO: Update here
 log.info(f"Reading feature file {args.infile}")
-# in_df = pd.read_csv("dataset/feature_files/review_body-bow-df_default-ngram11-992-3322.csv")
+# in_df = pd.read_csv("dataset/feature_files/review_body-bow-df_none-ngram11-992-3322.csv")
 in_df = pd.read_csv(args.infile)
 row, col = in_df.shape
 log.info("Finished reading feature file")

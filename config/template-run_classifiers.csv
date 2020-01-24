@@ -1,10 +1,10 @@
 data_dir,data_file,class_column,dtype,drop_columns,model_name,max_iter,sampling,status,status_date,message
 ../dataset/feature_files,review_body-fasttext-df_none-ngram_none-89-100-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LR,100.0,,failed,2019-11-09 00:21:56,tuple index out of range
 ../dataset/feature_files,review_body-word2vec-df_none-ngram_none-89-100-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DT,,,failed,2019-11-09 00:21:56,tuple index out of range
-../dataset/feature_files,review_body-tfidf-df_default-ngram22-99-2282-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LR,100.0,,failed,2019-11-09 00:21:32,Initializing from file failed
-../dataset/feature_files,review_body-tfidf-df_default-ngram11-99-862-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DT,,,failed,2019-11-09 00:21:32,tuple index out of range
+../dataset/feature_files,review_body-tfidf-df_none-ngram22-99-2282-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LR,100.0,,failed,2019-11-09 00:21:32,Initializing from file failed
+../dataset/feature_files,review_body-tfidf-df_none-ngram11-99-862-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DT,,,failed,2019-11-09 00:21:32,tuple index out of range
 ../dataset/feature_files,review_body-fasttext-df_none-ngram_none-89-100-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LR,100.0,smote,failed,2019-11-09 00:21:32,"Expected n_neighbors <= n_samples,  but n_samples = 5, n_neighbors = 6"
 ../dataset/feature_files,review_body-word2vec-df_none-ngram_none-89-100-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DT,,adasyn,failed,2019-11-09 00:21:32,"Expected n_neighbors <= n_samples,  but n_samples = 5, n_neighbors = 6"
-../dataset/feature_files,review_body-tfidf-df_default-ngram22-99-2282-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LR,100.0,random_over_sampling,failed,2019-11-09 00:21:32,Initializing from file failed
-../dataset/feature_files,review_body-tfidf-df_default-ngram11-99-862-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DT,,random_under_sampling,failed,2019-11-09 00:21:32,tuple index out of range
-../dataset/feature_files,review_body-tfidf-df_default-ngram11-99-862-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DT,,nearmiss-2,failed,2019-11-09 00:21:33,tuple index out of range
+../dataset/feature_files,review_body-tfidf-df_none-ngram22-99-2282-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",LR,100.0,random_over_sampling,failed,2019-11-09 00:21:32,Initializing from file failed
+../dataset/feature_files,review_body-tfidf-df_none-ngram11-99-862-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DT,,random_under_sampling,failed,2019-11-09 00:21:32,tuple index out of range
+../dataset/feature_files,review_body-tfidf-df_none-ngram11-99-862-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",DT,,nearmiss-2,failed,2019-11-09 00:21:33,tuple index out of range

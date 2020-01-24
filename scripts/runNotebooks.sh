@@ -27,8 +27,8 @@ NOTEBOOK_DIR="../notebooks"
 while getopts "chdn:b:" arg; do
   case $arg in
     h) usage && exit 0 ;;
-    n) ALL="false" && notebooks=`ls $OPTARG` ;;
     b) NOTEBOOK_DIR="$OPTARG" ;;
+    n) ALL="false" && notebooks=`ls ${NOTEBOOK_DIR}/$OPTARG` ;;
     d) DEBUG="true" ;;
     c) CLEAN="true" ;;
     ?) usage && exit 1 ;;

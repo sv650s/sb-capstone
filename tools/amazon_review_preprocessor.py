@@ -66,13 +66,6 @@ def remove_http_links(text: str) -> str:
     text = re.sub(r'(http[s]{0,1}:\S+)', '', text, re.I | re.A)
     return text
 
-def expand_star_ratings(text: str) -> str:
-    """
-    for reviews we may have people writing things like 1 star or
-    :param text:
-    :return:
-    """
-
 
 def main():
     # set up argument parser

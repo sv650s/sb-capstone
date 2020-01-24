@@ -1,0 +1,2 @@
+data_dir,data_file,class_column,dtype,drop_columns,model_name,max_iter,sampling,status,status_date,message
+../dataset/feature_files,review_body-tfidf-df_none-ngram13-49784-4000-nolda.csv,star_rating,,"helpful_votes, total_votes, helpful_product",SVC_RBF,,,success,2020-01-14 03:18:33,

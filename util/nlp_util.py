@@ -84,6 +84,9 @@ def generate_bow_file(x: pd.DataFrame,
                          ngram_range=(int(min_ngram_range), int(max_ngram_range)),
                          max_features=int(max_features)
                          )
+    log.debug(f'Shape of x {x.shape}')
+    # there is no info because this is a Series and not DataFrame
+    # log.debug(f'Info for x {x.info()}')
     cv_matrix = cv.fit_transform(x.array)
     vocab = cv.get_feature_names()
     log.info(f'vocab_length: {len(vocab)}')
@@ -91,7 +94,7 @@ def generate_bow_file(x: pd.DataFrame,
     df = pd.DataFrame(cv_matrix.toarray(), columns=vocab)
 
     file_start_time = datetime.now()
-    write_to_file(df, y, feature_column, description, False, lda_topics)
+    outfile = write_to_file(df, y, feature_column, description, False, lda_topics)
 
     lda_time = 0
     lda_file_time = 0
@@ -103,7 +106,7 @@ def generate_bow_file(x: pd.DataFrame,
 
         lda_file_start_time = datetime.now()
         # get ready to write file
-        write_to_file(df, y, feature_column, description, True, int(lda_topics))
+        outfile = write_to_file(df, y, feature_column, description, True, int(lda_topics))
         lda_file_end_time = datetime.now()
 
         lda_time = round((lda_file_start_time - lda_start_time).total_seconds() / 60, 2)
@@ -113,7 +116,7 @@ def generate_bow_file(x: pd.DataFrame,
     vectorize_time = round((file_start_time - start_time).total_seconds() / 60, 2)
 
 
-    return df, vectorize_time, vectorize_file_time, lda_time, lda_file_time
+    return outfile, df, vectorize_time, vectorize_file_time, lda_time, lda_file_time
 
 
 def generate_tfidf_file(x: pd.DataFrame,
@@ -148,7 +151,7 @@ def generate_tfidf_file(x: pd.DataFrame,
                          ngram_range=(int(min_ngram_range), int(max_ngram_range)),
                          max_features=int(max_features),
                          use_idf=True)
-    print(x.array)
+    log.debug(x.array)
     tv_matrix = tv.fit_transform(x.array)
 
     # TODO: save the vectorizer
@@ -157,7 +160,7 @@ def generate_tfidf_file(x: pd.DataFrame,
     df = pd.DataFrame(np.round(tv_matrix.toarray(), 2), columns=vocab)
 
     file_start_time = datetime.now()
-    write_to_file(df, y, feature_column, description, False, lda_topics)
+    outfile = write_to_file(df, y, feature_column, description, False, lda_topics)
 
     lda_time = 0
     lda_file_time = 0
@@ -169,7 +172,7 @@ def generate_tfidf_file(x: pd.DataFrame,
 
         lda_file_start_time = datetime.now()
         # get ready to write file
-        write_to_file(df, y, feature_column, description, True, lda_topics)
+        outfile = write_to_file(df, y, feature_column, description, True, lda_topics)
         lda_file_end_time = datetime.now()
 
         lda_time = round((lda_file_start_time - lda_start_time).total_seconds() / 60, 2)
@@ -179,7 +182,7 @@ def generate_tfidf_file(x: pd.DataFrame,
 
     vectorize_time = round((file_start_time - start_time).total_seconds() / 60, 2)
 
-    return df, vectorize_time, vectorize_file_time, lda_time, lda_file_time
+    return outfile, df, vectorize_time, vectorize_file_time, lda_time, lda_file_time
 
 
 

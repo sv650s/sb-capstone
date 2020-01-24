@@ -1,3 +1,3 @@
 data_dir,data_file,status,status_date
-dataset/feature_files,review_body-bow-df_default-ngram12-992-10020-lda20.csv,success,2019-06-06 21:53:22
-dataset/feature_files,review_body-tfidf-df_default-ngram12-992-10020-lda20.csv,success,2019-06-06 21:53:36
+dataset/feature_files,review_body-bow-df_none-ngram12-992-10020-lda20.csv,success,2019-06-06 21:53:22
+dataset/feature_files,review_body-tfidf-df_none-ngram12-992-10020-lda20.csv,success,2019-06-06 21:53:36
