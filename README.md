@@ -17,6 +17,7 @@ conda env create --file environments.yml
 ```buildoutcfg
 ├── config - config files for python programs
 ├── dataset - sample dataset files. This is empty
+├── images - images/diagrams for notebooks and README's
 ├── notebooks - jupyter notebooks
 ├── reports - reports from python programs
 ├── services - final Flask API 

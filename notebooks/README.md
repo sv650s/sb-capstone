@@ -42,6 +42,7 @@ root - summary notebooks of our findings
 ├── exploratory - all exploratory notebooks
 ├── deep_learning - google colab notebooks used for deep learning
 ├── pyspark - pyspark notebook to train our model with entire dataset
+├── retired - old notebooks - you can ignore these
 ├── tests - scratch pad space for tests (you can ignore this)
 ```
 
@@ -53,11 +54,11 @@ Sometime I would re-run notebooks via the command line. You can do that using *.
 ```bash
 Use this script to run notebooks from the command line. By default, notebooks will be overwritten with the output (including errors)
 If -n is note specified, this will run all notebooks in the directory
-./runNotebooks.sh: [-d run all notebooks in debug] [-n <notebook> specific notebook or a pattern for notebooks] [-c when running in debug mode, us this to delete temp notebooks]
+../tools/runNotebooks.sh: [-d run all notebooks in debug] [-n <notebook> specific notebook or a pattern for notebooks] [-c when running in debug mode, us this to delete temp notebooks]
 Example:
-  ./runNotebooks.sh
-  ./runNotebooks.sh -n notebook.ipynb
-  ./runNotebooks.sh -n 3*.ipynb
+  ../tools/runNotebooks.sh
+  ../tools/runNotebooks.sh -n notebook.ipynb
+  ../tools/runNotebooks.sh -n 3*.ipynb
 ```
 
 
