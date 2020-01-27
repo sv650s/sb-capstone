@@ -8,7 +8,7 @@ Configuration files and reports are checked into the repository so we can reprod
 
 Notebooks are numbered in the order they were done
 
-Unfortunately because of github repo limits, I could not check in all data files
+Unfortunately because of github repo limits, I could not check in all data files or models. Sample data sets have been checked in so you can get a sense of what the data looks like
 
 ## Traditional ML Model 
 
@@ -38,9 +38,9 @@ To train the entire dataset with trandtion ML model, I took the best perfroming 
 ## Directory Structure
 
 ```buildoutcfg
-root - summary notebooks of our findings
-├── exploratory - all exploratory notebooks
-├── deep_learning - google colab notebooks used for deep learning
+root - summary notebooks of findings (start here)
+├── exploratory - all EDA notebooks
+├── deep_learning - google colab notebooks used for deep learning prototypes
 ├── pyspark - pyspark notebook to train our model with entire dataset
 ├── retired - old notebooks - you can ignore these
 ├── tests - scratch pad space for tests (you can ignore this)

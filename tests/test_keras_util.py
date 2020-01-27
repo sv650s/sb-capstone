@@ -38,7 +38,7 @@ class TestModelReport(object):
         l = [1, 2, 3]
         npa = np.array([1, 2, 3,])
 
-        report = ModelReport("model_name")
+        report = ModelReport("model_name", "architecture")
 
         report.add("dict", d)
         assert isinstance(report.get("dict"), str), "returned object is not a string"
@@ -65,7 +65,7 @@ def test_load_model_report(shared_datadir):
     report = ModelReport.load_report(filename, 0)
     assert report is not None, f'Report is None {report}'
 
-    s = pd.read_csv(filename, quotechar=",").iloc[0]
+    s = pd.read_csv(filename, quotechar="'").iloc[0]
     assert isinstance(s, pd.Series), f"s is not a Series: {type(s)}"
     assert len(s) >= 1, f"Dataframe length is less than 1 {len(s)}"
     log.debug(f'report keys: {report.report.keys()}')
