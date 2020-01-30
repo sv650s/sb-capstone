@@ -43,3 +43,6 @@ reports/template-hyperparameter_tuning-report.csv
 reports/template-model_selection-report.csv
 reports/template-run_classifiers-report.csv
 reports/*feature_generator*.csv
+report/2019-07*.csv
+report/2019-08*.csv
+report/*99-histogram.csv
