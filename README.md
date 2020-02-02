@@ -31,3 +31,4 @@ NOTE: Because of github size limit, the data files are not checked into the repo
 
 You can down the entire dataset directly here: 
 
+https://s3.amazonaws.com/amazon-reviews-pds/tsv/index.txt
