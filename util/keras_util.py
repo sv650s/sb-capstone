@@ -183,7 +183,8 @@ class ModelWrapper(object):
                  sampling_type="none",
                  embed_size = None,
                  tokenizer=None,
-                 description=None):
+                 description=None,
+                 save_weights=True):
         """
         Constructor
 
@@ -197,6 +198,9 @@ class ModelWrapper(object):
         :param embed_size: size of embedding. default is None
         :param tokenizer: tokenizer used to preprocess, default is None
         :param description: description of model. If not passed in, will automatically construct this
+        :param save_weights: whether we should save weights for the model or not. Default is true to make old notebooks
+            backwards compatible. However, for newer notebooks that use ModelCheckpoints,
+            you should set this to false because ModelCheckpoint should already save the best model weights for you
         """
         self.model_name = model_name
         self.model = model
@@ -216,8 +220,12 @@ class ModelWrapper(object):
         self.network_history = None
         self.weights_file = None
         self.epochs = 0
+        self.save_weights = save_weights
         # dumping ground for anything else we want to store
         self.misc_items = {}
+
+        self.X_test = None
+        self.y_test = None
 
 
     def fit(self, X_train, y_train,
@@ -308,13 +316,37 @@ class ModelWrapper(object):
             return  f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
         return  f"{save_dir}/reports/dl_prototype-report.csv"
 
+    def get_weights_filename(self, save_dir):
+        """
+        Returns the name of the weights file for this model.
+
+        Mean to be used when we use ModelCheckpoint so we can tell ModelCheckpoint
+        where to save the weights file.
+
+        :param save_dir:
+        :return:
+        """
+        return f"{save_dir}/models/{self._get_description()}-weights.h5"
+
     def save(self, save_dir, save_format=None, append_report=True):
+        """
+        Save the following information based on our trained model:
+        * model file
+        * model weights (if save_weights is True)
+        * writes model report
+        * tokenizer used for pre-processing
+
+        :param save_dir: base directory to save files models and reports will be appended to this
+        :param save_format: save_format for tf.model.save
+        :param append_report: if existing report, True to append or False to overwrite
+        :return:
+        """
         description = self._get_description()
         print(f"description: {description}")
 
         self.model_file = f"{save_dir}/models/{description}-model.h5"
         self.model_json_file = f"{save_dir}/models/{description}-model.json"
-        self.weights_file = f"{save_dir}/models/{description}-weights.h5"
+        self.weights_file = self.get_weights_filename(save_dir)
         self.report_file = ModelWrapper.get_report_file_name(save_dir)
         self.tokenizer_file = f'{save_dir}/models/dl-tokenizer.pkl'
 
@@ -328,7 +360,7 @@ class ModelWrapper(object):
                 json_file.write(model_json)
 
         print(f"Saving weights file: {self.weights_file}")
-        if self.weights_file is not None:
+        if self.weights_file is not None and self.save_weights:
             self.model.save_weights(self.weights_file,
                     save_format=save_format)
 

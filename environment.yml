@@ -4,55 +4,56 @@ channels:
   - conda-forge
   - anaconda
 dependencies:
-  - flask
-  - flask-restplus
-  - Flask-SQLAlchemy
-  - python>=3.7.0
   - autopep8
-  - pandas
-  - unittest2
+  - beautifulsoup4
+  - catboost
+  - coverage=4.5.3
+  - flask
+  - Flask-SQLAlchemy
+  - flask-restplus
+  - gensim
+  - gensim
+  - google-cloud-storage
+  - h5py
+  - hdf5
+  - imbalanced-learn=0.4
+  - joblib
   - joblib
   - jupyter
-  - jupyterlab
   - jupyter_contrib_nbextensions
-  - pandas-datareader
+  - jupyterlab
+  - lightgbm
   - matplotlib
-  - seaborn
-  - hdf5
-  - h5py
-  - scikit-learn
-  - pyspark
-  - beautifulsoup4
-  - unittest2=1.1.0
+  - mock=2.0.0
+  - mysqlclient
   - nltk=3.4.1
-  - coverage=4.5.3
-  - gensim
+  - numpy
+  - pandas
+  - pandas-datareader
+  - pip
+  - pydot
   - pyldavis
+  - pymysql
   - pyspark
-  - pytest=4.4.1
+  - pyspark
   - pytest-cov=2.6.1
   - pytest-datadir
-  - mock=2.0.0
-  - gensim
-  - joblib
-  - lightgbm
-  - imbalanced-learn=0.4
-  - xgboost
-  - catboost
-  - google-cloud-storage
-  - traceback2
-  - numpy
-  - pip
+  - pytest=4.4.1
+  - python>=3.7.0
   - pyyaml
+  - scikit-learn
   - scipy
-  - pymysql
-  - mysqlclient
-  - pydot
+  - seaborn
+  - traceback2
+  - unittest2
+  - unittest2=1.1.0
   - virtualenv
   - Werkzeug
+  - xgboost
   - pip:
-    - tensorflow==2.0.0-beta1
-    - mysql-connector
+    - gradient
     - jupyter_http_over_ws
+    - mysql-connector
+    - tensorflow==2.0.0-beta1
 prefix: /Users/vinceluk/springboard-projects/capstone
 

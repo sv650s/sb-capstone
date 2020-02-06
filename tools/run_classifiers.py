@@ -54,7 +54,7 @@ class TimedClassifier(TimedProgram):
         self.radius = int(self.args.radius)
         self.lr_c = int(self.args.lr_c)
 
-    def sample_data(self, sampling_method: str, X_train, Y_train, base_file_name):
+    def sample_data(self, sampling_method: str, X_train, Y_train, base_file_name, target_column="star_rating"):
         """
         Creates sampler based in sampling method and return the resulting X and y
 
@@ -69,7 +69,7 @@ class TimedClassifier(TimedProgram):
         log.debug(f'Y_train {Y_train.shape}')
         log.debug(f'Y_train {Y_train.head()}')
 
-        grouped_df = Y_train.reset_index().groupby("star_rating").count()
+        grouped_df = Y_train.reset_index().groupby(target_column).count()
 
         log.info(f'Distribution before sampling with {sampling_method}\n{grouped_df}')
         log.debug(f'grouped type: {type(grouped_df)}')
@@ -92,10 +92,10 @@ class TimedClassifier(TimedProgram):
         X_train_res, Y_train_res = sampler.fit_resample(X_train, Y_train.ravel())
 
         X_train = pd.DataFrame(X_train_res, columns=X_train.columns)
-        Y_train = pd.DataFrame(Y_train_res, columns=["star_rating"])
+        Y_train = pd.DataFrame(Y_train_res, columns=[target_column])
 
         # get distribution of samples after samping
-        dist = Y_train.reset_index().groupby("star_rating").count()
+        dist = Y_train.reset_index().groupby(target_column).count()
 
         log.info(f'Distribution after sampling with {sampling_method}\n{dist}')
 
