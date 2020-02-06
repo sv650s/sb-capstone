@@ -136,6 +136,22 @@ def preprocess_file(data_df,
 
 class ModelWrapper(object):
 
+    report_file_name = None
+
+    @staticmethod
+    def set_report_filename(filename: str):
+        ModelWrapper.report_file_name = filename
+
+
+    @staticmethod
+    def get_report_file_name(save_dir: str, use_date=True):
+        if ModelWrapper.report_file_name is not None:
+            return f'{save_dir}/reports/{ModelWrapper.report_file_name}'
+        if use_date:
+            return  f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
+        return  f"{save_dir}/reports/dl_prototype-report.csv"
+
+
     @staticmethod
     def copy(mw):
         """
@@ -310,12 +326,6 @@ class ModelWrapper(object):
             description = self.model_name
         return description
 
-    @staticmethod
-    def get_report_file_name(save_dir: str, use_date=True):
-        if use_date:
-            return  f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
-        return  f"{save_dir}/reports/dl_prototype-report.csv"
-
     def get_weights_filename(self, save_dir):
         """
         Returns the name of the weights file for this model.
@@ -346,6 +356,7 @@ class ModelWrapper(object):
 
         self.model_file = f"{save_dir}/models/{description}-model.h5"
         self.model_json_file = f"{save_dir}/models/{description}-model.json"
+        self.network_history_file = f"{save_dir}/models/{description}-history.h5"
         self.weights_file = self.get_weights_filename(save_dir)
         self.report_file = ModelWrapper.get_report_file_name(save_dir)
         self.tokenizer_file = f'{save_dir}/models/dl-tokenizer.pkl'
@@ -368,6 +379,23 @@ class ModelWrapper(object):
         if self.tokenizer is not None:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
             pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
+
+        # TODO: fix this - not quite working
+        # getting the following error
+        #
+        # /content/drive/My Drive/Springboard/capstone/util/keras_util.py in save(self, save_dir, save_format, append_report)
+        #     369             print(f"Saving history file: {self.network_history_file}")
+        #     370             with open(self.network_history_file, 'wb') as file:
+        # --> 371                 pickle.dump(self.network_history, file)
+        #     372
+        #     373
+        #
+        # TypeError: can't pickle _thread.RLock objects
+        # if self.network_history is not None:
+        #     print(f"Saving history file: {self.network_history_file}")
+        #     with open(self.network_history_file, 'wb') as file:
+        #         pickle.dump(self.network_history, file)
+
 
         print(f"Saving to report file: {self.report_file}")
         report = self.get_report()

@@ -7,6 +7,7 @@ dependencies:
   - autopep8
   - beautifulsoup4
   - catboost
+  - connexion # LSTMVis
   - coverage=4.5.3
   - flask
   - Flask-SQLAlchemy
@@ -43,12 +44,14 @@ dependencies:
   - pyyaml
   - scikit-learn
   - scipy
+  - spacy # LSTMVis
   - seaborn
   - traceback2
   - unittest2
   - unittest2=1.1.0
   - virtualenv
   - Werkzeug
+  - Whoosh #LSTMVis
   - xgboost
   - pip:
     - gradient

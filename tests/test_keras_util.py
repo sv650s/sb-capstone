@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import logging
 import json
+from datetime import datetime
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Dropout
 from tensorflow.keras.layers import BatchNormalization
@@ -158,6 +159,34 @@ def test_model_wrapper(datadir, feature_data, label_data):
         assert col in report.columns, f"report missing column: {col}"
         # check to make sure we have values everywhere
         assert len(report[col]) > 0, f'{col} value is 0'
+
+def test_model_wrapper_get_report_filename():
+    """
+    Test the following:
+    * if no filename is passed, we follow normal convention and use_date flag
+    * if filename is pass, this should overwrite our default file format
+    :return:
+    """
+
+    # test without default filename explicitly - use date default is true
+    date_format = '%Y-%m'
+    full_path = ModelWrapper.get_report_file_name('save_dir')
+    assert full_path == f'save_dir/reports/{datetime.now().strftime(date_format)}-dl_prototype-report.csv', \
+        f"File name with Date format is wrong {full_path}"
+
+    # test without default filename explicitly - set use_date to False
+    full_path = ModelWrapper.get_report_file_name('save_dir', use_date=False)
+    assert full_path == f'save_dir/reports/dl_prototype-report.csv', \
+        f"Default filename format is wrong {full_path}"
+
+    # test that we set the filename explicitly
+    filename = 'report_filename.csv'
+    ModelWrapper.set_report_filename(filename)
+    full_path = ModelWrapper.get_report_file_name('save_dir')
+    assert full_path == f'save_dir/reports/{filename}', \
+        f'Explicit filename is not working {full_path}'
+
+
 
 
 @pytest.fixture()
