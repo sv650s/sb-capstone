@@ -356,13 +356,14 @@ class ModelWrapper(object):
 
         self.model_file = f"{save_dir}/models/{description}-model.h5"
         self.model_json_file = f"{save_dir}/models/{description}-model.json"
-        self.network_history_file = f"{save_dir}/models/{description}-history.h5"
+        self.network_history_file = f"{save_dir}/models/{description}-history.pkl"
         self.weights_file = self.get_weights_filename(save_dir)
         self.report_file = ModelWrapper.get_report_file_name(save_dir)
-        self.tokenizer_file = f'{save_dir}/models/dl-tokenizer.pkl'
+        self.tokenizer_file = f'{save_dir}/models/{description}-tokenizer.pkl'
 
-        print(f"Saving model file: {self.model_file}")
-        self.model.save(self.model_file, save_format=save_format)
+        print(f"Saving to report file: {self.report_file}")
+        report = self.get_report()
+        report.save(self.report_file, append=append_report)
 
         print(f"Saving json config file: {self.model_json_file}")
         if self.model:
@@ -373,33 +374,21 @@ class ModelWrapper(object):
         print(f"Saving weights file: {self.weights_file}")
         if self.weights_file is not None and self.save_weights:
             self.model.save_weights(self.weights_file,
-                    save_format=save_format)
+                                    save_format=save_format)
 
+        if self.network_history is not None:
+            print(f"Saving history file: {self.network_history_file}")
+            with open(self.network_history_file, 'wb') as file:
+                pickle.dump(self.network_history.history, file)
+
+        print(f"Saving model file: {self.model_file}")
+        self.model.save(self.model_file, save_format=save_format)
 
         if self.tokenizer is not None:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
             pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
 
-        # TODO: fix this - not quite working
-        # getting the following error
-        #
-        # /content/drive/My Drive/Springboard/capstone/util/keras_util.py in save(self, save_dir, save_format, append_report)
-        #     369             print(f"Saving history file: {self.network_history_file}")
-        #     370             with open(self.network_history_file, 'wb') as file:
-        # --> 371                 pickle.dump(self.network_history, file)
-        #     372
-        #     373
-        #
-        # TypeError: can't pickle _thread.RLock objects
-        # if self.network_history is not None:
-        #     print(f"Saving history file: {self.network_history_file}")
-        #     with open(self.network_history_file, 'wb') as file:
-        #         pickle.dump(self.network_history, file)
 
-
-        print(f"Saving to report file: {self.report_file}")
-        report = self.get_report()
-        report.save(self.report_file, append=append_report)
 
 
     def get_report(self):
@@ -415,7 +404,7 @@ class ModelWrapper(object):
         report.add("confusion_matrix", json.dumps(self.confusion_matrix.tolist()))
         report.add("file", self.data_file)
         # too long to save in CSV
-        # report.add("network_history_file", self.network_history_file)
+        report.add("network_history_file", self.network_history_file)
         # report.add("history", self.network_history.history)
         report.add("tokenizer_file", self.tokenizer_file)
         if self.X_train is not None:
