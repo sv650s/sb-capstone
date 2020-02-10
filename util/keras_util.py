@@ -356,7 +356,7 @@ class ModelWrapper(object):
 
         self.model_file = f"{save_dir}/models/{description}-model.h5"
         self.model_json_file = f"{save_dir}/models/{description}-model.json"
-        self.network_history_file = f"{save_dir}/models/{description}-history.pkl"
+        self.network_history_file = f"{save_dir}/reports/{description}-history.pkl"
         self.weights_file = self.get_weights_filename(save_dir)
         self.report_file = ModelWrapper.get_report_file_name(save_dir)
         self.tokenizer_file = f'{save_dir}/models/{description}-tokenizer.pkl'
@@ -376,6 +376,7 @@ class ModelWrapper(object):
             self.model.save_weights(self.weights_file,
                                     save_format=save_format)
 
+        # TODO: should probably save this as json instead
         if self.network_history is not None:
             print(f"Saving history file: {self.network_history_file}")
             with open(self.network_history_file, 'wb') as file:
