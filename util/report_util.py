@@ -40,6 +40,33 @@ def calculate_metric(data, column_name ="eval_metric", dnn = False) -> pd.DataFr
         return _harmonic_mean(m)
     return data
 
+def calculate_metric15(data, column_name ="eval_metric", dnn = False) -> pd.DataFrame:
+    """
+    Calculates the harmonic mean in the following manner so we can use one metric to evalute our models
+        recall - star rating 1, 2, 3, 4
+        precision - star rating 5
+
+    :param data: if it's a report df - must have 1_precision, 2_recall, 3_recall, 4_recall, and 5_precision columns.
+        Or you can pass in a classification dictionary
+    :param column_name: name of column to put metric in. default eval_metric
+    :param dnn: indicates if we are calculating this for a DNN notebook as reports have different format
+    :return:
+    """
+    if isinstance(data, pd.DataFrame):
+        log.info("Calculating metric for ML report")
+        data[column_name] = data.apply(lambda x: _harmonic_mean(
+            [ x[col] for col in EVAL_COLS ] ), axis=1)
+    elif isinstance(data, dict):
+        log.info("calculating metric from dictionary")
+        log.debug(f'{data}')
+        m = []
+        m.append(data["1"]["recall"])
+        m.append(data["2"]["precision"])
+        log.info("got all values to calculate")
+
+        return _harmonic_mean(m)
+    return data
+
 def _harmonic_mean(values: list):
     """
     Calculates the harmonic mean based on a list of values

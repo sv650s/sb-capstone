@@ -29,6 +29,10 @@ rsync -rauv ${DEBUG_FLAG} --delete ../util/*.py ~/Google\ Drive/Springboard/caps
 echo "pulling down reports..."
 rsync -rauv ${DEBUG_FLAG} ~/Google\ Drive/Springboard/capstone/reports/*.csv ../reports/
 
+# sync report files and notebooks from colab to git repot
+#echo "pulling down history files..."
+#rsync -rauv ${DEBUG_FLAG} ~/Google\ Drive/Springboard/capstone/models/*history.pkl ../models/
+
 # actually this is not a good idea - google colab notebooks are slightly different format
 #echo "syncing colab notebooks to git..."
 #rsync -rauv --exclude 5.0-deep-learning-summary.ipynb ~/Google\ Drive/Colab\ Notebooks/amazon-review/*.ipynb ../notebooks/deep_learning

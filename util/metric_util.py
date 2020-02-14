@@ -32,7 +32,7 @@ def calculate_roc_auc(y_test: np.ndarray, y_predict: pd.DataFrame):
     fpr = {}
     tpr = {}
     roc_auc = {}
-    for i in np.arange(0, 5):
+    for i in np.arange(0, n_classes):
         fpr_ndarray, tpr_ndarray, _ = roc_curve(y_test[:, i], y_predict[i].to_list())
         fpr[str(i)] = fpr_ndarray.tolist()
         tpr[str(i)] = tpr_ndarray.tolist()

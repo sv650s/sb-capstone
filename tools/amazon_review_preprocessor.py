@@ -74,8 +74,11 @@ def main():
     parser.add_argument("-o", "--outdir", help="output directory. Default ../dataset/amazon_reviews", default="../dataset/amazon_reviews")
     parser.add_argument("-l", "--loglevel", help="log level", default="INFO")
     parser.add_argument("-r", "--retain", help="specifieds which columns to keep - NOT YET IMPLEMENTED", action="store_true", default=False)
+    parser.add_argument("-p", "--prefix", help="output file for prefix. Default none")
     parser.add_argument("-c", "--convert", action='store_true',
                     help="convert to csv")
+    parser.add_argument("-s", "--no_stop", action='store_true',
+                        help="don't remove stop words", default=False)
     # get command line arguments
     args = parser.parse_args()
 
@@ -87,8 +90,12 @@ def main():
 
     start_time = datetime.now()
     infile = args.datafile
+    prefix = args.prefix
     _, basename = fu.get_dir_basename(infile)
-    outfile = f'{args.outdir}/{basename}-preprocessed.csv'
+    if prefix == None:
+        outfile = f'{args.outdir}/{basename}-preprocessed.csv'
+    else:
+        outfile = f'{args.outdir}/{basename}-{prefix}-preprocessed.csv'
     assert os.path.isfile(infile), f"{infile} does not exist"
 
     logger.info(f'loading data frame from {infile}')
@@ -101,7 +108,8 @@ def main():
                           columns_to_drop=['marketplace', 'vine', 'verified_purchase', 'customer_id', 'review_id', 'product_id', 'product_parent', 'product_title', 'product_category'],
                           stop_word_remove_list=STOP_WORDS_TO_REMOVE,
                           retain_original_columns=args.retain,
-                          custom_preprocessor=[remove_amazon_tags, remove_http_links])
+                          custom_preprocessor=[remove_amazon_tags, remove_http_links],
+                          remove_stop_words=not args.no_stop)
     df = tp.preprocess_data(df)
     logger.info(f'pre-processing finished - new dataframe length: {len(df)}')
 
