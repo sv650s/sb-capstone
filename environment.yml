@@ -29,6 +29,7 @@ dependencies:
   - mysqlclient
   - nltk=3.4.1
   - numpy
+  - openpyxl
   - pandas
   - pandas-datareader
   - pip

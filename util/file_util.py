@@ -16,7 +16,7 @@ def convert_tsv_to_csv(infile: str, outfile: str, sampler = None):
     :return:
     """
 
-    log.info(f"Converting {infile} to {outfile} with sampling {sampler}")
+    print(f"Converting {infile} to {outfile} with sampling {sampler}")
 
     if os.path.isfile(infile):
 
@@ -29,6 +29,9 @@ def convert_tsv_to_csv(infile: str, outfile: str, sampler = None):
                     data = line.strip('\n').split('\t')
                     writer.writerow(data)
                 counter += 1
+        print(f"Finished converting {infile} to {outfile} with sampling {sampler}")
+    else:
+        print(f'File not found: {infile}')
 
 
 def get_report_filename(infile: str, outpath:str="reports/") -> str:

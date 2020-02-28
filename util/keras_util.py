@@ -169,7 +169,8 @@ class ModelWrapper(object):
                                mw.sampling_type,
                                mw.embed_size,
                                mw.tokenizer,
-                               mw.description)
+                               mw.description,
+                               mw.feature_column)
         mw_copy.tokenizer_file = mw.tokenizer_file
         mw_copy.train_time_min = mw.train_time_min
         mw_copy.predict_time_min = mw.predict_time_min
@@ -195,6 +196,7 @@ class ModelWrapper(object):
                  architecture,
                  feature_set_name,
                  label_column,
+                 feature_column,
                  data_file,
                  sampling_type="none",
                  embed_size = None,
@@ -223,6 +225,7 @@ class ModelWrapper(object):
         self.feature_set_name = feature_set_name
         self.architecture = architecture
         self.label_column = label_column
+        self.feature_column = feature_column
         self.data_file = data_file
         self.batch_size = 0
         self.sampling_type = sampling_type
@@ -321,7 +324,7 @@ class ModelWrapper(object):
         directory, inbasename = fu.get_dir_basename(self.data_file)
         if self.X_test is not None:
             # self.X_test might not be set yet
-            description = f"{self.model_name}-{self.architecture}-{self.feature_set_name}-sampling_{self.sampling_type}-{self.X_test.shape[0] + self.X_train.shape[0]}-{self.X_test.shape[1]}-{self.label_column}"
+            description = f"{self.model_name}-{self.architecture}-{self.feature_set_name}-sampling_{self.sampling_type}-{self.X_test.shape[0] + self.X_train.shape[0]}-{self.X_test.shape[1]}-{self.feature_column}"
         else:
             description = self.model_name
         return description
@@ -398,6 +401,8 @@ class ModelWrapper(object):
         else:
             report = ModelReport(self.model_name, self.architecture, self._get_description())
 
+        report.add("feature_column", self.crd)
+        report.add("label_column", self.crd)
         report.add("classification_report", self.crd)
         report.add("roc_auc", self.roc_auc)
         report.add("loss", self.scores[0])

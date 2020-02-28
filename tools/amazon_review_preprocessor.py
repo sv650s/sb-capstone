@@ -79,6 +79,8 @@ def main():
                     help="convert to csv")
     parser.add_argument("-s", "--no_stop", action='store_true',
                         help="don't remove stop words", default=False)
+    parser.add_argument("-e", "--no_lemmatize", action='store_true',
+                        help="don't lemmatize words", default=False)
     # get command line arguments
     args = parser.parse_args()
 
@@ -109,7 +111,8 @@ def main():
                           stop_word_remove_list=STOP_WORDS_TO_REMOVE,
                           retain_original_columns=args.retain,
                           custom_preprocessor=[remove_amazon_tags, remove_http_links],
-                          remove_stop_words=not args.no_stop)
+                          remove_stop_words=not args.no_stop,
+                          lemmatize_text=not args.no_lemmatize)
     df = tp.preprocess_data(df)
     logger.info(f'pre-processing finished - new dataframe length: {len(df)}')
 

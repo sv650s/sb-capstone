@@ -184,3 +184,8 @@ class TestTextUtil(object):
         assert newtext == expected, "did not remove first word correctly"
 
 
+    def test_replace_numbers(self):
+        text = "1 star"
+        expected_text = "one star"
+        newtext = tu.replace_numbers(text)
+        assert newtext == expected_text, f'expected: {expected_text} got {newtext}'

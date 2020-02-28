@@ -36,6 +36,7 @@ logs
 syncTo*.sh
 
 reports/*test.csv
+reports/test*
 
 # don't track these template reports
 reports/template-feature_generator-report.csv
