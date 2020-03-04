@@ -53,6 +53,7 @@ dependencies:
   - virtualenv
   - Werkzeug
   - Whoosh #LSTMVis
+  - xlrd
   - xgboost
   - pip:
     - gradient
