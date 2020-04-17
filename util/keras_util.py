@@ -269,7 +269,7 @@ class ModelWrapper(object):
         self.train_time_min = round((end_time - start_time).total_seconds() / 50, 2)
         self.X_train = X_train
         self.y_train = y_train
-        self.batch_size = 128
+        self.batch_size = batch_size
         self.epochs = len(self.network_history.history['loss'])
         return self.network_history
 
