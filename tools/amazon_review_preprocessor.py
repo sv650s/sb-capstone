@@ -71,9 +71,12 @@ def main():
     # set up argument parser
     parser = argparse.ArgumentParser()
     parser.add_argument("datafile", help="source data file")
-    parser.add_argument("-o", "--outdir", help="output directory. Default ../dataset/amazon_reviews", default="../dataset/amazon_reviews")
+    parser.add_argument("-o", "--outdir", help="output directory. Default ../dataset/amazon_reviews",
+                        default="../dataset/amazon_reviews")
     parser.add_argument("-l", "--loglevel", help="log level", default="INFO")
-    parser.add_argument("-r", "--retain", help="specifieds which columns to keep - NOT YET IMPLEMENTED", action="store_true", default=False)
+    parser.add_argument("-r", "--retain_original",
+                        help="specifieds whether to retain original columns. Default is False",
+                        action="store_true", default=False)
     parser.add_argument("-p", "--prefix", help="output file for prefix. Default none")
     parser.add_argument("-c", "--convert", action='store_true',
                     help="convert to csv")
@@ -81,6 +84,7 @@ def main():
                         help="don't remove stop words", default=False)
     parser.add_argument("-e", "--no_lemmatize", action='store_true',
                         help="don't lemmatize words", default=False)
+
     # get command line arguments
     args = parser.parse_args()
 
@@ -109,7 +113,7 @@ def main():
     tp = TextPreprocessor(text_columns=["review_headline", "review_body"],
                           columns_to_drop=['marketplace', 'vine', 'verified_purchase', 'customer_id', 'review_id', 'product_id', 'product_parent', 'product_title', 'product_category'],
                           stop_word_remove_list=STOP_WORDS_TO_REMOVE,
-                          retain_original_columns=args.retain,
+                          retain_original_columns=args.retain_original,
                           custom_preprocessor=[remove_amazon_tags, remove_http_links],
                           remove_stop_words=not args.no_stop,
                           lemmatize_text=not args.no_lemmatize)
