@@ -485,12 +485,22 @@ class ModelReport(object):
         # log.debug(f"key type: {type(key)} value type: {type(value)}")
         if value is not None:
             # if it's a list then we serialize to json string format so we can load it back later
-            if isinstance(value, list) or isinstance(value, dict):
-                log.debug("converting to json")
+            if isinstance(value, list):
+                log.debug(f"converting to list to json: {value}")
+                log.debug(f'json dumps results {json.dumps(value)}')
                 self.report[key] = json.dumps(value)
+                log.debug("done converting list to json")
+            elif isinstance(value, dict):
+                log.debug(f"converting to dict to json: {value}")
+                dict_converted = {str(k): value[k] for k in value.keys()}
+                log.debug(f'json dumps results {json.dumps(dict_converted)}')
+                self.report[key] = json.dumps(dict_converted)
+                log.debug("done converting dict to json")
             elif isinstance(value, np.ndarray):
-                log.debug("converting to json")
+                log.debug(f"converting ndarray to json: {value}")
+                log.debug(f'json dumps results {json.dumps(value)}')
                 self.report[key] = json.dumps(value.tolist())
+                log.debug("done converting ndarray to json")
             else:
                 self.report[key] = value
 
