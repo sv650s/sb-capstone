@@ -28,10 +28,10 @@ dependencies:
   - mock=2.0.0
   - mysqlclient
   - nltk=3.4.1
-  - numpy
+  - numpy=1.18.1
   - openpyxl
-  - pandas
-  - pandas-datareader
+  - pandas=1.0.1
+  - pandas-datareader=0.8.1
   - pip
   - pydot
   - pyldavis
@@ -43,8 +43,8 @@ dependencies:
   - pytest=4.4.1
   - python>=3.7.0
   - pyyaml
-  - scikit-learn
-  - scipy
+  - scikit-learn=0.22.1
+  - scipy=1.4.1
   - spacy # LSTMVis
   - seaborn
   - traceback2
