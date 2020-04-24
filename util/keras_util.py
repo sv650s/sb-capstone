@@ -137,19 +137,29 @@ def preprocess_file(data_df,
 class ModelWrapper(object):
 
     report_file_name = None
+    reports_dir = "/reports"
+    models_dir = "/models"
 
     @staticmethod
     def set_report_filename(filename: str):
         ModelWrapper.report_file_name = filename
 
+    @staticmethod
+    def set_reports_dir(reports_dir: str):
+        ModelWrapper.reports_dir = reports_dir
+
+    @staticmethod
+    def set_models_dir(models_dir: str):
+        ModelWrapper.models_dir = models_dir
+
 
     @staticmethod
     def get_report_file_name(save_dir: str, use_date=True):
         if ModelWrapper.report_file_name is not None:
-            return f'{save_dir}/reports/{ModelWrapper.report_file_name}'
+            return f'{save_dir}{ModelWrapper.reports_dir}/{ModelWrapper.report_file_name}'
         if use_date:
-            return  f"{save_dir}/reports/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
-        return  f"{save_dir}/reports/dl_prototype-report.csv"
+            return  f"{save_dir}{ModelWrapper.reports_dir}/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
+        return  f"{save_dir}{ModelWrapper.reports_dir}/dl_prototype-report.csv"
 
 
     @staticmethod
@@ -339,7 +349,7 @@ class ModelWrapper(object):
         :param save_dir:
         :return:
         """
-        return f"{save_dir}/models/{self._get_description()}-weights.h5"
+        return f"{save_dir}{ModelWrapper.models_dir}/{self._get_description()}-weights.h5"
 
     def save(self, save_dir, save_format=None, append_report=True):
         """
@@ -357,12 +367,12 @@ class ModelWrapper(object):
         description = self._get_description()
         print(f"description: {description}")
 
-        self.model_file = f"{save_dir}/models/{description}-model.h5"
-        self.model_json_file = f"{save_dir}/models/{description}-model.json"
-        self.network_history_file = f"{save_dir}/reports/{description}-history.pkl"
+        self.model_file = f"{save_dir}{ModelWrapper.models_dir}/{description}-model.h5"
+        self.model_json_file = f"{save_dir}{ModelWrapper.models_dir}/{description}-model.json"
+        self.network_history_file = f"{save_dir}{ModelWrapper.reports_dir}/{description}-history.pkl"
         self.weights_file = self.get_weights_filename(save_dir)
         self.report_file = ModelWrapper.get_report_file_name(save_dir)
-        self.tokenizer_file = f'{save_dir}/models/{description}-tokenizer.pkl'
+        self.tokenizer_file = f'{save_dir}{ModelWrapper.models_dir}/{description}-tokenizer.pkl'
 
         print(f"Saving to report file: {self.report_file}")
         report = self.get_report()
