@@ -20,7 +20,7 @@ from util.metric_util import calculate_roc_auc
 DATE_FORMAT = '%Y-%m'
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 def unencode(input):
@@ -156,10 +156,10 @@ class ModelWrapper(object):
     @staticmethod
     def get_report_file_name(save_dir: str, use_date=True):
         if ModelWrapper.report_file_name is not None:
-            return f'{save_dir}{ModelWrapper.reports_dir}/{ModelWrapper.report_file_name}'
+            return f'{save_dir}/{ModelWrapper.reports_dir}/{ModelWrapper.report_file_name}'
         if use_date:
-            return  f"{save_dir}{ModelWrapper.reports_dir}/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
-        return  f"{save_dir}{ModelWrapper.reports_dir}/dl_prototype-report.csv"
+            return  f"{save_dir}/{ModelWrapper.reports_dir}/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
+        return  f"{save_dir}/{ModelWrapper.reports_dir}/dl_prototype-report.csv"
 
 
     @staticmethod
@@ -349,7 +349,7 @@ class ModelWrapper(object):
         :param save_dir:
         :return:
         """
-        return f"{save_dir}{ModelWrapper.models_dir}/{self._get_description()}-weights.h5"
+        return f"{save_dir}/{ModelWrapper.models_dir}/{self._get_description()}-weights.h5"
 
     def save(self, save_dir, save_format=None, append_report=True):
         """
@@ -367,12 +367,12 @@ class ModelWrapper(object):
         description = self._get_description()
         print(f"description: {description}")
 
-        self.model_file = f"{save_dir}{ModelWrapper.models_dir}/{description}-model.h5"
-        self.model_json_file = f"{save_dir}{ModelWrapper.models_dir}/{description}-model.json"
-        self.network_history_file = f"{save_dir}{ModelWrapper.reports_dir}/{description}-history.pkl"
+        self.model_file = f"{save_dir}/{ModelWrapper.models_dir}/{description}-model.h5"
+        self.model_json_file = f"{save_dir}/{ModelWrapper.models_dir}/{description}-model.json"
+        self.network_history_file = f"{save_dir}/{ModelWrapper.reports_dir}/{description}-history.pkl"
         self.weights_file = self.get_weights_filename(save_dir)
         self.report_file = ModelWrapper.get_report_file_name(save_dir)
-        self.tokenizer_file = f'{save_dir}{ModelWrapper.models_dir}/{description}-tokenizer.pkl'
+        self.tokenizer_file = f'{save_dir}/{ModelWrapper.models_dir}/{description}-tokenizer.pkl'
 
         print(f"Saving to report file: {self.report_file}")
         report = self.get_report()
