@@ -4,7 +4,6 @@ import pandas as pd
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.layers import Layer
-#from tensorflow.keras.engine.topology import Layer
 from tensorflow.keras import backend as K
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
@@ -67,6 +66,7 @@ def preprocess_file(data_df,
     :param data_df: DF with both features and label
     :param feature_column: string name of feature column
     :param label_column: string name of lable column
+    :param report_dir: string - where to save sampling histogram
     :param max_sequence_length: maximum number of words to keep in the review
     :param use_oov_token: Default True. Use a out of vocabulary token for tokenizer
     :param sampler: imblearn sampler must have fit_resample function
@@ -360,8 +360,8 @@ class ModelWrapper(object):
         * tokenizer used for pre-processing
 
         :param save_dir: base directory to save files models and reports will be appended to this
-        :param save_format: save_format for tf.model.save
-        :param append_report: if existing report, True to append or False to overwrite
+        :param save_format: save_format for tf.model.save. Default None
+        :param append_report: if existing report, True to append or False to overwrite. Default True
         :return:
         """
         description = self._get_description()
