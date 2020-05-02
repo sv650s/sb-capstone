@@ -6,27 +6,37 @@
 #
 
 usage() {
-    echo "`echo $0`: [-n debug]"
+    echo "`basename $0`: [-n debug] [-u no_util]"
+    echo "examples:"
+    echo "  $0 -n -u"
 }
 
-while getopts "d" opt; do
+NO_UTIL=""
+while getopts "du" opt; do
     case $opt in
       d ) echo "Entering DEBUG mode" && DEBUG_FLAG="-n";;
-      \?) echo "Invalid option: -"$OPTARG"" >&2
+      u ) NO_UTIL="true";;
+      : ) echo "Option -"$OPTARG" requires an argument." >&2
           usage
           exit 1;;
-      : ) echo "Option -"$OPTARG" requires an argument." >&2
+      * ) echo "Invalid option: -"$OPTARG"" >&2
           usage
           exit 1;;
     esac
 done
 
 # sync all util file to google colab
-echo "syncing util to google drive..."
-rsync -rauv ${DEBUG_FLAG} --delete ../util/*.py ~/Google\ Drive/Springboard/capstone/util/
+echo ""
+if [ "x${NO_UTIL}" == "xtrue" ]; then
+    echo "Skip syncing util to google drive"
+else
+    echo "Syncing util to google drive..."
+    rsync -rauv ${DEBUG_FLAG} --delete ../util/*.py ~/Google\ Drive/Springboard/capstone/util/
+fi
 
 # sync report files and notebooks from colab to git repot
-echo "pulling down reports..."
+echo ""
+echo "Pulling down reports..."
 rsync -rauv ${DEBUG_FLAG} ~/Google\ Drive/Springboard/capstone/reports/*.csv ../reports/
 
 # sync report files and notebooks from colab to git repot
