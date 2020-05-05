@@ -48,6 +48,7 @@ dependencies:
   - spacy # LSTMVis
   - seaborn
   - traceback2
+  - tensorflow==2.0.0
   - unittest2
   - unittest2=1.1.0
   - virtualenv
@@ -59,6 +60,5 @@ dependencies:
     - gradient
     - jupyter_http_over_ws
     - mysql-connector
-    - tensorflow==2.0.0-beta1
 prefix: /Users/vinceluk/springboard-projects/capstone
 
