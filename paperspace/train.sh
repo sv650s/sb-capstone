@@ -35,7 +35,9 @@ fi
 machine_type="P4000"
 bidirectional_opt=
 bidirectional_name=
-while getopts :b:c:d:e:l:m:np:r: o
+unbalance_class_weights_opt=
+balance_name="B"
+while getopts :b:c:d:e:l:m:np:r:u o
    do
      case $o in
         b) batch_size="$OPTARG" ;;
@@ -47,6 +49,7 @@ while getopts :b:c:d:e:l:m:np:r: o
         n) bidirectional_opt="-n"; bidirectional_name="bi";;
         p) patience="$OPTARG" ;;
         r) recurrent_dropout_rate="$OPTARG" ;;
+        u) unbalance_class_weights_opt="-u"; balance_name="" ;;
         *) usage && exit 0 ;;                     # display usage and exit
      esac
    done
@@ -101,11 +104,11 @@ echo "Running python with following command"
 echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${sample_size}" \
 
 gradient experiments run singlenode \
-    --name ${bidirectional_name}LSTM-${sample_size} \
+    --name ${bidirectional_name}LSTM${balance_name}-${sample_size} \
     --projectId pr1cl53bg \
     --machineType ${machine_type} \
     --container vtluk/paperspace-tf-gpu:1.0 \
-    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${sample_size}" \
+    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${unbalance_class_weights_opt} ${sample_size}" \
     --workspace .
 
 

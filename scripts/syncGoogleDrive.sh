@@ -37,7 +37,7 @@ fi
 # sync report files and notebooks from colab to git repot
 echo ""
 echo "Pulling down reports..."
-rsync -rauv ${DEBUG_FLAG} ~/Google\ Drive/Springboard/capstone/reports/*.csv ../reports/
+rsync -rauv ${DEBUG_FLAG} --exclude=*test* ~/Google\ Drive/Springboard/capstone/reports/*.csv ../reports/
 
 # sync report files and notebooks from colab to git repot
 #echo "pulling down history files..."

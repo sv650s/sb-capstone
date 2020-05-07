@@ -259,6 +259,10 @@ if __name__ == "__main__":
                         help="label column. Default star_rating",
                         default=False,
                         action="store_true")
+    parser.add_argument("-u", "--unbalanced_class_weights",
+                        help="do not balance class weights for training",
+                        default=False,
+                        action="store_true")
 
     parser.add_argument("-p", "--patience", help="patience. Default = 4", default=4)
     parser.add_argument("-c", "--lstm_cells", help="Number of LSTM cells. Default = 128", default=128)
@@ -301,6 +305,7 @@ if __name__ == "__main__":
     recurrent_dropout_rate = float(args.recurrent_dropout_rate)
 
     bidirectional = args.bidirectional
+    balance_class_weights = not args.unbalanced_class_weights
 
 
     data_dir = f'{input_dir}/amazon_reviews'
@@ -457,7 +462,7 @@ if __name__ == "__main__":
                              epochs=epochs,
                              verbose=1,
                              validation_split=0.2,
-                             class_weight=weights_dict,
+                             balance_class_weights=balance_class_weights,
                              callbacks=[early_stop, reduce_lr])
 
     mw.evaluate(X_test, y_test)

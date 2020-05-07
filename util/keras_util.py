@@ -12,6 +12,7 @@ from tensorflow.keras.layers import Layer
 from tensorflow.keras import backend as K
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.utils.class_weight import compute_class_weight
 from abc import ABC, ABCMeta, abstractmethod, abstractproperty, abstractclassmethod, abstractstaticmethod
 
 import util.file_util as fu
@@ -305,15 +306,59 @@ class ModelWrapper(object):
                     f"\tlearning_rate:\t\t\t{self.learning_rate}\n"
         return summary
 
+    def get_class_weight_dict(self, y_train):
+        """
+        computes class weight based on y_train distribution
 
+        :param y_train: encoded labels - should have dimension (samples, num of classes)
+        :return: dictionary of class weights ready to feed into model.fit function
+        """
+        self.y_train_unencoded = unencode(y_train)
+        weights = compute_class_weight('balanced', np.arange(1, 6), self.y_train_unencoded)
+        weights_dict = {i: weights[i] for i in np.arange(0, len(weights))}
+        log.debug(f'class weights: {weights}')
+        log.info(f'Computed class weight dictionary: {weights_dict}')
+        return weights_dict
+
+
+    # TODO: remove parameters defined in model.fit
     def fit(self, X_train, y_train,
             epochs,
             batch_size = 32,
-            validation_split=0.2,
-            verbose=1,
-            callbacks=None,
-            class_weight = None):
-        print(f'Number of training examples: {len(X_train)}')
+            validation_split = 0.2,
+            verbose = 1,
+            callbacks = None,
+            balance_class_weights = True):
+        """
+        Calls model.fit and record metrics
+
+        Typical parameters for fit:
+            epochs - max epochs for training
+            batch_size
+            validation_split
+            verbose
+            callbacks
+
+        :param X_train:
+        :param y_train:
+        :param epochs:
+        :param batch_size:
+        :param validation_split:
+        :param verbose:
+        :param callbacks:
+        :param balance_class_weight:
+        :return:
+        """
+
+        log.info(f'Number of training examples: {len(X_train)}')
+        if balance_class_weights:
+            self.class_weight = self.get_class_weight_dict(y_train)
+        else:
+            self.class_weight = None
+        self.X_train = X_train
+        self.y_train = y_train
+        self.batch_size = batch_size
+
         start_time = datetime.now()
         log.info(f'model: {self.model}')
         self.network_history = self.model.fit(X_train,
@@ -323,13 +368,9 @@ class ModelWrapper(object):
                                               validation_split=validation_split,
                                               callbacks=callbacks,
                                               verbose=verbose,
-                                              class_weight=class_weight)
+                                              class_weight=self.class_weight)
         end_time = datetime.now()
-        self.class_weight = class_weight
         self.train_time_min = round((end_time - start_time).total_seconds() / 60, 2)
-        self.X_train = X_train
-        self.y_train = y_train
-        self.batch_size = batch_size
         self.epochs = len(self.network_history.history['loss'])
         return self.network_history
 
@@ -400,20 +441,18 @@ class ModelWrapper(object):
         print("Unencode training set predictions...")
         # 1D array with class index as each value
         train_y_predict_unencoded = unencoder(self.train_y_predict)
-        # TODO: move this to fit so we don't have to do this twice and use to calculate class_weights
-        y_train_unencoded = unencoder(self.y_train)
 
 
         print("Generating training set confusion matrix...")
-        self.train_confusion_matrix = confusion_matrix(y_train_unencoded, train_y_predict_unencoded)
+        self.train_confusion_matrix = confusion_matrix(self.y_train_unencoded, train_y_predict_unencoded)
 
         print("Calculating training set ROC AUC...")
         self.train_roc_auc, self.train_fpr, self.train_tpr = calculate_roc_auc(self.y_train, self.train_y_predict)
 
         print("Getting training set classification report...")
-        self.train_classification_report = classification_report(y_train_unencoded, train_y_predict_unencoded)
+        self.train_classification_report = classification_report(self.y_train_unencoded, train_y_predict_unencoded)
         # classification report dictioonary
-        self.train_crd = classification_report(y_train_unencoded, train_y_predict_unencoded, output_dict=True)
+        self.train_crd = classification_report(self.y_train_unencoded, train_y_predict_unencoded, output_dict=True)
 
 
 
