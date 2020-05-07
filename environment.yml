@@ -13,12 +13,10 @@ dependencies:
   - Flask-SQLAlchemy
   - flask-restplus
   - gensim
-  - gensim
   - google-cloud-storage
   - h5py
   - hdf5
   - imbalanced-learn=0.4
-  - joblib
   - joblib
   - jupyter
   - jupyter_contrib_nbextensions
@@ -33,10 +31,10 @@ dependencies:
   - pandas=1.0.1
   - pandas-datareader=0.8.1
   - pip
+  - psutil # used for paperspace training
   - pydot
   - pyldavis
   - pymysql
-  - pyspark
   - pyspark
   - pytest-cov=2.6.1
   - pytest-datadir
@@ -49,7 +47,6 @@ dependencies:
   - seaborn
   - traceback2
   - tensorflow==2.0.0
-  - unittest2
   - unittest2=1.1.0
   - virtualenv
   - Werkzeug

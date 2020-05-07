@@ -333,7 +333,17 @@ if __name__ == "__main__":
 
     architecture = f"1x{lstm_cells}"
     FEATURE_SET_NAME = "glove_with_stop_nonlemmatized"
-    REPORT_FILE = "paperspace-glove_embedding_with_stop_nonlemmatized-dl_prototype-report.csv"
+    # TODO: add in sampling
+    REPORT_FILE = f"paperspace-{model_name}{lstm_cells}-" \
+        f"{architecture}-" \
+        f"dr{str(dropout_rate).split('.')[1]}-" \
+        f"rdr{str(recurrent_dropout_rate).split('.')[1]}-" \
+        f"batch{batch_size}-" \
+        f"lr{str(LEARNING_RATE).split('.')[1]}-" \
+        f"{FEATURE_SET_NAME}-" \
+        f"sampling_none-" \
+        f"{feature_column}-" \
+            "report.csv"
 
     if debug:
       data_file = f'{data_dir}/amazon_reviews_us_Wireless_v1_00-test-with_stop_nonlemmatized-preprocessed.csv'
@@ -438,6 +448,8 @@ if __name__ == "__main__":
                             learning_rate = LEARNING_RATE, # learning rate - ModelWrapper
                             optimizer = "Adam"
     )
+
+    mw.add("environment", "paperspace")
 
     network_history = mw.fit(X_train,
                              y_train,

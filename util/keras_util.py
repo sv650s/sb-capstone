@@ -48,6 +48,8 @@ def unencode(input):
     return ret
 
 
+# TODO: move this method into ModelWrapper so we don't have to set sampling_type
+# explicitly - we should be able infer this using type(sampler).__name__.lower()
 def preprocess_file(data_df,
                     feature_column,
                     label_column,
@@ -504,8 +506,8 @@ class ModelWrapper(object):
         report.add("roc_auc_train", self.train_roc_auc)
         report.add("loss", self.test_scores[0])
         report.add("accuracy", self.test_scores[1])
-        report.add("train_loss", self.train_scores[0])
-        report.add("train_accuracy", self.train_scores[1])
+        report.add("loss_train", self.train_scores[0])
+        report.add("accuracy_train", self.train_scores[1])
         report.add("confusion_matrix", json.dumps(self.test_confusion_matrix.tolist()))
         report.add("confusion_matrix_train", json.dumps(self.train_confusion_matrix.tolist()))
         report.add("file", self.data_file)
@@ -513,16 +515,12 @@ class ModelWrapper(object):
         report.add("network_history_file", self.network_history_file)
         # report.add("history", self.network_history.history)
         report.add("tokenizer_file", self.tokenizer_file)
-        if self.X_train is not None:
-            report.add("max_sequence_length", self.X_train.shape[1])
         report.add("batch_size", self.batch_size)
         report.add("epochs", self.epochs)
         report.add("feature_set_name", self.feature_set_name)
         if self.class_weight is not None:
             report.add("class_weight", self.class_weight)
         report.add("sampling_type", self.sampling_type)
-        # TODO: move to EmbeddingModelWrapper
-        report.add("embedding", self.embed_size)
         report.add("model_file", self.model_file)
         report.add("model_json_file", self.model_json_file)
         report.add("weights_file", self.weights_file)
@@ -532,9 +530,9 @@ class ModelWrapper(object):
         report.add("train_features", self.X_train.shape[1])
         report.add("train_time_min", self.train_time_min)
         report.add("evaluate_time_min", self.evaluate_time_min)
-        report.add("train_evaluate_time_min", self.train_evaluate_time_min)
+        report.add("evaluate_time_min_train", self.train_evaluate_time_min)
         report.add("predict_time_min", self.test_predict_time_min)
-        report.add("train_predict_time_min", self.train_predict_time_min)
+        report.add("predict_time_min_train", self.train_predict_time_min)
         report.add("status", "success")
         report.add("status_date", datetime.now().strftime(TIME_FORMAT))
         for k, v in self.misc_items.items():
@@ -596,6 +594,16 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
             f"\tembed_size:\t\t\t{self.embed_size}\n" \
             f"\tmax_sequence_length:\t\t{self.max_sequence_length}\n"
         return summary
+
+    def get_report(self):
+        report = super().get_report()
+        report.add("embedding", self.embed_size)
+        report.add("vocab_size", self.vocab_size)
+        if self.X_train is not None:
+            report.add("max_sequence_length", self.X_train.shape[1])
+
+        return report
+
 
 
 class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
@@ -682,6 +690,15 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
             f"\tdropout_rate:\t\t\t{self.dropout_rate}\n" \
             f"\trecurrent_dropout_rate:\t\t{self.recurrent_dropout_rate}\n"
         return summary
+
+    def get_report(self):
+        report = super().get_report()
+        report.add("lstm_dim", self.lstm_dim)
+        report.add("bidirectional", self.bidirectional)
+        report.add("dropout_rate", self.dropout_rate)
+        report.add("recurrent_dropout_rate", self.recurrent_dropout_rate)
+
+        return report
 
 
 class ModelReport(object):

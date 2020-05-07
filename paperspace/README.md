@@ -23,6 +23,8 @@ Use the following script to traing models on gradient paperspace.
 P4000 GPU instance will be created for model training
 
 ```bash
+$ ./train.sh -?
+
 train.sh: [-b batch_size] [-c lstm_cells] [-d dropout_rate] [-e epochs] [-l log_level] [-m machine_type]
                [-p patience] [-r recurrent_dropout_rate] <sample size>
 Parameter(s):
@@ -34,13 +36,57 @@ Options:
   -e epochs:                  max number of epochs for training. Default 20
   -l log_level:               log level for logging. Default INFO
   -m machine_type:            Gradient machine type. Options C3 (CPU) or P4000 (GPU). Default P4000
+  -n enable_bidirectional:    Enable bidirectional network. Default False
   -p patience:                patience for early stopping. Default 4
   -r recurrent_dropout_rate:  recurrent dropout rate for LSTM cells. Default 0
 Example:
-  ./train.sh test # DEBUG MODE
   ./train.sh 1m
   ./train.sh -e 40 -d 0.2 1m
 ```
+
+## Training Locally
+
+```bash
+$ python train/train.py --help
+
+usage: train.py [-h] [-i INPUT_DIR] [-o OUTPUT_DIR] [-d DROPOUT_RATE]
+                [-r RECURRENT_DROPOUT_RATE] [-f FEATURE_COLUMN]
+                [-t TRUTH_LABEL_COLUMN] [-n] [-p PATIENCE] [-c LSTM_CELLS]
+                [-e EPOCHS] [-b BATCH_SIZE] [-l LOGLEVEL]
+                sample_size
+
+positional arguments:
+  sample_size           Sample size (ie, 50k, test)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT_DIR, --input_dir INPUT_DIR
+                        input directory. Default /storage/data
+  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
+                        output directory. Default /artifacts
+  -d DROPOUT_RATE, --dropout_rate DROPOUT_RATE
+                        dropout rate. Default 0
+  -r RECURRENT_DROPOUT_RATE, --recurrent_dropout_rate RECURRENT_DROPOUT_RATE
+                        recurrent dropout rate. NOTE: will not be able to
+                        cuDNN if this is set. Default 0
+  -f FEATURE_COLUMN, --feature_column FEATURE_COLUMN
+                        feature column. Default review_body
+  -t TRUTH_LABEL_COLUMN, --truth_label_column TRUTH_LABEL_COLUMN
+                        label column. Default star_rating
+  -n, --bidirectional   label column. Default star_rating
+  -p PATIENCE, --patience PATIENCE
+                        patience. Default = 4
+  -c LSTM_CELLS, --lstm_cells LSTM_CELLS
+                        Number of LSTM cells. Default = 128
+  -e EPOCHS, --epochs EPOCHS
+                        Max number epochs. Default = 20
+  -b BATCH_SIZE, --batch_size BATCH_SIZE
+                        Training batch size. Default = 32
+  -l LOGLEVEL, --loglevel LOGLEVEL
+                        log level
+```
+
+./syncUtil.sh &&  python train/train.py -i ../dataset -o /tmp -n test
 
 ## Artifacts
 
