@@ -1,12 +1,19 @@
 from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 import pandas as pd
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Dropout
+from tensorflow.keras.layers import Conv1D, MaxPooling1D, Embedding, \
+    SpatialDropout1D, Flatten, LSTM, Bidirectional
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.layers import Layer
 from tensorflow.keras import backend as K
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
+from abc import ABC, ABCMeta, abstractmethod, abstractproperty, abstractclassmethod, abstractstaticmethod
+
 import util.file_util as fu
 import json
 import logging
@@ -137,8 +144,8 @@ def preprocess_file(data_df,
 class ModelWrapper(object):
 
     report_file_name = None
-    reports_dir = "/reports"
-    models_dir = "/models"
+    reports_dir = "reports"
+    models_dir = "models"
 
     @staticmethod
     def set_report_filename(filename: str):
@@ -180,11 +187,14 @@ class ModelWrapper(object):
                                mw.embed_size,
                                mw.tokenizer,
                                mw.description,
-                               mw.feature_column)
+                               mw.feature_column,
+                               mw.optimizer)
+
         mw_copy.tokenizer_file = mw.tokenizer_file
         mw_copy.train_time_min = mw.train_time_min
         mw_copy.predict_time_min = mw.predict_time_min
         mw_copy.evaluate_time_min = mw.evaluate_time_min
+        mw_copy.train_evaluate_time_min = mw.train_evaluate_time_min
         mw_copy.network_history = mw.network_history
         mw_copy.weights_file = mw.weights_file
         mw_copy.X_train = mw.X_train
@@ -197,6 +207,8 @@ class ModelWrapper(object):
         mw_copy.fpr = mw.fpr
         mw_copy.tpr = mw.tpr
         mw_copy.crd = mw.crd
+        mw_copy.optimizer = mw.optimizer
+        mw_copy.learning_rate = mw.learnig_rate
         return mw_copy
 
 
@@ -209,10 +221,11 @@ class ModelWrapper(object):
                  feature_column,
                  data_file,
                  sampling_type="none",
-                 embed_size = None,
                  tokenizer=None,
                  description=None,
-                 save_weights=True):
+                 save_weights=True,
+                 optimizer = None,
+                 learning_rate = None):
         """
         Constructor
 
@@ -223,13 +236,14 @@ class ModelWrapper(object):
         :param label_column: name of column to use as label
         :param data_file: datafile used
         :param sampling_type: specify type of sampling - ie, smote, nearmiss-2. default none
-        :param embed_size: size of embedding. default is None
         :param tokenizer: tokenizer used to preprocess, default is None
         :param description: description of model. If not passed in, will automatically construct this
         :param save_weights: whether we should save weights for the model or not. Default is true to make old notebooks
             backwards compatible. However, for newer notebooks that use ModelCheckpoints,
             you should set this to false because ModelCheckpoint should already save the best model weights for you
         """
+        log.debug(f"Contructor ModelWrapper")
+
         self.model_name = model_name
         self.model = model
         self.feature_set_name = feature_set_name
@@ -239,22 +253,54 @@ class ModelWrapper(object):
         self.data_file = data_file
         self.batch_size = 0
         self.sampling_type = sampling_type
-        self.embed_size = embed_size
         self.tokenizer = tokenizer
         self.description = description
+        self.save_weights = save_weights
+        self.optimizer = optimizer
+        self.learning_rate = learning_rate
         self.tokenizer_file = None
         self.train_time_min = 0
         self.predict_time_min = 0
         self.evaluate_time_min = 0
+        self.train_evaluate_time_min = 0
         self.network_history = None
         self.weights_file = None
+        # number of epochs used to train
         self.epochs = 0
-        self.save_weights = save_weights
         # dumping ground for anything else we want to store
         self.misc_items = {}
 
         self.X_test = None
         self.y_test = None
+
+        log.debug(f"Summary: {self}")
+
+
+
+
+    def __str__(self):
+        """
+        Override __str__ so we can print a summary of this class
+        
+        :return: 
+        """
+        log.debug("ModelWrapper.__str__")
+        summary = \
+            f"\nModelWrapper parameters:\n" \
+                f"\tmodel_name:\t\t\t{self.model_name}\n" \
+                    f"\tdescription:\t\t\t{self.description}\n" \
+                    f"\tarchitecture:\t\t\t{self.architecture}\n" \
+                    f"\tfeature_set_name:\t\t{self.feature_set_name}\n" \
+                    f"\tlabel_column:\t\t\t{self.label_column}\n" \
+                    f"\tfeature_column:\t\t\t{self.feature_column}\n" \
+                    f"\tdata_file:\t\t\t{self.data_file}\n" \
+                    f"\tbatch_size:\t\t\t{self.batch_size}\n" \
+                    f"\tsampling_type:\t\t\t{self.sampling_type}\n" \
+                    f"\ttokenizer:\t\t\t{self.tokenizer}\n" \
+                    f"\tsave_weights:\t\t\t{self.save_weights}\n" \
+                    f"\toptimizer:\t\t\t{self.optimizer}\n" \
+                    f"\tlearning_rate:\t\t\t{self.learning_rate}\n"
+        return summary
 
 
     def fit(self, X_train, y_train,
@@ -266,6 +312,7 @@ class ModelWrapper(object):
             class_weight = None):
         print(f'Number of training examples: {len(X_train)}')
         start_time = datetime.now()
+        log.info(f'model: {self.model}')
         self.network_history = self.model.fit(X_train,
                                               y_train,
                                               batch_size=batch_size,
@@ -300,7 +347,13 @@ class ModelWrapper(object):
         self.X_test = X_test
         self.y_test = y_test
 
-        print("Running model.evaluate...")
+        print("Running model.evaluate on training set...")
+        start_time = datetime.now()
+        self.train_scores = self.model.evaluate(self.X_train, self.y_train, verbose=verbose)
+        end_time = datetime.now()
+        self.train_evaluate_time_min = round((end_time - start_time).total_seconds() / 50, 2)
+
+        print("Running model.evaluate on test set...")
         start_time = datetime.now()
         self.scores = self.model.evaluate(X_test, y_test, verbose=verbose)
         end_time = datetime.now()
@@ -417,6 +470,8 @@ class ModelWrapper(object):
         report.add("roc_auc", self.roc_auc)
         report.add("loss", self.scores[0])
         report.add("accuracy", self.scores[1])
+        report.add("train_loss", self.train_scores[0])
+        report.add("train_accuracy", self.train_scores[1])
         report.add("confusion_matrix", json.dumps(self.confusion_matrix.tolist()))
         report.add("file", self.data_file)
         # too long to save in CSV
@@ -441,6 +496,7 @@ class ModelWrapper(object):
         report.add("train_features", self.X_train.shape[1])
         report.add("train_time_min", self.train_time_min)
         report.add("evaluate_time_min", self.evaluate_time_min)
+        report.add("train_evaluate_time_min", self.train_evaluate_time_min)
         report.add("predict_time_min", self.predict_time_min)
         report.add("status", "success")
         report.add("status_date", datetime.now().strftime(TIME_FORMAT))
@@ -449,7 +505,146 @@ class ModelWrapper(object):
 
         return report
 
+class EmbeddingModelWrapper(ModelWrapper, ABC):
+    """
+    Abstract base class for creating models that use an initial embedding layer
 
+    Must implement the following abstract functions:
+        build_model
+
+    Must override the following functions:
+        __init__
+        __str__
+    """
+
+    # TODO: implement copy static method
+
+    @abstractmethod
+    def build_model(self):
+        """
+        implement this method to create model based on class variables
+        :return: model object used for training
+        """
+        return NotImplemented
+
+    def compute_class_weights(self):
+        # TODO: implement this instead of calculating from notebook
+        pass
+
+    def __init__(self,
+                   vocab_size,
+                   max_sequence_length = 100,
+                   embed_size = 300,
+                   *args,
+                 **kwargs):
+        log.debug(f'Constructor EmbeddingModelWrapper')
+
+        self.vocab_size = vocab_size
+        self.embed_size = embed_size
+        self.max_sequence_length = max_sequence_length
+
+        # pass None to super constructor since we haven't built it yet
+        super().__init__(None, *args, **kwargs)
+
+        self.model = self.build_model()
+
+
+
+    def __str__(self):
+        log.debug("EmbeddingModelWrapper.__str__")
+        super_sum = super().__str__()
+        summary = f"{super_sum}\n" \
+            f"\nEmbeddingModelWrapper parameters:\n" \
+            f"\tvocab_size:\t\t\t{self.vocab_size}\n" \
+            f"\tembed_size:\t\t\t{self.embed_size}\n" \
+            f"\tmax_sequence_length:\t\t{self.max_sequence_length}\n"
+        return summary
+
+
+class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
+
+
+    # TODO: implement copy static method
+
+    def __init__(self,
+                 lstm_dim,
+                 dropout_rate,
+                 recurrent_dropout_rate,
+                 bidirectional = False,
+                 *args,
+                 **kwargs):
+        log.debug(f'Constructor LSTM1LayerModelWrapper')
+
+        self.lstm_dim = lstm_dim
+        self.bidirectional = bidirectional
+        self.dropout_rate = dropout_rate
+        self.recurrent_dropout_rate = recurrent_dropout_rate
+
+
+        # return super(LSTM1LayerModelWrapper, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+
+    def build_model(self):
+        """
+        Build a 1 layer LSTM network
+        :return: LSTM model
+        """
+        log.debug(f'Building Model: {self}')
+
+        model = Sequential()
+        model.add(Embedding(input_dim=self.vocab_size,
+                            output_dim=self.embed_size,
+                            input_length=self.max_sequence_length))
+        if self.bidirectional:
+            model.add(Bidirectional(LSTM(self.lstm_dim,
+                                         dropout=self.dropout_rate,
+                                         recurrent_dropout=self.recurrent_dropout_rate)))
+        else:
+            model.add(LSTM(self.lstm_dim,
+                           dropout=self.dropout_rate,
+                           recurrent_dropout=self.recurrent_dropout_rate))
+        model.add(Dense(5, activation="softmax"))
+
+        model.compile(loss="categorical_crossentropy",
+                      optimizer=eval(self.optimizer)(learning_rate = self.learning_rate),
+                      metrics=["categorical_accuracy"])
+
+        print(model.summary())
+        return model
+
+    def _get_description(self) -> str:
+        """
+        Override default descripition to take into account hyperparameters
+        :return:
+        """
+        directory, inbasename = fu.get_dir_basename(self.data_file)
+        if self.X_test is not None:
+            # TODO: add learning rate
+            description = f"{self.model_name}-" \
+                    f"{self.architecture}-" \
+                    f"dr{str(self.dropout_rate).split('.')[1]}-" \
+                    f"rdr{str(self.recurrent_dropout_rate).split('.')[1]}-" \
+                    f"batch{self.batch_size}-" \
+                    f"lr{str(self.learning_rate).split('.')[1]}-" \
+                    f"{self.feature_set_name}-" \
+                    f"sampling_{self.sampling_type}-" \
+                    f"{self.X_test.shape[0] + self.X_train.shape[0]}-" \
+                    f"{self.X_test.shape[1]}-{self.feature_column}"
+        else:
+            description = self.model_name
+        return description
+
+    def __str__(self):
+        log.info("LSTM1LayerModelWrapper.__str__")
+        super_sum = super().__str__()
+        summary = f"{super_sum}\n" \
+            f"LSTM1LayerModelWrapper parameters:\n" \
+            f"\tlstm_dim:\t\t\t{self.lstm_dim}\n" \
+            f"\tbidirectional:\t\t\t{self.bidirectional}\n" \
+            f"\tdropout_rate:\t\t\t{self.dropout_rate}\n" \
+            f"\trecurrent_dropout_rate:\t\t{self.recurrent_dropout_rate}\n"
+        return summary
 
 
 class ModelReport(object):
@@ -515,7 +710,7 @@ class ModelReport(object):
                 self.report[key] = value
 
     def to_df(self):
-        print(self.report)
+        log.debug(self.report)
         df = pd.DataFrame()
         return df.append(self.report, ignore_index=True, sort=False)
 

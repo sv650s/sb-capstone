@@ -166,7 +166,10 @@ def _preprocess_dnn_report_file(report: pd.DataFrame):
     # TODO: implement parsing out other attributes
     report["eval_metric"] = report["classification_report"].apply(lambda x: calculate_metric(json.loads(x)))
     report["sample_size"] = report.train_examples + report.test_examples
-    report["display_name"] = report["model_name"] + " (" + report["architecture"] + ")"
+    if "architecture" in report.keys():
+        report["display_name"] = report["model_name"] + " (" + report["architecture"] + ")"
+    else:
+        report["display_name"] = report["model_name"]
     return report
 
 def convert_dnn_report_format(report:pd.DataFrame):
