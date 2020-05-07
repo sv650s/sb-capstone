@@ -50,3 +50,7 @@ report/*99-histogram.csv
 
 # white papers
 white_papers
+
+
+# paperspace - ignore util since we are copying from /util directory
+paperspace/train/util
