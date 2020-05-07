@@ -192,7 +192,7 @@ class ModelWrapper(object):
 
         mw_copy.tokenizer_file = mw.tokenizer_file
         mw_copy.train_time_min = mw.train_time_min
-        mw_copy.predict_time_min = mw.predict_time_min
+        mw_copy.test_predict_time_min = mw.predict_time_min
         mw_copy.evaluate_time_min = mw.evaluate_time_min
         mw_copy.train_evaluate_time_min = mw.train_evaluate_time_min
         mw_copy.network_history = mw.network_history
@@ -201,12 +201,13 @@ class ModelWrapper(object):
         mw_copy.X_test = mw.X_test
         mw_copy.y_train = mw.y_train
         mw_copy.y_test = mw.y_test
-        mw_copy.scores = mw.scores
-        mw_copy.confusion_matrix = mw.confusion_matrix
-        mw_copy.roc_auc = mw.roc_auc
-        mw_copy.fpr = mw.fpr
-        mw_copy.tpr = mw.tpr
-        mw_copy.crd = mw.crd
+        mw_copy.test_scores = mw.scores
+        mw_copy.train_scores = mw.train_scores
+        mw_copy.test_confusion_matrix = mw.confusion_matrix
+        mw_copy.test_roc_auc = mw.roc_auc
+        mw_copy.test_fpr = mw.fpr
+        mw_copy.test_tpr = mw.tpr
+        mw_copy.test_crd = mw.crd
         mw_copy.optimizer = mw.optimizer
         mw_copy.learning_rate = mw.learnig_rate
         return mw_copy
@@ -260,7 +261,7 @@ class ModelWrapper(object):
         self.learning_rate = learning_rate
         self.tokenizer_file = None
         self.train_time_min = 0
-        self.predict_time_min = 0
+        self.test_predict_time_min = 0
         self.evaluate_time_min = 0
         self.train_evaluate_time_min = 0
         self.network_history = None
@@ -323,7 +324,7 @@ class ModelWrapper(object):
                                               class_weight=class_weight)
         end_time = datetime.now()
         self.class_weight = class_weight
-        self.train_time_min = round((end_time - start_time).total_seconds() / 50, 2)
+        self.train_time_min = round((end_time - start_time).total_seconds() / 60, 2)
         self.X_train = X_train
         self.y_train = y_train
         self.batch_size = batch_size
@@ -347,41 +348,72 @@ class ModelWrapper(object):
         self.X_test = X_test
         self.y_test = y_test
 
+        print("Running model.evaluate on test set...")
+        start_time = datetime.now()
+        self.test_scores = self.model.evaluate(X_test, y_test, verbose=verbose)
+        end_time = datetime.now()
+        self.evaluate_time_min = round((end_time - start_time).total_seconds() / 60, 2)
+
+        print("Running model.predict on test set...")
+        # this is a 2D array with each column as probabilyt of that class
+        start_time = datetime.now()
+        self.test_y_predict = self.model.predict(X_test)
+        end_time = datetime.now()
+        self.test_predict_time_min = round((end_time - start_time).total_seconds() / 60, 2)
+
+        print("Unencode test set predictions...")
+        # 1D array with class index as each value
+        test_y_predict_unencoded = unencoder(self.test_y_predict)
+        y_test_unencoded = unencoder(self.y_test)
+
+
+        print("Generating test set confusion matrix...")
+        self.test_confusion_matrix = confusion_matrix(y_test_unencoded, test_y_predict_unencoded)
+
+        print("Calculating test set ROC AUC...")
+        self.test_roc_auc, self.test_fpr, self.test_tpr = calculate_roc_auc(y_test, self.test_y_predict)
+
+        print("Getting test set classification report...")
+        self.test_classification_report = classification_report(y_test_unencoded, test_y_predict_unencoded)
+        # classification report dictioonary
+        self.test_crd = classification_report(y_test_unencoded, test_y_predict_unencoded, output_dict=True)
+
+        """
+        get stats from training set
+        """
+
         print("Running model.evaluate on training set...")
         start_time = datetime.now()
         self.train_scores = self.model.evaluate(self.X_train, self.y_train, verbose=verbose)
         end_time = datetime.now()
-        self.train_evaluate_time_min = round((end_time - start_time).total_seconds() / 50, 2)
+        self.train_evaluate_time_min = round((end_time - start_time).total_seconds() / 60, 2)
 
-        print("Running model.evaluate on test set...")
-        start_time = datetime.now()
-        self.scores = self.model.evaluate(X_test, y_test, verbose=verbose)
-        end_time = datetime.now()
-        self.evaluate_time_min = round((end_time - start_time).total_seconds() / 50, 2)
-
-        print("Running model.predict...")
+        print("Running model.predict on training set...")
         # this is a 2D array with each column as probabilyt of that class
         start_time = datetime.now()
-        self.y_predict = self.model.predict(X_test)
+        self.train_y_predict = self.model.predict(self.X_train)
         end_time = datetime.now()
-        self.predict_time_min = round((end_time - start_time).total_seconds() / 50, 2)
+        self.train_predict_time_min = round((end_time - start_time).total_seconds() / 60, 2)
 
-        print("Unencode predictions...")
+        print("Unencode training set predictions...")
         # 1D array with class index as each value
-        y_predict_unencoded = unencoder(self.y_predict)
-        y_test_unencoded = unencoder(self.y_test)
+        train_y_predict_unencoded = unencoder(self.train_y_predict)
+        # TODO: move this to fit so we don't have to do this twice and use to calculate class_weights
+        y_train_unencoded = unencoder(self.y_train)
 
 
-        print("Generating confusion matrix...")
-        self.confusion_matrix = confusion_matrix(y_test_unencoded, y_predict_unencoded)
+        print("Generating training set confusion matrix...")
+        self.train_confusion_matrix = confusion_matrix(y_train_unencoded, train_y_predict_unencoded)
 
-        print("Calculating ROC AUC...")
-        self.roc_auc, self.fpr, self.tpr = calculate_roc_auc(y_test, self.y_predict)
+        print("Calculating training set ROC AUC...")
+        self.train_roc_auc, self.train_fpr, self.train_tpr = calculate_roc_auc(self.y_train, self.train_y_predict)
 
-        print("Getting classification report...")
-        self.classification_report = classification_report(y_test_unencoded, y_predict_unencoded)
+        print("Getting training set classification report...")
+        self.train_classification_report = classification_report(y_train_unencoded, train_y_predict_unencoded)
         # classification report dictioonary
-        self.crd = classification_report(y_test_unencoded, y_predict_unencoded, output_dict=True)
+        self.train_crd = classification_report(y_train_unencoded, train_y_predict_unencoded, output_dict=True)
+
+
 
     def _get_description(self):
         directory, inbasename = fu.get_dir_basename(self.data_file)
@@ -464,15 +496,18 @@ class ModelWrapper(object):
         else:
             report = ModelReport(self.model_name, self.architecture, self._get_description())
 
-        report.add("feature_column", self.crd)
-        report.add("label_column", self.crd)
-        report.add("classification_report", self.crd)
-        report.add("roc_auc", self.roc_auc)
-        report.add("loss", self.scores[0])
-        report.add("accuracy", self.scores[1])
+        report.add("feature_column", self.test_crd)
+        report.add("label_column", self.test_crd)
+        report.add("classification_report", self.test_crd)
+        report.add("classification_report_train", self.train_crd)
+        report.add("roc_auc", self.test_roc_auc)
+        report.add("roc_auc_train", self.train_roc_auc)
+        report.add("loss", self.test_scores[0])
+        report.add("accuracy", self.test_scores[1])
         report.add("train_loss", self.train_scores[0])
         report.add("train_accuracy", self.train_scores[1])
-        report.add("confusion_matrix", json.dumps(self.confusion_matrix.tolist()))
+        report.add("confusion_matrix", json.dumps(self.test_confusion_matrix.tolist()))
+        report.add("confusion_matrix_train", json.dumps(self.train_confusion_matrix.tolist()))
         report.add("file", self.data_file)
         # too long to save in CSV
         report.add("network_history_file", self.network_history_file)
@@ -486,6 +521,7 @@ class ModelWrapper(object):
         if self.class_weight is not None:
             report.add("class_weight", self.class_weight)
         report.add("sampling_type", self.sampling_type)
+        # TODO: move to EmbeddingModelWrapper
         report.add("embedding", self.embed_size)
         report.add("model_file", self.model_file)
         report.add("model_json_file", self.model_json_file)
@@ -497,7 +533,8 @@ class ModelWrapper(object):
         report.add("train_time_min", self.train_time_min)
         report.add("evaluate_time_min", self.evaluate_time_min)
         report.add("train_evaluate_time_min", self.train_evaluate_time_min)
-        report.add("predict_time_min", self.predict_time_min)
+        report.add("predict_time_min", self.test_predict_time_min)
+        report.add("train_predict_time_min", self.train_predict_time_min)
         report.add("status", "success")
         report.add("status_date", datetime.now().strftime(TIME_FORMAT))
         for k, v in self.misc_items.items():
@@ -636,7 +673,7 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         return description
 
     def __str__(self):
-        log.info("LSTM1LayerModelWrapper.__str__")
+        log.debug("LSTM1LayerModelWrapper.__str__")
         super_sum = super().__str__()
         summary = f"{super_sum}\n" \
             f"LSTM1LayerModelWrapper parameters:\n" \
