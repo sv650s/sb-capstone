@@ -6,9 +6,9 @@
 #    --container vtluk/paperspace-tf-gpu:1.0 \
 
 gradient experiments run singlenode \
-    --name train-test \
+    --name test-env \
     --projectId pr1cl53bg \
-    --machineType P4000 \
+    --machineType C3 \
     --container vtluk/paperspace-tf-gpu:1.0 \
     --command 'python train/test-env.py -i /storage -o /artifacts' \
     --workspace .

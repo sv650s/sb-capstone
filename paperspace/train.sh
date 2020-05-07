@@ -32,20 +32,21 @@ if [ $# -lt 1 ]; then
 fi
 
 
-MACHINE_TYPE="P4000"
-BIDIRECTIONAL_OPT=
+machine_type="P4000"
+bidirectional_opt=
+bidirectional_name=
 while getopts :b:c:d:e:l:m:np:r: o
    do
      case $o in
-        b) BATCH_SIZE="$OPTARG" ;;
-        c) LSTM_CELLS="$OPTARG" ;;
-        d) DROPOUT_RATE="$OPTARG" ;;
-        e) EPOCHS="$OPTARG" ;;
-        l) LOG_LEVEL="$OPTARG" ;;
-        m) MACHINE_TYPE="$OPTARG" ;;
-        n) BIDIRECTIONAL_OPT=" -n ";;
-        p) PATIENCE="$OPTARG" ;;
-        r) RECURRENT_DROPOUT_RATE="$OPTARG" ;;
+        b) batch_size="$OPTARG" ;;
+        c) lstm_cells="$OPTARG" ;;
+        d) dropout_rate="$OPTARG" ;;
+        e) epochs="$OPTARG" ;;
+        l) log_level="$OPTARG" ;;
+        m) machine_type="$OPTARG" ;;
+        n) bidirectional_opt="-n"; bidirectional_name="bi";;
+        p) patience="$OPTARG" ;;
+        r) recurrent_dropout_rate="$OPTARG" ;;
         *) usage && exit 0 ;;                     # display usage and exit
      esac
    done
@@ -54,57 +55,57 @@ shift $((OPTIND-1))
 sample_size=$1
 echo "Sample size: ${sample_size}"
 
-if [ "x${BATCH_SIZE}" == "x" ]; then
-    BATCH_SIZE_OPT=""
+if [ "x${batch_size}" == "x" ]; then
+    batch_size_opt=""
 else
-    BATCH_SIZE_OPT="-b ${BATCH_SIZE}"
+    batch_size_opt="-b ${batch_size}"
 fi
-if [ "x${LSTM_CELLS}" == "x" ]; then
-    LSTM_CELLS_OPT=""
+if [ "x${lstm_cells}" == "x" ]; then
+    lstm_cells_opt=""
 else
-    LSTM_CELLS_OPT="-c ${LSTM_CELLS}"
+    lstm_cells_opt="-c ${lstm_cells}"
 fi
-if [ "x${DROPOUT_RATE}" == "x" ]; then
-    DROPOUT_RATE_OPT=""
+if [ "x${dropout_rate}" == "x" ]; then
+    dropout_rate_opt=""
 else
-    DROPOUT_RATE_OPT="-d ${DROPOUT_RATE}"
+    dropout_rate_opt="-d ${dropout_rate}"
 fi
-if [ "x${EPOCHS}" == "x" ]; then
-    EPOCHS_OPT=""
+if [ "x${epochs}" == "x" ]; then
+    epochs_opt=""
 else
-    EPOCHS_OPT="-e ${EPOCHS}"
+    epochs_opt="-e ${epochs}"
 fi
-if [ "x${LOG_LEVEL}" == "x" ]; then
-    LOG_LEVEL_OPT=""
+if [ "x${log_level}" == "x" ]; then
+    log_level_opt=""
 else
-    LOG_LEVEL_OPT="-l ${LOG_LEVEL}"
+    log_level_opt="-l ${log_level}"
 fi
-if [ "x${MACHINE_TYPE}" == "x" ]; then
-    MACHINE_TYPE_OPT=""
+if [ "x${machine_type}" == "x" ]; then
+    machine_type_opt=""
 else
-    MACHINE_TYPE_OPT="-m ${MACHINE_TYPE}"
+    machine_type_opt="-m ${machine_type}"
 fi
-if [ "x${PATIENCE}" == "x" ]; then
-    PATIENCE_OPT=""
+if [ "x${patience}" == "x" ]; then
+    patience_opt=""
 else
-    PATIENCE_OPT="-p ${PATIENCE}"
+    patience_opt="-p ${patience}"
 fi
-if [ "x${RECURRENT_DROPOUT_RATE}" == "x" ]; then
-    RECURRENT_DROPOUT_RATE_OPT=""
+if [ "x${recurrent_dropout_rate}" == "x" ]; then
+    recurrent_dropout_rate_opt=""
 else
-    RECURRENT_DROPOUT_RATE_OPT="-r ${RECURRENT_DROPOUT_RATE}"
+    recurrent_dropout_rate_opt="-r ${recurrent_dropout_rate}"
 fi
 
 
 echo "Running python with following command"
-echo "python train/train.py -i /storage -o /artifacts ${BATCH_SIZE_OPT} ${BIDIRECTIONAL_OPT} ${LSTM_CELLS_OPT} ${DROPOUT_RATE_OPT} ${EPOCHS_OPT} ${LOG_LEVEL_OPT} ${PATIENCE_OPT} ${RECURRENT_DROPOUT_RATE_OPT} ${sample_size}" \
+echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${sample_size}" \
 
 gradient experiments run singlenode \
-    --name with_stop_nonlemmatized-${sample_size} \
+    --name ${bidirectional_name}LSTM-${sample_size} \
     --projectId pr1cl53bg \
-    --machineType ${MACHINE_TYPE} \
+    --machineType ${machine_type} \
     --container vtluk/paperspace-tf-gpu:1.0 \
-    --command "python train/train.py -i /storage -o /artifacts ${BATCH_SIZE_OPT} ${BIDIRECTIONAL_OPT} ${LSTM_CELLS_OPT} ${DROPOUT_RATE_OPT} ${EPOCHS_OPT} ${LOG_LEVEL_OPT} ${PATIENCE_OPT} ${RECURRENT_DROPOUT_RATE_OPT} ${sample_size}" \
+    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${sample_size}" \
     --workspace .
 
 
