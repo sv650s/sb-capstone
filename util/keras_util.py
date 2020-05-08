@@ -29,6 +29,14 @@ TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 log = logging.getLogger(__name__)
 
+def get_decimal_str(flt):
+  """
+  gets the parts after decimal for a float as a string
+
+  will use this to parse DL parameters to generate filenames
+  """
+  return str(flt).split(".")[1]
+
 
 def unencode(input):
     """
@@ -606,16 +614,27 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         pass
 
     def __init__(self,
-                   vocab_size,
-                   max_sequence_length = 100,
-                   embed_size = 300,
-                   *args,
+                 vocab_size,
+                 max_sequence_length = 100,
+                 embed_size = 300,
+                 train_embeddings = False,
+                 *args,
                  **kwargs):
+        """
+
+        :param vocab_size: size of corpus vocabulary + 1
+        :param max_sequence_length: max length of padded sequence. default 100
+        :param embed_size: vector length of embedding. default 300
+        :param train_embeddings: if set to True then the first embedding layer is not trainable. default False
+        :param args:
+        :param kwargs:
+        """
         log.debug(f'Constructor EmbeddingModelWrapper')
 
         self.vocab_size = vocab_size
         self.embed_size = embed_size
         self.max_sequence_length = max_sequence_length
+        self.train_embeddings = train_embeddings
 
         # pass None to super constructor since we haven't built it yet
         super().__init__(None, *args, **kwargs)
@@ -631,7 +650,8 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
             f"\nEmbeddingModelWrapper parameters:\n" \
             f"\tvocab_size:\t\t\t{self.vocab_size}\n" \
             f"\tembed_size:\t\t\t{self.embed_size}\n" \
-            f"\tmax_sequence_length:\t\t{self.max_sequence_length}\n"
+            f"\tmax_sequence_length:\t\t{self.max_sequence_length}\n" \
+            f"\ttrain_embeddings:\t\t{self.train_embeddings}\n"
         return summary
 
     def get_report(self):
@@ -640,6 +660,7 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         report.add("vocab_size", self.vocab_size)
         if self.X_train is not None:
             report.add("max_sequence_length", self.X_train.shape[1])
+        report.add("train_embeddings", self.train_embeddings)
 
         return report
 
@@ -679,22 +700,23 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         model = Sequential()
         model.add(Embedding(input_dim=self.vocab_size,
                             output_dim=self.embed_size,
-                            input_length=self.max_sequence_length))
+                            input_length=self.max_sequence_length,
+                            trainable = self.train_embeddings))
         if self.bidirectional:
             model.add(Bidirectional(LSTM(self.lstm_dim,
-                                         dropout=self.dropout_rate,
-                                         recurrent_dropout=self.recurrent_dropout_rate)))
+                                         dropout = self.dropout_rate,
+                                         recurrent_dropout = self.recurrent_dropout_rate)))
         else:
             model.add(LSTM(self.lstm_dim,
-                           dropout=self.dropout_rate,
-                           recurrent_dropout=self.recurrent_dropout_rate))
+                           dropout = self.dropout_rate,
+                           recurrent_dropout = self.recurrent_dropout_rate))
         model.add(Dense(5, activation="softmax"))
 
         model.compile(loss="categorical_crossentropy",
                       optimizer=eval(self.optimizer)(learning_rate = self.learning_rate),
                       metrics=["categorical_accuracy"])
 
-        print(model.summary())
+        print(f"Build model:\n{model.summary()}")
         return model
 
     def _get_description(self) -> str:
@@ -704,13 +726,12 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         """
         directory, inbasename = fu.get_dir_basename(self.data_file)
         if self.X_test is not None:
-            # TODO: add learning rate
             description = f"{self.model_name}-" \
                     f"{self.architecture}-" \
-                    f"dr{str(self.dropout_rate).split('.')[1]}-" \
-                    f"rdr{str(self.recurrent_dropout_rate).split('.')[1]}-" \
+                    f"dr{get_decimal_str(self.dropout_rate)}-" \
+                    f"rdr{get_decimal_str(self.recurrent_dropout_rate)}-" \
                     f"batch{self.batch_size}-" \
-                    f"lr{str(self.learning_rate).split('.')[1]}-" \
+                    f"lr{get_decimal_str(self.learning_rate)}-" \
                     f"{self.feature_set_name}-" \
                     f"sampling_{self.sampling_type}-" \
                     f"{self.X_test.shape[0] + self.X_train.shape[0]}-" \

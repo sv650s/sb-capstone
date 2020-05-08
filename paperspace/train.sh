@@ -6,8 +6,8 @@
 #    --container vtluk/paperspace-tf-gpu:1.0 \
 
 usage() {
-    echo "`basename $0`: [-b batch_size] [-c lstm_cells] [-d dropout_rate] [-e epochs] [-l log_level] [-m machine_type]"
-    echo "               [-p patience] [-r recurrent_dropout_rate] <sample size>"
+    echo "`basename $0`: [-b batch_size] [-c lstm_cells] [-d dropout_rate] [-e epochs] [-l log_level] [-m train_embeddings]"
+    echo "               [-p patience] [-r recurrent_dropout_rate] [-t machine_type] <sample size>"
     echo "Parameter(s):"
     echo "  sample_size:                size of data set to train. available values: test, 50k, 100k, 200k, 500k, 1m, 2m, 4m, all"
     echo "Options:"
@@ -16,10 +16,11 @@ usage() {
     echo "  -d dropout_rate:            dropout rate for LSTM network. Default 0"
     echo "  -e epochs:                  max number of epochs for training. Default 20"
     echo "  -l log_level:               log level for logging. Default INFO"
-    echo "  -m machine_type:            Gradient machine type. Options C3 (CPU) or P4000 (GPU). Default P4000"
     echo "  -n enable_bidirectional:    Enable bidirectional network. Default False"
+    echo "  -m train_embeddings:        Sets embedding layer to trainable. Default False"
     echo "  -p patience:                patience for early stopping. Default 4"
     echo "  -r recurrent_dropout_rate:  recurrent dropout rate for LSTM cells. Default 0"
+    echo "  -t machine_type:            Gradient machine type. Options C3 (CPU) or P4000 (GPU). Default P4000"
     echo "Example:"
     echo "  ./train.sh 1m"
     echo "  ./train.sh -e 40 -d 0.2 1m"
@@ -32,12 +33,16 @@ if [ $# -lt 1 ]; then
 fi
 
 
+# set variables
+lstm_cells=128
 machine_type="P4000"
 bidirectional_opt=
 bidirectional_name=
 unbalance_class_weights_opt=
 balance_name="B"
-while getopts :b:c:d:e:l:m:np:r:u o
+train_embeddings_opt=
+
+while getopts :b:c:d:e:l:np:r:t:u o
    do
      case $o in
         b) batch_size="$OPTARG" ;;
@@ -45,10 +50,11 @@ while getopts :b:c:d:e:l:m:np:r:u o
         d) dropout_rate="$OPTARG" ;;
         e) epochs="$OPTARG" ;;
         l) log_level="$OPTARG" ;;
-        m) machine_type="$OPTARG" ;;
         n) bidirectional_opt="-n"; bidirectional_name="bi";;
+        m) train_embeddings_opt="-m" ;;
         p) patience="$OPTARG" ;;
         r) recurrent_dropout_rate="$OPTARG" ;;
+        t) machine_type="$OPTARG" ;;
         u) unbalance_class_weights_opt="-u"; balance_name="" ;;
         *) usage && exit 0 ;;                     # display usage and exit
      esac
@@ -101,14 +107,14 @@ fi
 
 
 echo "Running python with following command"
-echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${sample_size}" \
+echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${unbalance_class_weights_opt} ${train_embeddings_opt} ${sample_size}"
 
 gradient experiments run singlenode \
-    --name ${bidirectional_name}LSTM${balance_name}-${sample_size} \
+    --name ${bidirectional_name}LSTM${balance_name}${lstm_cells}-${sample_size} \
     --projectId pr1cl53bg \
     --machineType ${machine_type} \
     --container vtluk/paperspace-tf-gpu:1.0 \
-    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${unbalance_class_weights_opt} ${sample_size}" \
+    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt} ${bidirectional_opt} ${lstm_cells_opt} ${dropout_rate_opt} ${epochs_opt} ${log_level_opt} ${patience_opt} ${recurrent_dropout_rate_opt} ${unbalance_class_weights_opt} ${train_embeddings_opt} ${sample_size}" \
     --workspace .
 
 

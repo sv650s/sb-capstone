@@ -255,6 +255,10 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--truth_label_column", help="label column. Default star_rating",
                         default="star_rating")
 
+    parser.add_argument("-m", "--train_embeddings",
+                        help="set this flag to make enbedding layer trainable. Default False",
+                        default=False,
+                        action="store_true")
     parser.add_argument("-n", "--bidirectional",
                         help="label column. Default star_rating",
                         default=False,
@@ -306,6 +310,7 @@ if __name__ == "__main__":
 
     bidirectional = args.bidirectional
     balance_class_weights = not args.unbalanced_class_weights
+    train_embeddings = args.train_embeddings
 
 
     data_dir = f'{input_dir}/amazon_reviews'
@@ -376,6 +381,7 @@ if __name__ == "__main__":
               f'\tEMBED_SIZE:\t\t\t{EMBED_SIZE}\n' \
               f'\tMAX_SEQUENCE_LENGTH:\t\t{MAX_SEQUENCE_LENGTH}\n' \
               f'\tEMBEDDING_FILE:\t\t\t{EMBEDDING_FILE}\n' \
+              f'\ttrain_embeddings:\t\t\t{train_embeddings}\n' \
               f'\nModel Info:\n' \
               f'\tmodel_name:\t\t\t{model_name}\n' \
               f'\tlstm_cells:\t\t\t{lstm_cells}\n' \
@@ -435,19 +441,20 @@ if __name__ == "__main__":
 
 
     mw = ku.LSTM1LayerModelWrapper(
-                            lstm_cells, # LSTM dim - LSTM1LyerModelWrapper
-                             dropout_rate, # dropout rate - LSTM1LyerModelWrapper
-                             recurrent_dropout_rate, # recurrent dropout rate - LSTM1LyerModelWrapper
-                             bidirectional, # bidirectional - LSTM1LyerModelWrapper
-                             vocab_size,       # vocab size - EmbeddingModelWrapper
-                             MAX_SEQUENCE_LENGTH, # max sequence length - EmbeddingModelWrapper
-                             EMBED_SIZE, # embed size - EmbeddingModelWrapper
-                            model_name, # model name - ModelWrapper
-                            architecture, # architecture - ModelWrapper
-                            FEATURE_SET_NAME, # feature_set_name - ModelWrapper
-                            label_column, # label_column - ModelWrapper
-                            feature_column, # feature_column - ModelWrapper
-                            data_file, # data file - ModelWrapper
+                            lstm_dim = lstm_cells, # LSTM dim - LSTM1LyerModelWrapper
+                             dropout_rate = dropout_rate, # dropout rate - LSTM1LyerModelWrapper
+                             recurrent_dropout_rate = recurrent_dropout_rate, # recurrent dropout rate - LSTM1LyerModelWrapper
+                             bidirectional = bidirectional, # bidirectional - LSTM1LyerModelWrapper
+                             vocab_size = vocab_size,       # vocab size - EmbeddingModelWrapper
+                             max_sequence_length = MAX_SEQUENCE_LENGTH, # max sequence length - EmbeddingModelWrapper
+                             embed_size = EMBED_SIZE, # embed size - EmbeddingModelWrapper
+                            train_embeddings  =  train_embeddings, # trainable embedding - EmbeddingModelWrapper
+                            model_name = model_name, # model name - ModelWrapper
+                            architecture = architecture, # architecture - ModelWrapper
+                            feature_set_name = FEATURE_SET_NAME, # feature_set_name - ModelWrapper
+                            label_column = label_column, # label_column - ModelWrapper
+                            feature_column = feature_column, # feature_column - ModelWrapper
+                            data_file = data_file, # data file - ModelWrapper
                             tokenizer = t, # tokenizer - ModelWrapper
                             description = DESCRIPTION, #description - ModelWrapper
                             learning_rate = LEARNING_RATE, # learning rate - ModelWrapper
