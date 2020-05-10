@@ -44,7 +44,6 @@ TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 # length of our embedding - 300 is standard
 EMBED_SIZE = 300
-LEARNING_RATE = 0.01
 
 # From EDA, we know that 90% of review bodies have 100 words or less,
 # we will use this as our sequence length
@@ -270,6 +269,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-p", "--patience", help="patience. Default = 4", default=4)
     parser.add_argument("-c", "--lstm_cells", help="Number of LSTM cells. Default = 128", default=128)
+    parser.add_argument("-a", "--learning_rate", help="Optimizer learning rate. Default = 0.001", default=0.001)
     parser.add_argument("-e", "--epochs", help="Max number epochs. Default = 20", default=20)
     parser.add_argument("-b", "--batch_size", help="Training batch size. Default = 32", default=32)
 
@@ -304,6 +304,7 @@ if __name__ == "__main__":
     epochs  = int(args.epochs)
     batch_size = int(args.batch_size)
     patience = int(args.patience)
+    learning_rate = float(args.learning_rate)
 
     dropout_rate = float(args.dropout_rate)
     recurrent_dropout_rate = float(args.recurrent_dropout_rate)
@@ -336,20 +337,22 @@ if __name__ == "__main__":
 
     if bidirectional:
         model_name = f"biLSTMB{lstm_cells}"
-        DESCRIPTION = f"1 Layer {lstm_cells} biLSTM Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {LEARNING_RATE}"
+        DESCRIPTION = f"1 Layer {lstm_cells} biLSTM Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {learning_rate}"
     else:
         model_name = f"LSTMB{lstm_cells}"
-        DESCRIPTION = f"1 Layer {lstm_cells} LSTM Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {LEARNING_RATE}"
+        DESCRIPTION = f"1 Layer {lstm_cells} LSTM Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {learning_rate}"
 
     architecture = f"1x{lstm_cells}"
     FEATURE_SET_NAME = "glove_with_stop_nonlemmatized"
-    # TODO: add in sampling
+    # TODO: add in sampling options
+
+
     REPORT_FILE = f"paperspace-{model_name}{lstm_cells}-" \
         f"{architecture}-" \
         f"dr{str(dropout_rate).split('.')[1]}-" \
         f"rdr{str(recurrent_dropout_rate).split('.')[1]}-" \
         f"batch{batch_size}-" \
-        f"lr{str(LEARNING_RATE).split('.')[1]}-" \
+        f"lr{str(learning_rate).split('.')[1]}-" \
         f"{FEATURE_SET_NAME}-" \
         f"sampling_none-" \
         f"{feature_column}-" \
@@ -385,7 +388,7 @@ if __name__ == "__main__":
               f'\nModel Info:\n' \
               f'\tmodel_name:\t\t\t{model_name}\n' \
               f'\tlstm_cells:\t\t\t{lstm_cells}\n' \
-              f'\tLEARNING_RATE:\t\t\t{LEARNING_RATE}\n' \
+              f'\tlearning_rate:\t\t\t{learning_rate}\n' \
               f'\tpatience:\t\t\t{patience}\n' \
               f'\tepochs:\t\t\t\t{epochs}\n' \
               f'\tbatch_size:\t\t\t{batch_size}\n' \
@@ -457,7 +460,7 @@ if __name__ == "__main__":
                             data_file = data_file, # data file - ModelWrapper
                             tokenizer = t, # tokenizer - ModelWrapper
                             description = DESCRIPTION, #description - ModelWrapper
-                            learning_rate = LEARNING_RATE, # learning rate - ModelWrapper
+                            learning_rate = learning_rate, # learning rate - ModelWrapper
                             optimizer = "Adam"
     )
 

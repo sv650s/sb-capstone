@@ -559,6 +559,8 @@ class ModelWrapper(object):
         report.add("confusion_matrix_train", json.dumps(self.train_confusion_matrix.tolist()))
         report.add("file", self.data_file)
         # too long to save in CSV
+        report.add("optimizer", self.optimizer)
+        report.add("learning_rate", self.learning_rate)
         report.add("network_history_file", self.network_history_file)
         # report.add("history", self.network_history.history)
         report.add("tokenizer_file", self.tokenizer_file)

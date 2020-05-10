@@ -38,7 +38,7 @@ def calculate_metric(data, column_name ="eval_metric", dnn = False) -> pd.DataFr
         log.info("got all values to calculate")
 
         return _harmonic_mean(m)
-    return data
+    return None
 
 def calculate_metric15(data, column_name ="eval_metric", dnn = False) -> pd.DataFrame:
     """
@@ -163,8 +163,13 @@ def _preprocess_dnn_report_file(report: pd.DataFrame):
     :param report:
     :return:
     """
-    # TODO: implement parsing out other attributes
+    log.info("calculating eval metric for test set...")
     report["eval_metric"] = report["classification_report"].apply(lambda x: calculate_metric(json.loads(x)))
+    if "classification_report_train" in report.columns:
+        log.info("calculating eval metric for training set...")
+        report["eval_metric_train"] = \
+            report["classification_report_train"].apply(lambda x: calculate_metric(json.loads(x)))
+
     report["sample_size"] = report.train_examples + report.test_examples
     if "architecture" in report.keys():
         report["display_name"] = report["model_name"] + " (" + report["architecture"] + ")"
@@ -181,10 +186,21 @@ def convert_dnn_report_format(report:pd.DataFrame):
     """
     new_report = pd.DataFrame()
     for idx, row in report.iterrows():
-        d = row.to_dict()
+        report_dict = row.to_dict()
+        log.info("Processing test set classification report")
         cr_dict = json.loads(row.classification_report)
-        d = du.add_dict_to_dict(d, cr_dict)
-        new_report = new_report.append(d, ignore_index=True, sort=False)
+        report_dict = du.add_dict_to_dict(report_dict, cr_dict)
+
+        if "classification_report_train" in report.columns and len(row.classification_report_train) > 0:
+            log.info("Processing train set classification report")
+            dict_train = {}
+            cr_dict_train = json.loads(row.classification_report_train)
+            dict_train = du.add_dict_to_dict(dict_train, cr_dict_train)
+            dict_train = {f"train_{key}": value for key, value in dict_train.items()}
+            report_dict.update(dict_train)
+
+        # convert dict to DF
+        new_report = new_report.append(report_dict, ignore_index=True, sort=False)
     return new_report
 
 def load_dnn_report(report_dir: str, report_file = None, convert_format = False):

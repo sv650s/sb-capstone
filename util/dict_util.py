@@ -1,21 +1,21 @@
 
-# expand classification report into dictionary
-# classifcation report is a 2 level dictionary. from documentation, it looks something like this
-# {'label 1': {'precision':0.5,
-#              'recall':1.0,
-#              'f1-score':0.67,
-#              'support':1},
-#  'label 2': { ... },
-#   ...
-# }
-# resulting dictionary:
-#   label1_precision: 0.5,
-#   label1_recall: 1.0
-#   label1_f1-score: 0.67
-#
 # TODO: should change this to recursively flatten dictionary
 def add_dict_to_dict(target :dict, source :dict) -> dict:
     """
+    expand classification report into dictionary
+    classifcation report is a 2 level dictionary. from documentation, it looks something like this
+    {'label 1': {'precision':0.5,
+                 'recall':1.0,
+                 'f1-score':0.67,
+                 'support':1},
+     'label 2': { ... },
+      ...
+    }
+    resulting dictionary:
+      label1_precision: 0.5,
+      label1_recall: 1.0
+      label1_f1-score: 0.67
+
     target: dictionary to add to
     source: dictionary to add from
     ------
