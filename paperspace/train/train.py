@@ -523,4 +523,6 @@ if __name__ == "__main__":
     print("Accuracy: %.2f%%" % (accuracy))
     print("Custom Score: %.2f%%" % (custom_score))
     print(f'Report filename: {ku.ModelWrapper.get_report_file_name(output_dir, use_date=False)}')
-    print(f'Star Time: {start_time } End time: {end_time} Total Duration: {round((end_time - start_time).total_seconds() / 60, 2)} mins')
+    print(f'Star Time: {start_time}')
+    print(f'End Time: {end_time}')
+    print(f'Total Duration: {round((end_time - start_time).total_seconds() / 60, 2)} mins')
