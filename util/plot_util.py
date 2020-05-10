@@ -281,30 +281,48 @@ def plot_roc_auc(model_name, roc_auc, fpr, tpr):
 
 
 def plot_network_history(network_history,
+                         stored_history = False,
                          accuracy_label:str = "categorical_accuracy",
-                         val_accuracy_label:str = "val_categorical_accuracy"):
+                         val_accuracy_label:str = "val_categorical_accuracy",
+                         figsize = (10, 5),
+                         title_font_size = 24):
     """
     Plots 2 graphs from network history
     1. epochs vs loss
     2. epochs vs accuracy
-    :param network_history:
-    :return:
+
+    :param network_history: network history object
+    :param stored_history: indicates whether network_history object is raw object from model training or if it's from stored object. Default True
+    :param accuracy_label: label to cuse for accuracy plot. Default categorical_accuracy
+    :param val_accuracy_label: label to cuse for validation accuracy plot. Default val_categorical_accuracy
+    :return: None
     """
-    fig = plt.figure(figsize=(10,5))
+    fig = plt.figure(figsize = figsize)
+
+    # print title across subplots
+    fig.suptitle("Network History",
+                 fontsize = title_font_size)
     gs = fig.add_gridspec(1, 2)
+
+    if stored_history:
+        history = network_history
+    else:
+        history = network_history.history
 
     ax1 = fig.add_subplot(gs[0, 0])
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.plot(network_history.history['loss'])
-    plt.plot(network_history.history['val_loss'])
+    plt.plot(history['loss'])
+    plt.plot(history['val_loss'])
     plt.legend(['Training', 'Validation'], loc='lower left')
 
     ax1 = fig.add_subplot(gs[0, 1])
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
-    plt.plot(network_history.history[accuracy_label])
-    plt.plot(network_history.history[val_accuracy_label])
+    plt.plot(history[accuracy_label])
+    plt.plot(history[val_accuracy_label])
     plt.legend(['Training', 'Validation'], loc='upper left')
+
+
     plt.show()
 
