@@ -96,3 +96,15 @@ class TestDfUtil(object):
         assert dtypes.get("a") == np.dtype("int64"), "a should be int64"
         assert dtypes.get("b") == np.dtype("int64"), "b should be int64"
         assert dtypes.get("c") == np.dtype("int8"), "c should be int8"
+
+
+    def test_drop_empty_columns(self):
+        # test that we are dropping rows with 0 len strings
+        # test that we are dropping rows with NaN column values
+        df = pd.DataFrame({ "a": [ "nonempty", "", np.NaN, "nonempty", "nonempty" ],
+                            "b": [ "nonempty", "nonempty", "nonempty", "", np.NaN ]})
+        new_df = dfu.drop_empty_columns(df, ["a", "b"])
+        assert len(new_df) == 1, f"Len should be 1 after dropping rows: {new_df}"
+
+
+

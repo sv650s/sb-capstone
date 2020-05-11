@@ -281,9 +281,9 @@ def plot_roc_auc(model_name, roc_auc, fpr, tpr):
 
 
 def plot_network_history(network_history,
-                         stored_history = False,
                          accuracy_label:str = "categorical_accuracy",
                          val_accuracy_label:str = "val_categorical_accuracy",
+                         stored_history = False,
                          figsize = (10, 5),
                          title_font_size = 24):
     """

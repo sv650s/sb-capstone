@@ -45,6 +45,9 @@ def drop_empty_columns(df: pd.DataFrame, columns_to_check) -> pd.DataFrame:
     :param columns_to_check:
     :return:
     """
+    # drop null columns
+    df.dropna(subset = columns_to_check, inplace = True)
+    # drop non-null columns that have 0 length
     for column in columns_to_check:
         df = df[
             df[column].apply(lambda x: len(x) > 0)

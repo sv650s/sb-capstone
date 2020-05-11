@@ -104,6 +104,11 @@ def load_data(data_file: str, feature_column:str, label_column: str):
     logger.info(f'Reading data file: {data_file} feature_column: {feature_column} label_column: {label_column}')
 
     df = pd.read_csv(data_file)
+
+    # drop any rows with empty feature columns that we may have missed
+    logger.info("Dropping rows with empty features")
+    df.dropna(subset = [feature_column, label_column], inplace = True)
+
     reviews = df[feature_column]
     ratings = df[label_column]
 
@@ -171,14 +176,14 @@ def preprocess_data(feature_train, feature_test, embedding_file: str, missing_wo
       embedding_index = np.load(f'{embedding_index_file}.npy',
                                  allow_pickle = True).item()
     else:
-      logging.info(f'{embedding_index_file} does not exist. Indexing words from {embedding_file}...')
+      logger.info(f'{embedding_index_file} does not exist. Indexing words from {embedding_file}...')
 
       with open(embedding_file) as f:
           for line in f:
               word, coefs = line.split(maxsplit=1)
               coefs = np.fromstring(coefs, 'f', sep=' ')
               embedding_index[word] = coefs
-      logging.info(f'Saving embedding index to {embedding_index_file}...')
+      logger.info(f'Saving embedding index to {embedding_index_file}...')
       np.save(embedding_index_file, embedding_index)
 
     logger.debug(f'embedding_index type {type(embedding_index)} shape {np.shape(embedding_index)}')
@@ -336,23 +341,28 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     if bidirectional:
-        model_name = f"biLSTMB{lstm_cells}"
-        DESCRIPTION = f"1 Layer {lstm_cells} biLSTM Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {learning_rate}"
+        bidirectional_name = "bi"
     else:
-        model_name = f"LSTMB{lstm_cells}"
-        DESCRIPTION = f"1 Layer {lstm_cells} LSTM Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {learning_rate}"
+        bidirectional_name = ""
 
+    if balance_class_weights:
+        balanced_name = "B"
+    else:
+        balanced_name = ""
+
+    model_name = f"{bidirectional_name}LSTM{balanced_name}{lstm_cells}"
+    DESCRIPTION = f"1 Layer {lstm_cells} {model_name} Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {learning_rate}"
     architecture = f"1x{lstm_cells}"
     FEATURE_SET_NAME = "glove_with_stop_nonlemmatized"
     # TODO: add in sampling options
 
 
-    REPORT_FILE = f"paperspace-{model_name}{lstm_cells}-" \
+    REPORT_FILE = f"paperspace-{model_name}-" \
         f"{architecture}-" \
-        f"dr{str(dropout_rate).split('.')[1]}-" \
-        f"rdr{str(recurrent_dropout_rate).split('.')[1]}-" \
+        f"dr{ku.get_decimal_str(dropout_rate)}-" \
+        f"rdr{ku.get_decimal_str(recurrent_dropout_rate)}-" \
         f"batch{batch_size}-" \
-        f"lr{str(learning_rate).split('.')[1]}-" \
+        f"lr{ku.get_decimal_str(learning_rate)}-" \
         f"{FEATURE_SET_NAME}-" \
         f"sampling_none-" \
         f"{feature_column}-" \
@@ -384,7 +394,7 @@ if __name__ == "__main__":
               f'\tEMBED_SIZE:\t\t\t{EMBED_SIZE}\n' \
               f'\tMAX_SEQUENCE_LENGTH:\t\t{MAX_SEQUENCE_LENGTH}\n' \
               f'\tEMBEDDING_FILE:\t\t\t{EMBEDDING_FILE}\n' \
-              f'\ttrain_embeddings:\t\t\t{train_embeddings}\n' \
+              f'\ttrain_embeddings:\t\t{train_embeddings}\n' \
               f'\nModel Info:\n' \
               f'\tmodel_name:\t\t\t{model_name}\n' \
               f'\tlstm_cells:\t\t\t{lstm_cells}\n' \
@@ -465,6 +475,8 @@ if __name__ == "__main__":
     )
 
     mw.add("environment", "paperspace")
+    mw.add("patience", patience)
+
 
     network_history = mw.fit(X_train,
                              y_train,
