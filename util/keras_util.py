@@ -173,12 +173,12 @@ class ModelWrapper(object):
 
 
     @staticmethod
-    def get_report_file_name(save_dir: str, use_date=True):
+    def get_report_file_name(reports_dir: str, use_date=False):
         if ModelWrapper.report_file_name is not None:
-            return f'{save_dir}/{ModelWrapper.reports_dir}/{ModelWrapper.report_file_name}'
+            return f'{reports_dir}/{ModelWrapper.report_file_name}'
         if use_date:
-            return  f"{save_dir}/{ModelWrapper.reports_dir}/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
-        return  f"{save_dir}/{ModelWrapper.reports_dir}/dl_prototype-report.csv"
+            return  f"{reports_dir}/{datetime.now().strftime(DATE_FORMAT)}-dl_prototype-report.csv"
+        return  f"{reports_dir}/dl_prototype-report.csv"
 
 
     @staticmethod
@@ -194,13 +194,17 @@ class ModelWrapper(object):
                                mw.architecture,
                                mw.feature_set_name,
                                mw.label_column,
+                               mw.feature_column,
                                mw.data_file,
+                               mw.sample_size_str,
                                mw.sampling_type,
-                               mw.embed_size,
                                mw.tokenizer,
                                mw.description,
-                               mw.feature_column,
-                               mw.optimizer)
+                               mw.save_weights,
+                               mw.optimizer_name,
+                               mw.learning_rate,
+                               mw.model_version,
+                               mw.save_dir)
 
         mw_copy.tokenizer_file = mw.tokenizer_file
         mw_copy.train_time_min = mw.train_time_min
@@ -209,6 +213,7 @@ class ModelWrapper(object):
         mw_copy.train_evaluate_time_min = mw.train_evaluate_time_min
         mw_copy.network_history = mw.network_history
         mw_copy.weights_file = mw.weights_file
+        mw_copy.epochs = mw.epochs
         mw_copy.X_train = mw.X_train
         mw_copy.X_test = mw.X_test
         mw_copy.y_train = mw.y_train
@@ -220,8 +225,18 @@ class ModelWrapper(object):
         mw_copy.test_fpr = mw.fpr
         mw_copy.test_tpr = mw.tpr
         mw_copy.test_crd = mw.crd
-        mw_copy.optimizer = mw.optimizer
         mw_copy.learning_rate = mw.learnig_rate
+        mw_copy.misc_items = mw.misc_items
+
+        mw_copy.model_file = mw.model_file
+        mw_copy.model_file = mw.model_file
+        mw_copy.model_json_file = mw.model_json_file
+        mw_copy.network_history_file = mw.network_history_file
+        mw_copy.weights_file = mw.weights_file
+        mw_copy.report_file = mw.report_file
+        mw_copy.tokenizer_file = mw.tokenizer_file
+        mw_copy.saved_model_dir = mw.saved_model_dir
+
         return mw_copy
 
 
@@ -233,13 +248,15 @@ class ModelWrapper(object):
                  label_column,
                  feature_column,
                  data_file,
+                 sample_size_str,
                  sampling_type="none",
                  tokenizer=None,
                  description=None,
                  save_weights=True,
-                 optimizer = None,
+                 optimizer_name = None,
                  learning_rate = None,
-                 model_version = 1):
+                 model_version = 1,
+                 save_dir = "drive/My Drive/Springboard/capstone"):
         """
         Constructor
 
@@ -249,6 +266,7 @@ class ModelWrapper(object):
         :param feature_set_name: feature set name
         :param label_column: name of column to use as label
         :param data_file: datafile used
+        :param sample_size_str: string value summarizing sample size - ie, 1mil (required)
         :param sampling_type: specify type of sampling - ie, smote, nearmiss-2. default none
         :param tokenizer: tokenizer used to preprocess, default is None
         :param description: description of model. If not passed in, will automatically construct this
@@ -266,27 +284,56 @@ class ModelWrapper(object):
         self.feature_column = feature_column
         self.data_file = data_file
         self.batch_size = 0
+        self.sample_size_str = sample_size_str
         self.sampling_type = sampling_type
         self.tokenizer = tokenizer
         self.description = description
         self.save_weights = save_weights
-        self.optimizer = optimizer
+        self.optimizer_name = optimizer_name
         self.learning_rate = learning_rate
         self.model_version = model_version
+        self.save_dir = save_dir
         self.tokenizer_file = None
         self.train_time_min = 0
         self.test_predict_time_min = 0
         self.evaluate_time_min = 0
         self.train_evaluate_time_min = 0
         self.network_history = None
-        self.weights_file = None
         # number of epochs used to train
         self.epochs = 0
         # dumping ground for anything else we want to store
         self.misc_items = {}
 
+        # set up variables to be used later
         self.X_test = None
         self.y_test = None
+
+        # self.model_file = None
+        # self.model_json_file = None
+        # self.network_history_file = None
+        # self.weights_file = None
+        # self.report_file = None
+        # self.tokenizer_file = None
+        # self.saved_model_dir = None
+
+        models_dir = f'{save_dir}/{ModelWrapper.models_dir}'
+        reports_dir = f'{save_dir}/{ModelWrapper.reports_dir}'
+        if not os.path.exists(models_dir):
+            log.info(f'Creating {models_dir}')
+            os.mkdir(f'{models_dir}')
+        if not os.path.exists(reports_dir):
+            log.info(f'Creating {reports_dir}')
+            os.mkdir(f'{reports_dir}')
+
+        basename = self._get_saved_file_basename()
+        print(f"basename: {basename}")
+        self.model_file = f"{models_dir}/{basename}-model.h5"
+        self.model_json_file = f"{models_dir}/{basename}-model.json"
+        self.network_history_file = f"{reports_dir}/{basename}-history.pkl"
+        self.weights_file = self.get_weights_filename(save_dir)
+        self.report_file = ModelWrapper.get_report_file_name(reports_dir)
+        self.tokenizer_file = f'{models_dir}/{basename}-tokenizer.pkl'
+        self.saved_model_dir = self.get_saved_model_dir(models_dir)
 
         log.debug(f"Summary: {self}")
 
@@ -310,12 +357,23 @@ class ModelWrapper(object):
                     f"\tfeature_column:\t\t\t{self.feature_column}\n" \
                     f"\tdata_file:\t\t\t{self.data_file}\n" \
                     f"\tbatch_size:\t\t\t{self.batch_size}\n" \
+                    f"\tsample_size:\t\t\t{self.sample_size_str}\n" \
                     f"\tsampling_type:\t\t\t{self.sampling_type}\n" \
                     f"\ttokenizer:\t\t\t{self.tokenizer}\n" \
                     f"\tsave_weights:\t\t\t{self.save_weights}\n" \
-                    f"\toptimizer:\t\t\t{self.optimizer}\n" \
+                    f"\toptimizer:\t\t\t{self.optimizer_name}\n" \
                     f"\tlearning_rate:\t\t\t{self.learning_rate}\n" \
-                    f"\tversion:\t\t\t{self.model_version}\n"
+                    f"\tversion:\t\t\t{self.model_version}\n" \
+                    f"\tsave_dir:\t\t\t{self.save_dir}\n" \
+                    f"\n\tOutput:\n" \
+                    f"\t\tmodel_file:\t\t\t{self.model_file}\n" \
+                    f"\t\tmodel_json_file:\t\t{self.model_json_file}\n" \
+                    f"\t\tnetwork_history_file:\t\t{self.network_history_file}\n" \
+                    f"\t\tweights_file:\t\t\t{self.weights_file}\n" \
+                    f"\t\treport_file:\t\t\t{self.report_file}\n" \
+                    f"\t\ttokenizer_file:\t\t\t{self.tokenizer_file}\n" \
+                    f"\t\tsaved_model_dir:\t\t{self.saved_model_dir}\n"
+
         return summary
 
     def get_class_weight_dict(self, y_train):
@@ -480,13 +538,22 @@ class ModelWrapper(object):
 
 
 
-    def _get_description(self):
-        directory, inbasename = fu.get_dir_basename(self.data_file)
-        if self.X_test is not None:
-            # self.X_test might not be set yet
-            description = f"{self.model_name}-{self.architecture}-{self.feature_set_name}-sampling_{self.sampling_type}-{self.X_test.shape[0] + self.X_train.shape[0]}-{self.X_test.shape[1]}-{self.feature_column}"
+    def _get_saved_file_basename(self):
+        """
+        contructs prefixes for all of our saved model and report files
+        :return: str: prefix of file
+        """
+        if self.sample_size_str is not None:
+            description = f"{self.model_name}-" \
+                    f"{self.architecture}-" \
+                    f"{self.feature_set_name}-" \
+                    f"sampling_{self.sampling_type}-" \
+                    f"{self.sample_size_str}-" \
+                    f"{self.feature_column}"
         else:
-            description = self.model_name
+            description = f"{self.model_name}-{self.architecture}-{self.feature_set_name}-sampling_{self.sampling_type}-{self.feature_column}"
+
+        log.info(f"saved file basename: {description}")
         return description
 
     def get_weights_filename(self, save_dir):
@@ -499,9 +566,19 @@ class ModelWrapper(object):
         :param save_dir:
         :return:
         """
-        return f"{save_dir}/{ModelWrapper.models_dir}/{self._get_description()}-weights.h5"
+        return f"{save_dir}/{ModelWrapper.models_dir}/{self._get_saved_file_basename()}-weights.h5"
 
-    def save(self, save_dir, save_format=None, append_report=True):
+
+    def get_saved_model_dir(self, models_dir: str):
+        """
+        gets the path for where SavedModels should be saved
+        :param models_dir: base directory to save models
+        :return:
+        """
+        description = self._get_saved_file_basename()
+        return f'{models_dir}/{description}/{self.model_version}'
+
+    def save(self, save_format=None, append_report=True):
         """
         Save the following information based on our trained model:
         * model file
@@ -509,21 +586,23 @@ class ModelWrapper(object):
         * writes model report
         * tokenizer used for pre-processing
 
-        :param save_dir: base directory to save files models and reports will be appended to this
+        :param save_dir: base directory to save files models and reports will be appended to this. will create reports and models dir underneath. this is depreciated and will be removed later
         :param save_format: save_format for tf.model.save. Default None
         :param append_report: if existing report, True to append or False to overwrite. Default True
         :return:
         """
-        description = self._get_description()
-        print(f"description: {description}")
 
-        self.model_file = f"{save_dir}/{ModelWrapper.models_dir}/{description}-model.h5"
-        self.model_json_file = f"{save_dir}/{ModelWrapper.models_dir}/{description}-model.json"
-        self.network_history_file = f"{save_dir}/{ModelWrapper.reports_dir}/{description}-history.pkl"
-        self.weights_file = self.get_weights_filename(save_dir)
-        self.report_file = ModelWrapper.get_report_file_name(save_dir)
-        self.tokenizer_file = f'{save_dir}/{ModelWrapper.models_dir}/{description}-tokenizer.pkl'
-        self.saved_model_dir = f'{save_dir}/{ModelWrapper.models_dir}/{description}/{self.model_version}'
+        # if save_dir is not None:
+        #     self.save_dir = save_dir
+
+        # models_dir = f'{self.save_dir}/{ModelWrapper.models_dir}'
+        # reports_dir = f'{self.save_dir}/{ModelWrapper.reports_dir}'
+        # if not os.path.exists(models_dir):
+        #     log.info(f'Creating {models_dir}')
+        #     os.mkdir(f'{models_dir}')
+        # if not os.path.exists(reports_dir):
+        #     log.info(f'Creating {reports_dir}')
+        #     os.mkdir(f'{reports_dir}')
 
         print(f"Saving to report file: {self.report_file}")
         report = self.get_report()
@@ -563,7 +642,7 @@ class ModelWrapper(object):
         if self.description is not None:
             report = ModelReport(self.model_name, self.architecture, self.description)
         else:
-            report = ModelReport(self.model_name, self.architecture, self._get_description())
+            report = ModelReport(self.model_name, self.architecture, self._get_saved_file_basename())
 
         report.add("feature_column", self.test_crd)
         report.add("label_column", self.test_crd)
@@ -579,9 +658,10 @@ class ModelWrapper(object):
         report.add("confusion_matrix_train", json.dumps(self.train_confusion_matrix.tolist()))
         report.add("file", self.data_file)
         # too long to save in CSV
-        report.add("optimizer", self.optimizer)
+        report.add("optimizer", self.optimizer_name)
         report.add("learning_rate", self.learning_rate)
         report.add("version", self.model_version)
+        report.add("save_dir", self.save_dir)
         report.add("network_history_file", self.network_history_file)
         # report.add("history", self.network_history.history)
         report.add("tokenizer_file", self.tokenizer_file)
@@ -590,6 +670,7 @@ class ModelWrapper(object):
         report.add("feature_set_name", self.feature_set_name)
         if self.class_weight is not None:
             report.add("class_weight", self.class_weight)
+        report.add("sample_size_str", self.sample_size_str)
         report.add("sampling_type", self.sampling_type)
         report.add("model_file", self.model_file)
         report.add("model_json_file", self.model_json_file)
@@ -737,19 +818,18 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         model.add(Dense(5, activation="softmax"))
 
         model.compile(loss="categorical_crossentropy",
-                      optimizer=eval(self.optimizer)(learning_rate = self.learning_rate),
+                      optimizer=eval(self.optimizer_name)(learning_rate = self.learning_rate),
                       metrics=["categorical_accuracy"])
 
         print(f"Build model:\n{model.summary()}")
         return model
 
-    def _get_description(self) -> str:
+    def _get_saved_file_basename(self) -> str:
         """
         Override default descripition to take into account hyperparameters
         :return:
         """
-        directory, inbasename = fu.get_dir_basename(self.data_file)
-        if self.X_test is not None:
+        if self.sample_size_str is not None:
             description = f"{self.model_name}-" \
                     f"{self.architecture}-" \
                     f"dr{get_decimal_str(self.dropout_rate)}-" \
@@ -758,10 +838,18 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
                     f"lr{get_decimal_str(self.learning_rate)}-" \
                     f"{self.feature_set_name}-" \
                     f"sampling_{self.sampling_type}-" \
-                    f"{self.X_test.shape[0] + self.X_train.shape[0]}-" \
-                    f"{self.X_test.shape[1]}-{self.feature_column}"
+                    f"{self.sample_size_str}-" \
+                    f"{self.feature_column}"
         else:
-            description = self.model_name
+            description = f"{self.model_name}-" \
+                f"{self.architecture}-" \
+                f"dr{get_decimal_str(self.dropout_rate)}-" \
+                f"rdr{get_decimal_str(self.recurrent_dropout_rate)}-" \
+                f"batch{self.batch_size}-" \
+                f"lr{get_decimal_str(self.learning_rate)}-" \
+                f"{self.feature_set_name}-" \
+                f"sampling_{self.sampling_type}-" \
+                f"{self.feature_column}"
         return description
 
     def __str__(self):

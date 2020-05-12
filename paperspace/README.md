@@ -86,7 +86,10 @@ optional arguments:
                         log level
 ```
 
-./syncUtil.sh &&  python train/train.py -i ../dataset -o /tmp -n test
+
+### Test if everything is working locally
+
+./syncUtil.sh &&  python train/train.py -i ../dataset -o /tmp -b 128 -c 16 -e 1 -l DEBUG test
 
 ## Artifacts
 

@@ -277,6 +277,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--learning_rate", help="Optimizer learning rate. Default = 0.001", default=0.001)
     parser.add_argument("-e", "--epochs", help="Max number epochs. Default = 20", default=20)
     parser.add_argument("-b", "--batch_size", help="Training batch size. Default = 32", default=32)
+    parser.add_argument("-v", "--model_version", help="Specify model version. Default = 1", default=1)
 
     parser.add_argument("-l", "--loglevel", help="log level", default="INFO")
 
@@ -310,6 +311,7 @@ if __name__ == "__main__":
     batch_size = int(args.batch_size)
     patience = int(args.patience)
     learning_rate = float(args.learning_rate)
+    model_version = int(args.model_version)
 
     dropout_rate = float(args.dropout_rate)
     recurrent_dropout_rate = float(args.recurrent_dropout_rate)
@@ -382,29 +384,29 @@ if __name__ == "__main__":
     EMBEDDING_FILE = f'{embeddings_dir}/glove.840B.300d.txt'
 
 
-    summary = f'\nParameters:\n' \
-              f'\tinput_dir:\t\t\t{input_dir}\n' \
-              f'\toutput_dir:\t\t\t{output_dir}\n' \
-              f'\tdata_file:\t\t\t{data_file}\n' \
-              f'\tlabel_column:\t\t\t{label_column}\n' \
-              f'\tfeature_column:\t\t\t{feature_column}\n' \
-              f'\tsample_size:\t\t\t{sample_size}\n' \
-              f'\nEmbedding Info:\n' \
-              f'\tFEATURE_SET_NAME:\t\t{FEATURE_SET_NAME}\n' \
-              f'\tEMBED_SIZE:\t\t\t{EMBED_SIZE}\n' \
-              f'\tMAX_SEQUENCE_LENGTH:\t\t{MAX_SEQUENCE_LENGTH}\n' \
-              f'\tEMBEDDING_FILE:\t\t\t{EMBEDDING_FILE}\n' \
-              f'\ttrain_embeddings:\t\t{train_embeddings}\n' \
-              f'\nModel Info:\n' \
-              f'\tmodel_name:\t\t\t{model_name}\n' \
-              f'\tlstm_cells:\t\t\t{lstm_cells}\n' \
-              f'\tlearning_rate:\t\t\t{learning_rate}\n' \
-              f'\tpatience:\t\t\t{patience}\n' \
-              f'\tepochs:\t\t\t\t{epochs}\n' \
-              f'\tbatch_size:\t\t\t{batch_size}\n' \
-              f'\tdropout_rate:\t\t\t{dropout_rate}\n' \
-              f'\trecurrent_dropout_rate:\t\t{recurrent_dropout_rate}\n'
-    logger.info(summary)
+    # summary = f'\nParameters:\n' \
+    #           f'\tinput_dir:\t\t\t{input_dir}\n' \
+    #           f'\toutput_dir:\t\t\t{output_dir}\n' \
+    #           f'\tdata_file:\t\t\t{data_file}\n' \
+    #           f'\tlabel_column:\t\t\t{label_column}\n' \
+    #           f'\tfeature_column:\t\t\t{feature_column}\n' \
+    #           f'\tsample_size:\t\t\t{sample_size}\n' \
+    #           f'\nEmbedding Info:\n' \
+    #           f'\tFEATURE_SET_NAME:\t\t{FEATURE_SET_NAME}\n' \
+    #           f'\tEMBED_SIZE:\t\t\t{EMBED_SIZE}\n' \
+    #           f'\tMAX_SEQUENCE_LENGTH:\t\t{MAX_SEQUENCE_LENGTH}\n' \
+    #           f'\tEMBEDDING_FILE:\t\t\t{EMBEDDING_FILE}\n' \
+    #           f'\ttrain_embeddings:\t\t{train_embeddings}\n' \
+    #           f'\nModel Info:\n' \
+    #           f'\tmodel_name:\t\t\t{model_name}\n' \
+    #           f'\tlstm_cells:\t\t\t{lstm_cells}\n' \
+    #           f'\tlearning_rate:\t\t\t{learning_rate}\n' \
+    #           f'\tpatience:\t\t\t{patience}\n' \
+    #           f'\tepochs:\t\t\t\t{epochs}\n' \
+    #           f'\tbatch_size:\t\t\t{batch_size}\n' \
+    #           f'\tdropout_rate:\t\t\t{dropout_rate}\n' \
+    #           f'\trecurrent_dropout_rate:\t\t{recurrent_dropout_rate}\n'
+    # logger.info(summary)
 
 
 
@@ -468,10 +470,13 @@ if __name__ == "__main__":
                             label_column = label_column, # label_column - ModelWrapper
                             feature_column = feature_column, # feature_column - ModelWrapper
                             data_file = data_file, # data file - ModelWrapper
+                            sample_size_str = sample_size, # sample size
                             tokenizer = t, # tokenizer - ModelWrapper
                             description = DESCRIPTION, #description - ModelWrapper
+                            optimizer_name = "Adam", # string optimizer name
                             learning_rate = learning_rate, # learning rate - ModelWrapper
-                            optimizer = "Adam"
+                            model_version= model_version, # model version - ModelWrapper
+                            save_dir = output_dir # where to save outputs - ModelWrapper
     )
 
     mw.add("environment", "paperspace")
@@ -508,7 +513,7 @@ if __name__ == "__main__":
 
     """**Save off various files**"""
 
-    mw.save(output_dir, append_report=True)
+    mw.save(append_report=True)
 
     """# Test That Our Models Saved Correctly"""
 
@@ -534,7 +539,6 @@ if __name__ == "__main__":
     logger.info(f'Finished training {mw}')
     logger.info("Accuracy: %.2f%%" % (accuracy))
     logger.info("Custom Score: %.2f%%" % (custom_score))
-    logger.info(f'Report filename: {ku.ModelWrapper.get_report_file_name(output_dir, use_date=False)}')
     logger.info(f'Star Time: {start_time}')
     logger.info(f'End Time: {end_time}')
     logger.info(f'Total Duration: {round((end_time - start_time).total_seconds() / 60, 2)} mins')
