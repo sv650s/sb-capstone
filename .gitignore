@@ -48,6 +48,9 @@ report/2019-07*.csv
 report/2019-08*.csv
 report/*99-histogram.csv
 
+# generally don't track pkl files
+*.pkl
+
 # white papers
 white_papers
 

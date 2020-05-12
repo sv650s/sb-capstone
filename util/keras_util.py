@@ -54,7 +54,7 @@ def unencode(input):
         input_df = input
 
     ret =  [row.idxmax() + 1 for index, row in input_df.iterrows()]
-    log.debug(f'Unencoded: {ret}')
+    log.debug(f'Unencoded: {ret[:5]}')
     return ret
 
 
@@ -229,7 +229,7 @@ class ModelWrapper(object):
         mw_copy.misc_items = mw.misc_items
 
         mw_copy.model_file = mw.model_file
-        mw_copy.model_file = mw.model_file
+        mw_copy.checkpoint_file = mw.checkpoint_file
         mw_copy.model_json_file = mw.model_json_file
         mw_copy.network_history_file = mw.network_history_file
         mw_copy.weights_file = mw.weights_file
@@ -255,6 +255,7 @@ class ModelWrapper(object):
                  save_weights=True,
                  optimizer_name = None,
                  learning_rate = None,
+                 batch_size = 32,
                  model_version = 1,
                  save_dir = "drive/My Drive/Springboard/capstone"):
         """
@@ -283,12 +284,12 @@ class ModelWrapper(object):
         self.label_column = label_column
         self.feature_column = feature_column
         self.data_file = data_file
-        self.batch_size = 0
         self.sample_size_str = sample_size_str
         self.sampling_type = sampling_type
         self.tokenizer = tokenizer
         self.description = description
         self.save_weights = save_weights
+        self.batch_size = batch_size
         self.optimizer_name = optimizer_name
         self.learning_rate = learning_rate
         self.model_version = model_version
@@ -308,32 +309,30 @@ class ModelWrapper(object):
         self.X_test = None
         self.y_test = None
 
-        # self.model_file = None
-        # self.model_json_file = None
-        # self.network_history_file = None
-        # self.weights_file = None
-        # self.report_file = None
-        # self.tokenizer_file = None
-        # self.saved_model_dir = None
-
-        models_dir = f'{save_dir}/{ModelWrapper.models_dir}'
+        basename = self._get_saved_file_basename()
+        models_dir = f'{save_dir}/{ModelWrapper.models_dir}/{basename}'
         reports_dir = f'{save_dir}/{ModelWrapper.reports_dir}'
-        if not os.path.exists(models_dir):
-            log.info(f'Creating {models_dir}')
-            os.mkdir(f'{models_dir}')
+        log.debug(f"basename: {basename}")
+
+        # model files
+        self.model_file = f"{models_dir}/{basename}-model.h5"
+        self.checkpoint_file = f"{models_dir}/checkpoints"
+        self.model_json_file = f"{models_dir}/{basename}-model.json"
+        self.weights_file = f"{models_dir}/{basename}-weights.h5"
+        self.tokenizer_file = f'{models_dir}/{basename}-tokenizer.pkl'
+        self.saved_model_dir = f"{models_dir}/{self.model_version}"
+
+        # reports
+        self.network_history_file = f"{reports_dir}/{basename}-history.pkl"
+        self.report_file = ModelWrapper.get_report_file_name(reports_dir)
+
+        if not os.path.exists(self.saved_model_dir):
+            log.info(f'Creating {self.saved_model_dir}')
+            os.makedirs(f'{self.saved_model_dir}', exist_ok = True)
         if not os.path.exists(reports_dir):
             log.info(f'Creating {reports_dir}')
-            os.mkdir(f'{reports_dir}')
+            os.makedirs(f'{reports_dir}', exist_ok = True)
 
-        basename = self._get_saved_file_basename()
-        print(f"basename: {basename}")
-        self.model_file = f"{models_dir}/{basename}-model.h5"
-        self.model_json_file = f"{models_dir}/{basename}-model.json"
-        self.network_history_file = f"{reports_dir}/{basename}-history.pkl"
-        self.weights_file = self.get_weights_filename(save_dir)
-        self.report_file = ModelWrapper.get_report_file_name(reports_dir)
-        self.tokenizer_file = f'{models_dir}/{basename}-tokenizer.pkl'
-        self.saved_model_dir = self.get_saved_model_dir(models_dir)
 
         log.debug(f"Summary: {self}")
 
@@ -365,14 +364,16 @@ class ModelWrapper(object):
                     f"\tlearning_rate:\t\t\t{self.learning_rate}\n" \
                     f"\tversion:\t\t\t{self.model_version}\n" \
                     f"\tsave_dir:\t\t\t{self.save_dir}\n" \
-                    f"\n\tOutput:\n" \
+                    f"\n\tModel Output:\n" \
                     f"\t\tmodel_file:\t\t\t{self.model_file}\n" \
+                    f"\t\tcheckpoint_file:\t\t{self.checkpoint_file}\n" \
                     f"\t\tmodel_json_file:\t\t{self.model_json_file}\n" \
-                    f"\t\tnetwork_history_file:\t\t{self.network_history_file}\n" \
                     f"\t\tweights_file:\t\t\t{self.weights_file}\n" \
-                    f"\t\treport_file:\t\t\t{self.report_file}\n" \
+                    f"\t\tsaved_model_dir:\t\t{self.saved_model_dir}\n" \
                     f"\t\ttokenizer_file:\t\t\t{self.tokenizer_file}\n" \
-                    f"\t\tsaved_model_dir:\t\t{self.saved_model_dir}\n"
+                    f"\n\tReport Output:\n" \
+                    f"\t\tnetwork_history_file:\t\t{self.network_history_file}\n" \
+                    f"\t\treport_file:\t\t\t{self.report_file}\n"
 
         return summary
 
@@ -394,11 +395,11 @@ class ModelWrapper(object):
     # TODO: remove parameters defined in model.fit
     def fit(self, X_train, y_train,
             epochs,
-            batch_size = 32,
             validation_split = 0.2,
             verbose = 1,
             callbacks = None,
-            balance_class_weights = True):
+            balance_class_weights = True,
+            save_checkpoints = True):
         """
         Calls model.fit and record metrics
 
@@ -412,7 +413,6 @@ class ModelWrapper(object):
         :param X_train:
         :param y_train:
         :param epochs:
-        :param batch_size:
         :param validation_split:
         :param verbose:
         :param callbacks:
@@ -427,24 +427,30 @@ class ModelWrapper(object):
             self.class_weight = None
         self.X_train = X_train
         self.y_train = y_train
-        self.batch_size = batch_size
 
         # TODO: add model checkpoint
         # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint
         # https://www.tensorflow.org/tutorials/keras/save_and_load#checkpoint_callback_options
-        # checkpoint_filepath = '/tmp/checkpoint'
-        # model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        #     filepath=checkpoint_filepath,
-        #     save_weights_only=True,
-        #     monitor='val_acc',
-        #     mode='max',
-        #     save_best_only=True)
+        if save_checkpoints:
+            log.info("Adding checkpoint callback...")
+            checkpoint = tf.keras.callbacks.ModelCheckpoint(
+                filepath = self.checkpoint_file,
+                verbose = 1,
+                save_weights_only = False,
+                monitor = 'val_categorical_accuracy',
+               save_freq = 'epoch',
+                save_best_only = True)
+
+            callbacks.append(checkpoint)
+            log.debug(f"callbacks after all checkpoint: {callbacks}")
+        else:
+            new_callbacks = callbacks
 
         start_time = datetime.now()
         log.info(f'model: {self.model}')
         self.network_history = self.model.fit(X_train,
                                               y_train,
-                                              batch_size=batch_size,
+                                              batch_size=self.batch_size,
                                               epochs=epochs,
                                               validation_split=validation_split,
                                               callbacks=callbacks,
@@ -549,34 +555,28 @@ class ModelWrapper(object):
                     f"{self.feature_set_name}-" \
                     f"sampling_{self.sampling_type}-" \
                     f"{self.sample_size_str}-" \
-                    f"{self.feature_column}"
+                    f"{self.feature_column}-" \
+                    f"v{self.model_version}"
         else:
-            description = f"{self.model_name}-{self.architecture}-{self.feature_set_name}-sampling_{self.sampling_type}-{self.feature_column}"
+            description = f"{self.model_name}-" \
+                    f"{self.architecture}-" \
+                    f"{self.feature_set_name}-" \
+                    f"sampling_{self.sampling_type}-" \
+                    f"{self.feature_column}-" \
+                    f"v{self.model_version}"
 
         log.info(f"saved file basename: {description}")
         return description
 
-    def get_weights_filename(self, save_dir):
-        """
-        Returns the name of the weights file for this model.
 
-        Mean to be used when we use ModelCheckpoint so we can tell ModelCheckpoint
-        where to save the weights file.
-
-        :param save_dir:
-        :return:
-        """
-        return f"{save_dir}/{ModelWrapper.models_dir}/{self._get_saved_file_basename()}-weights.h5"
-
-
-    def get_saved_model_dir(self, models_dir: str):
-        """
-        gets the path for where SavedModels should be saved
-        :param models_dir: base directory to save models
-        :return:
-        """
-        description = self._get_saved_file_basename()
-        return f'{models_dir}/{description}/{self.model_version}'
+    # def get_saved_model_dir(self, models_dir: str):
+    #     """
+    #     gets the path for where SavedModels should be saved
+    #     :param models_dir: base directory to save models
+    #     :return:
+    #     """
+    #     basename = self._get_saved_file_basename()
+    #     return f'{models_dir}/{basename}/{self.model_version}'
 
     def save(self, save_format=None, append_report=True):
         """
@@ -673,6 +673,7 @@ class ModelWrapper(object):
         report.add("sample_size_str", self.sample_size_str)
         report.add("sampling_type", self.sampling_type)
         report.add("model_file", self.model_file)
+        report.add("checkpoint_dir", self.checkpoint_file)
         report.add("model_json_file", self.model_json_file)
         report.add("weights_file", self.weights_file)
         report.add("saved_model_dir", self.saved_model_dir)
@@ -839,7 +840,8 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
                     f"{self.feature_set_name}-" \
                     f"sampling_{self.sampling_type}-" \
                     f"{self.sample_size_str}-" \
-                    f"{self.feature_column}"
+                    f"{self.feature_column}-" \
+                    f"v{self.model_version}"
         else:
             description = f"{self.model_name}-" \
                 f"{self.architecture}-" \
@@ -849,7 +851,8 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
                 f"lr{get_decimal_str(self.learning_rate)}-" \
                 f"{self.feature_set_name}-" \
                 f"sampling_{self.sampling_type}-" \
-                f"{self.feature_column}"
+                f"{self.feature_column}" \
+                f"v{self.model_version}"
         return description
 
     def __str__(self):

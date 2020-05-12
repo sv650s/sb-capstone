@@ -334,11 +334,11 @@ if __name__ == "__main__":
     # process argument
     if debug:
         loglevel = logging.DEBUG
-        # override parameters to make testing faster
-        epochs = 1
-        lstm_cells = 16
     elif args.loglevel is not None:
         loglevel = getattr(logging, args.loglevel.upper(), None)
+    else:
+        loglevel = logging.WARN
+
     logging.basicConfig(format=LOG_FORMAT, level=loglevel)
     logger = logging.getLogger(__name__)
 
@@ -475,6 +475,9 @@ if __name__ == "__main__":
                             description = DESCRIPTION, #description - ModelWrapper
                             optimizer_name = "Adam", # string optimizer name
                             learning_rate = learning_rate, # learning rate - ModelWrapper
+                            # TODO: this should be in fit instead but need it to define name for the
+                            # checkpoint location - move later
+                            batch_size = batch_size, # batch size - ModelWrapper
                             model_version= model_version, # model version - ModelWrapper
                             save_dir = output_dir # where to save outputs - ModelWrapper
     )
@@ -485,7 +488,6 @@ if __name__ == "__main__":
 
     network_history = mw.fit(X_train,
                              y_train,
-                             batch_size=batch_size,
                              epochs=epochs,
                              verbose=1,
                              validation_split=0.2,

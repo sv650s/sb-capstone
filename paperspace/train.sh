@@ -36,29 +36,37 @@ fi
 
 # set variables
 lstm_cells=128
+lstm_cells_opt="-c ${lstm_cells} "
 machine_type="P4000"
+batch_size=32
+batch_size_opt="-b ${batch_size} "
 bidirectional_opt=
 bidirectional_name=
 unbalance_class_weights_opt=
 balance_name="B"
 train_embeddings_opt=
-learning_rate=
+dropout_rate=0.0 && dropout_rate_opt="-d ${dropout_rate} "
+recurrent_dropout_rate=0.0 && recurrent_dropout_rate_opt="-r ${recurrent_dropout_rate} "
+learning_rate=0.001 && learning_rate_opt="-a ${learning_rate} "
+version=1
+version_opt="-v ${version} "
 
-while getopts :a:b:c:d:e:l:np:r:t:u o
+while getopts :a:b:c:d:e:l:np:r:t:uv: o
    do
      case $o in
-        a) learning_rate="$OPTARG" ;;
-        b) batch_size="$OPTARG" ;;
-        c) lstm_cells="$OPTARG" ;;
-        d) dropout_rate="$OPTARG" ;;
+        a) learning_rate="$OPTARG" ; learning_rate_opt="-a ${learning_rate} " ;;
+        b) batch_size="$OPTARG" && batch_size_opt="-b ${batch_size} " ;;
+        c) lstm_cells="$OPTARG" && lstm_cells_opt="-c ${lstm_cells} ";;
+        d) dropout_rate="$OPTARG" && dropout_rate_opt="-d ${dropout_rate} ";;
         e) epochs="$OPTARG" ;;
         l) log_level="$OPTARG" ;;
-        n) bidirectional_opt="-n"; bidirectional_name="bi";;
+        n) bidirectional_opt="-n" && bidirectional_name="bi";;
         m) train_embeddings_opt="-m" ;;
         p) patience="$OPTARG" ;;
-        r) recurrent_dropout_rate="$OPTARG" ;;
+        r) recurrent_dropout_rate="$OPTARG" && recurrent_dropout_rate_opt="-r ${recurrent_dropout_rate} " ;;
         t) machine_type="$OPTARG" ;;
-        u) unbalance_class_weights_opt="-u"; balance_name="" ;;
+        u) unbalance_class_weights_opt="-u" && balance_name="" ;;
+        v) version="$OPTARG " && version_opt="-v ${version}" ;;
         *) usage && exit 0 ;;                     # display usage and exit
      esac
    done
@@ -67,24 +75,16 @@ shift $((OPTIND-1))
 sample_size=$1
 echo "Sample size: ${sample_size}"
 
-if [ ! -z ${learning_rate} ]; then
-    learning_rate_opt="-a ${learning_rate} "
-fi
-if [ "x${batch_size}" == "x" ]; then
-    batch_size_opt=""
-else
-    batch_size_opt="-b ${batch_size} "
-fi
-if [ "x${lstm_cells}" == "x" ]; then
-    lstm_cells_opt=""
-else
-    lstm_cells_opt="-c ${lstm_cells} "
-fi
-if [ "x${dropout_rate}" == "x" ]; then
-    dropout_rate_opt=""
-else
-    dropout_rate_opt="-d ${dropout_rate} "
-fi
+#if [ "x${lstm_cells}" == "x" ]; then
+#    lstm_cells_opt=""
+#else
+#    lstm_cells_opt="-c ${lstm_cells} "
+#fi
+#if [ "x${dropout_rate}" == "x" ]; then
+#    dropout_rate_opt=""
+#else
+#    dropout_rate_opt="-d ${dropout_rate} "
+#fi
 if [ "x${epochs}" == "x" ]; then
     epochs_opt=""
 else
@@ -105,11 +105,11 @@ if [ "x${patience}" == "x" ]; then
 else
     patience_opt="-p ${patience} "
 fi
-if [ "x${recurrent_dropout_rate}" == "x" ]; then
-    recurrent_dropout_rate_opt=""
-else
-    recurrent_dropout_rate_opt="-r ${recurrent_dropout_rate} "
-fi
+#if [ "x${recurrent_dropout_rate}" == "x" ]; then
+#    recurrent_dropout_rate_opt=""
+#else
+#    recurrent_dropout_rate_opt="-r ${recurrent_dropout_rate} "
+#fi
 
 
 UTIL_ORIG="../util"
@@ -117,18 +117,41 @@ UTIL_DEST="train/util"
 echo "Syncing util..."
 rsync -rauv --delete --exclude="__pycache__" ${UTIL_ORIG}/*.py ${UTIL_DEST}/
 
+# test-LSTMB16-1x16-dr0-rdr0-batch0-lr01-glove_with_stop_nonlemmatized-sampling_none-test-review_body
+
+if [ ${sample_size} == "test" ]; then
+    model_basename="test-${bidirectional_name}LSTM${balance_name}${lstm_cells}-"
+else
+    model_basename="${bidirectional_name}LSTM${balance_name}${lstm_cells}-"
+fi
+model_basename="${model_basename}1x${lstm_cells}-"
+model_basename="${model_basename}dr`echo ${dropout_rate} | awk -F\. '{print $2}'`-"
+model_basename="${model_basename}rdr`echo ${recurrent_dropout_rate} | awk -F\. '{print $2}'`-"
+model_basename="${model_basename}batch${batch_size}-lr`echo ${learning_rate} | awk -F\. '{print $2}'`-"
+# TODO: parameterize feature_set_name
+model_basename="${model_basename}glove_with_stop_nonlemmatized-"
+model_basename="${model_basename}sampling_none-"
+model_basename="${model_basename}${sample_size}-"
+model_basename="${model_basename}review_body-"
+model_basename="${model_basename}v${version}"
 
 echo "Running python with following command"
-echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt} ${sample_size}"
+echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${version_opt} ${sample_size}"
+echo "basename: ${model_basename}"
+
 
 gradient experiments run singlenode \
-    --name ${bidirectional_name}LSTM${balance_name}${lstm_cells}-dr${dropout_rate}-rdr${recurrent_dropout_rate}-batch${batch_size}-lr${learning_rate}-${sample_size} \
+    --name ${model_basename} \
     --projectId pr1cl53bg \
     --machineType ${machine_type} \
     --container vtluk/paperspace-tf-gpu:1.0 \
-    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt} ${sample_size}" \
+    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${version_opt} ${sample_size}" \
     --workspace . \
     --modelType Tensorflow \
-    --modelPath "/artifacts/models"
+    --modelPath "/artifacts/models/${model_basename}"
+#    --modelPath "/artifacts/models/"
 
 
+#    --name ${bidirectional_name}LSTM${balance_name}${lstm_cells}-dr${dropout_rate}-rdr${recurrent_dropout_rate}-batch${batch_size}-lr${learning_rate}-${sample_size} \
+
+# test-LSTMB128-1x128-dr0-rdr0-batch128-lr0.01-glove_with_stop_nonlemmatized-sampling_none-test-star_ratings
