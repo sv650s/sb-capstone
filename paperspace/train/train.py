@@ -71,7 +71,7 @@ def check_resources():
 
     # check that we are using high RAM runtime
     ram_gb = virtual_memory().total / 1e9
-    print('Your runtime has {:.1f} gigabytes of available RAM\n'.format(ram_gb))
+    logger.info('Your runtime has {:.1f} gigabytes of available RAM\n'.format(ram_gb))
 
     # if ram_gb < 20:
     #   print('To enable a high-RAM runtime, select the Runtime → "Change runtime type"')
@@ -106,7 +106,7 @@ def load_data(data_file: str, feature_column:str, label_column: str):
     df = pd.read_csv(data_file)
 
     # drop any rows with empty feature columns that we may have missed
-    logger.info("Dropping rows with empty features")
+    logger.info("Dropping rows with empty features...")
     df.dropna(subset = [feature_column, label_column], inplace = True)
 
     reviews = df[feature_column]
@@ -150,15 +150,15 @@ def preprocess_data(feature_train, feature_test, embedding_file: str, missing_wo
     train_sequences = t.texts_to_sequences(feature_train)
     test_sequences = t.texts_to_sequences(feature_test)
 
-    print("Vocabulary size={}".format(len(t.word_counts)))
-    print("Number of Documents={}".format(t.document_count))
+    logger.info("Vocabulary size={}".format(len(t.word_counts)))
+    logger.info("Number of Documents={}".format(t.document_count))
 
 
     # pad our reviews to the max sequence length
     X_train = sequence.pad_sequences(train_sequences, maxlen=MAX_SEQUENCE_LENGTH)
     X_test = sequence.pad_sequences(test_sequences, maxlen=MAX_SEQUENCE_LENGTH)
 
-    print('Train review vectors shape:', X_train.shape, ' Test review vectors shape:', X_test.shape)
+    logger.info(f'Train review vectors shape: {np.shape(X_train)} Test review vectors shape: {np.shape(X_test)}')
 
     """## Load our pre-trained embedding
 
@@ -202,7 +202,7 @@ def preprocess_data(feature_train, feature_test, embedding_file: str, missing_wo
 
     # this is a map with key == word, value == index in the vocabulary
     word_index = t.word_index
-    print(f'word_index length: {len(word_index)}')
+    logger.info(f'word_index length: {len(word_index)}')
 
     # start with a matrix of 0's
     embedding_matrix = np.zeros((len(word_index) + 1, EMBED_SIZE))
@@ -212,16 +212,16 @@ def preprocess_data(feature_train, feature_test, embedding_file: str, missing_wo
     logger.info("Creating embedding matrix from embedding index...")
     missing_words = []
     for word, i in word_index.items():
-        # print(f'word: {word} i: {i}')
+        # logger.info(f'word: {word} i: {i}')
         embedding_vector = embedding_index.get(word)
         if embedding_vector is not None and np.shape(embedding_vector)[0] == EMBED_SIZE:
             # words not found in embedding index will be all-zeros.
-            # print(f'i: {i} embedding_vector shape: {np.shape(embedding_vector)}')
+            # logger.info(f'i: {i} embedding_vector shape: {np.shape(embedding_vector)}')
             embedding_matrix[i] = embedding_vector
         else:
           missing_words.append(word)
 
-    print(f'Number of missing words from our vocabulary: {len(missing_words)}')
+    logger.info(f'Number of missing words from our vocabulary: {len(missing_words)}')
 
     """Save off our missing words into a csv file so we can analyze this later"""
 
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 
     debug = False
     if sample_size == "test":
-        print("Running in DEBUG mode")
+        logger.info("Running in DEBUG mode")
         debug = True
 
     # process argument
@@ -404,7 +404,7 @@ if __name__ == "__main__":
               f'\tbatch_size:\t\t\t{batch_size}\n' \
               f'\tdropout_rate:\t\t\t{dropout_rate}\n' \
               f'\trecurrent_dropout_rate:\t\t{recurrent_dropout_rate}\n'
-    print(summary)
+    logger.info(summary)
 
 
 
@@ -488,23 +488,23 @@ if __name__ == "__main__":
                              callbacks=[early_stop, reduce_lr])
 
     mw.evaluate(X_test, y_test)
-    print("Train Accuracy: %.2f%%" % (mw.train_scores[1]*100))
-    print("Test Accuracy: %.2f%%" % (mw.test_scores[1]*100))
+    logger.info("Train Accuracy: %.2f%%" % (mw.train_scores[1]*100))
+    logger.info("Test Accuracy: %.2f%%" % (mw.test_scores[1]*100))
 
     # pu.plot_network_history(mw.network_history, "categorical_accuracy", "val_categorical_accuracy")
     # plt.show()
 
-    print("\nConfusion Matrix")
-    print(mw.test_confusion_matrix)
+    logger.info("\nConfusion Matrix")
+    logger.info(mw.test_confusion_matrix)
     
-    print("\nClassification Report")
-    print(mw.test_classification_report)
+    logger.info("\nClassification Report")
+    logger.info(mw.test_classification_report)
 
     # fig = plt.figure(figsize=(5,5))
     # pu.plot_roc_auc(mw.model_name, mw.roc_auc, mw.fpr, mw.tpr)
 
     custom_score = ru.calculate_metric(mw.test_crd)
-    print(f'Custom Score: {custom_score}')
+    logger.info(f'Custom Score: {custom_score}')
 
     """**Save off various files**"""
 
@@ -512,11 +512,11 @@ if __name__ == "__main__":
 
     """# Test That Our Models Saved Correctly"""
 
-    print("Reloading model for testing...")
+    logger.info("Reloading model for testing...")
     model_loaded = load_model(mw.model_file)
     scores = model_loaded.evaluate(X_test, y_test, verbose=1)
     accuracy = scores[1] * 100
-    print("Accuracy: %.2f%%" % (accuracy))
+    logger.info("Accuracy: %.2f%%" % (accuracy))
 
     # this takes too long for real models
     if debug == True:
@@ -525,16 +525,16 @@ if __name__ == "__main__":
       y_test_unencoded = ku.unencode(y_test)
 
       # classification report
-      print(classification_report(y_test_unencoded, y_predict_unencoded))
+      logger.info(classification_report(y_test_unencoded, y_predict_unencoded))
 
       # confusion matrix
-      print(confusion_matrix(y_test_unencoded, y_predict_unencoded))
+      logger.info(confusion_matrix(y_test_unencoded, y_predict_unencoded))
 
     end_time = datetime.now()
-    print(f'Finished training {mw}')
-    print("Accuracy: %.2f%%" % (accuracy))
-    print("Custom Score: %.2f%%" % (custom_score))
-    print(f'Report filename: {ku.ModelWrapper.get_report_file_name(output_dir, use_date=False)}')
-    print(f'Star Time: {start_time}')
-    print(f'End Time: {end_time}')
-    print(f'Total Duration: {round((end_time - start_time).total_seconds() / 60, 2)} mins')
+    logger.info(f'Finished training {mw}')
+    logger.info("Accuracy: %.2f%%" % (accuracy))
+    logger.info("Custom Score: %.2f%%" % (custom_score))
+    logger.info(f'Report filename: {ku.ModelWrapper.get_report_file_name(output_dir, use_date=False)}')
+    logger.info(f'Star Time: {start_time}')
+    logger.info(f'End Time: {end_time}')
+    logger.info(f'Total Duration: {round((end_time - start_time).total_seconds() / 60, 2)} mins')

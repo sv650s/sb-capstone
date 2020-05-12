@@ -42,6 +42,7 @@ bidirectional_name=
 unbalance_class_weights_opt=
 balance_name="B"
 train_embeddings_opt=
+learning_rate=
 
 while getopts :a:b:c:d:e:l:np:r:t:u o
    do
@@ -66,10 +67,8 @@ shift $((OPTIND-1))
 sample_size=$1
 echo "Sample size: ${sample_size}"
 
-if [ -n ${learning_rate} ]; then
+if [ ! -z ${learning_rate} ]; then
     learning_rate_opt="-a ${learning_rate} "
-else
-    learning_rate_opt=""
 fi
 if [ "x${batch_size}" == "x" ]; then
     batch_size_opt=""
@@ -113,6 +112,12 @@ else
 fi
 
 
+UTIL_ORIG="../util"
+UTIL_DEST="train/util"
+echo "Syncing util..."
+rsync -rauv --delete --exclude="__pycache__" ${UTIL_ORIG}/*.py ${UTIL_DEST}/
+
+
 echo "Running python with following command"
 echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt} ${sample_size}"
 
@@ -122,6 +127,8 @@ gradient experiments run singlenode \
     --machineType ${machine_type} \
     --container vtluk/paperspace-tf-gpu:1.0 \
     --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt} ${sample_size}" \
-    --workspace .
+    --workspace . \
+    --modelType Tensorflow \
+    --modelPath "/artifacts/models"
 
 

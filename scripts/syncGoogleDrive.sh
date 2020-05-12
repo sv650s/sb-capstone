@@ -39,6 +39,10 @@ echo ""
 echo "Pulling down reports..."
 rsync -rauv ${DEBUG_FLAG} --exclude=*test* --exclude=bak* ~/Google\ Drive/Springboard/capstone/reports/*.csv ../reports/
 
+echo ""
+echo "Pulling down network history files..."
+rsync -rauv ${DEBUG_FLAG} --exclude=*test* --exclude=bak* ~/Google\ Drive/Springboard/capstone/reports/*history.pkl ../reports/
+
 # sync report files and notebooks from colab to git repot
 #echo "pulling down history files..."
 #rsync -rauv ${DEBUG_FLAG} ~/Google\ Drive/Springboard/capstone/models/*history.pkl ../models/

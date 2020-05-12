@@ -283,6 +283,7 @@ def plot_roc_auc(model_name, roc_auc, fpr, tpr):
 def plot_network_history(network_history,
                          accuracy_label:str = "categorical_accuracy",
                          val_accuracy_label:str = "val_categorical_accuracy",
+                         description = None,
                          stored_history = False,
                          figsize = (10, 5),
                          title_font_size = 24):
@@ -300,8 +301,10 @@ def plot_network_history(network_history,
     fig = plt.figure(figsize = figsize)
 
     # print title across subplots
-    fig.suptitle("Network History",
-                 fontsize = title_font_size)
+    if description is not None:
+        fig.suptitle(f"Network History - {description}", fontsize=title_font_size)
+    else:
+        fig.suptitle("Network History", fontsize = title_font_size)
     gs = fig.add_gridspec(1, 2)
 
     if stored_history:

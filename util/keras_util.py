@@ -1,6 +1,7 @@
 from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Dropout
@@ -237,7 +238,8 @@ class ModelWrapper(object):
                  description=None,
                  save_weights=True,
                  optimizer = None,
-                 learning_rate = None):
+                 learning_rate = None,
+                 model_version = 1):
         """
         Constructor
 
@@ -270,6 +272,7 @@ class ModelWrapper(object):
         self.save_weights = save_weights
         self.optimizer = optimizer
         self.learning_rate = learning_rate
+        self.model_version = model_version
         self.tokenizer_file = None
         self.train_time_min = 0
         self.test_predict_time_min = 0
@@ -311,7 +314,8 @@ class ModelWrapper(object):
                     f"\ttokenizer:\t\t\t{self.tokenizer}\n" \
                     f"\tsave_weights:\t\t\t{self.save_weights}\n" \
                     f"\toptimizer:\t\t\t{self.optimizer}\n" \
-                    f"\tlearning_rate:\t\t\t{self.learning_rate}\n"
+                    f"\tlearning_rate:\t\t\t{self.learning_rate}\n" \
+                    f"\tversion:\t\t\t{self.model_version}\n"
         return summary
 
     def get_class_weight_dict(self, y_train):
@@ -367,6 +371,17 @@ class ModelWrapper(object):
         self.y_train = y_train
         self.batch_size = batch_size
 
+        # TODO: add model checkpoint
+        # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint
+        # https://www.tensorflow.org/tutorials/keras/save_and_load#checkpoint_callback_options
+        # checkpoint_filepath = '/tmp/checkpoint'
+        # model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        #     filepath=checkpoint_filepath,
+        #     save_weights_only=True,
+        #     monitor='val_acc',
+        #     mode='max',
+        #     save_best_only=True)
+
         start_time = datetime.now()
         log.info(f'model: {self.model}')
         self.network_history = self.model.fit(X_train,
@@ -379,6 +394,7 @@ class ModelWrapper(object):
                                               class_weight=self.class_weight)
         end_time = datetime.now()
         self.train_time_min = round((end_time - start_time).total_seconds() / 60, 2)
+        print(f'Total training time: {self.train_time_min} mins')
         self.epochs = len(self.network_history.history['loss'])
         return self.network_history
 
@@ -507,6 +523,7 @@ class ModelWrapper(object):
         self.weights_file = self.get_weights_filename(save_dir)
         self.report_file = ModelWrapper.get_report_file_name(save_dir)
         self.tokenizer_file = f'{save_dir}/{ModelWrapper.models_dir}/{description}-tokenizer.pkl'
+        self.saved_model_dir = f'{save_dir}/{ModelWrapper.models_dir}/{description}/{self.model_version}'
 
         print(f"Saving to report file: {self.report_file}")
         report = self.get_report()
@@ -531,6 +548,9 @@ class ModelWrapper(object):
 
         print(f"Saving model file: {self.model_file}")
         self.model.save(self.model_file, save_format=save_format)
+
+        print(f"Saving SavedModel to: {self.saved_model_dir}")
+        tf.saved_model.save(self.model, self.saved_model_dir)
 
         if self.tokenizer is not None:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
@@ -561,6 +581,7 @@ class ModelWrapper(object):
         # too long to save in CSV
         report.add("optimizer", self.optimizer)
         report.add("learning_rate", self.learning_rate)
+        report.add("version", self.model_version)
         report.add("network_history_file", self.network_history_file)
         # report.add("history", self.network_history.history)
         report.add("tokenizer_file", self.tokenizer_file)
@@ -573,6 +594,7 @@ class ModelWrapper(object):
         report.add("model_file", self.model_file)
         report.add("model_json_file", self.model_json_file)
         report.add("weights_file", self.weights_file)
+        report.add("saved_model_dir", self.saved_model_dir)
         report.add("test_examples", self.X_test.shape[0])
         report.add("test_features", self.X_test.shape[1])
         report.add("train_examples", self.X_train.shape[0])
