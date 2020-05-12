@@ -428,7 +428,7 @@ class ModelWrapper(object):
         self.X_train = X_train
         self.y_train = y_train
 
-        # TODO: add model checkpoint
+        # add model checkpoint
         # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint
         # https://www.tensorflow.org/tutorials/keras/save_and_load#checkpoint_callback_options
         if save_checkpoints:
