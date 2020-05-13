@@ -168,7 +168,7 @@ def _preprocess_dnn_report_file(report: pd.DataFrame):
     if "classification_report_train" in report.columns:
         log.info("calculating eval metric for training set...")
         report["eval_metric_train"] = \
-            report["classification_report_train"].apply(lambda x: calculate_metric(json.loads(x)))
+            report["classification_report_train"].apply(lambda x: calculate_metric(json.loads(x) if type(x) != float else np.NaN))
 
     report["sample_size"] = report.train_examples + report.test_examples
     if "architecture" in report.keys():
@@ -191,7 +191,10 @@ def convert_dnn_report_format(report:pd.DataFrame):
         cr_dict = json.loads(row.classification_report)
         report_dict = du.add_dict_to_dict(report_dict, cr_dict)
 
-        if "classification_report_train" in report.columns and len(row.classification_report_train) > 0:
+        if "classification_report_train" in report.columns \
+            and type(row.classification_report_train) != float \
+                and len(row.classification_report_train) > 0:
+
             log.info("Processing train set classification report")
             dict_train = {}
             cr_dict_train = json.loads(row.classification_report_train)

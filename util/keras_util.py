@@ -437,7 +437,7 @@ class ModelWrapper(object):
                 filepath = self.checkpoint_file,
                 verbose = 1,
                 save_weights_only = False,
-                monitor = 'val_categorical_accuracy',
+                monitor = 'val_loss',
                save_freq = 'epoch',
                 save_best_only = True)
 

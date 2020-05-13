@@ -139,7 +139,6 @@ echo "Running python with following command"
 echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${version_opt} ${sample_size}"
 echo "basename: ${model_basename}"
 
-
 gradient experiments run singlenode \
     --name ${model_basename} \
     --projectId pr1cl53bg \
@@ -152,6 +151,3 @@ gradient experiments run singlenode \
 #    --modelPath "/artifacts/models/"
 
 
-#    --name ${bidirectional_name}LSTM${balance_name}${lstm_cells}-dr${dropout_rate}-rdr${recurrent_dropout_rate}-batch${batch_size}-lr${learning_rate}-${sample_size} \
-
-# test-LSTMB128-1x128-dr0-rdr0-batch128-lr0.01-glove_with_stop_nonlemmatized-sampling_none-test-star_ratings
