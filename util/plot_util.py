@@ -298,33 +298,34 @@ def plot_network_history(network_history,
     :param val_accuracy_label: label to cuse for validation accuracy plot. Default val_categorical_accuracy
     :return: None
     """
-    fig = plt.figure(figsize = figsize)
+    f, a = plt.subplots(1, 2, figsize = figsize, sharex = True)
 
     # print title across subplots
     if description is not None:
-        fig.suptitle(f"Network History - {description}", fontsize=title_font_size)
+        f.suptitle(f"Network History - {description}", fontsize=title_font_size)
     else:
-        fig.suptitle("Network History", fontsize = title_font_size)
-    gs = fig.add_gridspec(1, 2)
+        f.suptitle("Network History", fontsize = title_font_size)
 
-    if stored_history:
+    if isinstance(network_history, dict):
         history = network_history
     else:
         history = network_history.history
 
-    ax1 = fig.add_subplot(gs[0, 0])
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.plot(history['loss'])
-    plt.plot(history['val_loss'])
-    plt.legend(['Training', 'Validation'], loc='lower left')
+    _ = a[0].set_xlabel('Epochs')
+    _ = a[0].set_ylabel('Loss')
+    _ = plt.legend(['Training', 'Validation'], loc='lower left')
+    sns.lineplot(x = np.arange(1, len(history['loss']) + 1), y = history['loss'], ax=a[0], label = "Training", marker = "o")
+    sns.lineplot(x = np.arange(1, len(history['val_loss']) + 1), y = history['val_loss'], ax=a[0], label = "Validation", marker = "o")
+    # plt.plot(history['loss'], ax=a[0])
+    # plt.plot(history['val_loss'], ax=a[0])
 
-    ax1 = fig.add_subplot(gs[0, 1])
-    plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.plot(history[accuracy_label])
-    plt.plot(history[val_accuracy_label])
-    plt.legend(['Training', 'Validation'], loc='upper left')
+    _ = a[1].set_xlabel('Epochs')
+    _ = a[1].set_ylabel('Accuracy')
+    _ = plt.legend(['Training', 'Validation'], loc='lower left')
+    sns.lineplot(x = np.arange(1, len(history[accuracy_label]) + 1), y = history[accuracy_label], ax=a[1], label = "Training", marker = "o")
+    sns.lineplot(x = np.arange(1, len(history[val_accuracy_label]) + 1), y = history[val_accuracy_label], ax=a[1], label = "Validation", marker = "o")
+    # sns.lineplot(data = history[accuracy_label], ax=a[1])
+    # sns.lineplot(data = history[val_accuracy_label], ax=a[1])
 
 
     plt.show()

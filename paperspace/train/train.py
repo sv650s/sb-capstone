@@ -243,22 +243,17 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i", "--input_dir", help="input directory. Default /storage/data",
-                        default="/storage/data")
-    parser.add_argument("-o", "--output_dir", help="output directory. Default /artifacts",
-                        default="/artifacts")
-
-
+    parser.add_argument("-a", "--learning_rate", help="Optimizer learning rate. Default = 0.001", default=0.001)
+    parser.add_argument("-b", "--batch_size", help="Training batch size. Default = 32", default=32)
+    parser.add_argument("-c", "--lstm_cells", help="Number of LSTM cells. Default = 128", default=128)
     parser.add_argument("-d", "--dropout_rate", help="dropout rate. Default 0",
                         default=0)
-    parser.add_argument("-r", "--recurrent_dropout_rate", help="recurrent dropout rate. NOTE: will not be able to " \
-            "cuDNN if this is set. Default 0",
-                        default=0)
+    parser.add_argument("-e", "--epochs", help="Max number epochs. Default = 20", default=20)
     parser.add_argument("-f", "--feature_column", help="feature column. Default review_body",
                         default="review_body")
-    parser.add_argument("-t", "--truth_label_column", help="label column. Default star_rating",
-                        default="star_rating")
-
+    parser.add_argument("-i", "--input_dir", help="input directory. Default /storage/data",
+                        default="/storage/data")
+    parser.add_argument("-l", "--loglevel", help="log level", default="INFO")
     parser.add_argument("-m", "--train_embeddings",
                         help="set this flag to make enbedding layer trainable. Default False",
                         default=False,
@@ -267,19 +262,20 @@ if __name__ == "__main__":
                         help="label column. Default star_rating",
                         default=False,
                         action="store_true")
+    parser.add_argument("-o", "--output_dir", help="output directory. Default /artifacts",
+                        default="/artifacts")
+    parser.add_argument("-p", "--patience", help="patience. Default = 4", default=4)
+    parser.add_argument("-r", "--recurrent_dropout_rate", help="recurrent dropout rate. NOTE: will not be able to " \
+                                                               "cuDNN if this is set. Default 0",
+                        default=0)
+    parser.add_argument("-s", "--resume_training_file", help="path to load model file to resume training", default = None)
+    parser.add_argument("-t", "--truth_label_column", help="label column. Default star_rating",
+                        default="star_rating")
     parser.add_argument("-u", "--unbalanced_class_weights",
                         help="do not balance class weights for training",
                         default=False,
                         action="store_true")
-
-    parser.add_argument("-p", "--patience", help="patience. Default = 4", default=4)
-    parser.add_argument("-c", "--lstm_cells", help="Number of LSTM cells. Default = 128", default=128)
-    parser.add_argument("-a", "--learning_rate", help="Optimizer learning rate. Default = 0.001", default=0.001)
-    parser.add_argument("-e", "--epochs", help="Max number epochs. Default = 20", default=20)
-    parser.add_argument("-b", "--batch_size", help="Training batch size. Default = 32", default=32)
     parser.add_argument("-v", "--model_version", help="Specify model version. Default = 1", default=1)
-
-    parser.add_argument("-l", "--loglevel", help="log level", default="INFO")
 
     # POSITIONAL ARGUMENTS
     parser.add_argument("sample_size",
@@ -319,6 +315,10 @@ if __name__ == "__main__":
     bidirectional = args.bidirectional
     balance_class_weights = not args.unbalanced_class_weights
     train_embeddings = args.train_embeddings
+
+    resume_training_file = args.resume_training_file
+    if resume_training_file is not None and not os.path.exists(resume_training_file):
+        raise FileNotFoundError(f"File not found {resume_training_file}")
 
 
     data_dir = f'{input_dir}/amazon_reviews'
@@ -384,29 +384,6 @@ if __name__ == "__main__":
     EMBEDDING_FILE = f'{embeddings_dir}/glove.840B.300d.txt'
 
 
-    # summary = f'\nParameters:\n' \
-    #           f'\tinput_dir:\t\t\t{input_dir}\n' \
-    #           f'\toutput_dir:\t\t\t{output_dir}\n' \
-    #           f'\tdata_file:\t\t\t{data_file}\n' \
-    #           f'\tlabel_column:\t\t\t{label_column}\n' \
-    #           f'\tfeature_column:\t\t\t{feature_column}\n' \
-    #           f'\tsample_size:\t\t\t{sample_size}\n' \
-    #           f'\nEmbedding Info:\n' \
-    #           f'\tFEATURE_SET_NAME:\t\t{FEATURE_SET_NAME}\n' \
-    #           f'\tEMBED_SIZE:\t\t\t{EMBED_SIZE}\n' \
-    #           f'\tMAX_SEQUENCE_LENGTH:\t\t{MAX_SEQUENCE_LENGTH}\n' \
-    #           f'\tEMBEDDING_FILE:\t\t\t{EMBEDDING_FILE}\n' \
-    #           f'\ttrain_embeddings:\t\t{train_embeddings}\n' \
-    #           f'\nModel Info:\n' \
-    #           f'\tmodel_name:\t\t\t{model_name}\n' \
-    #           f'\tlstm_cells:\t\t\t{lstm_cells}\n' \
-    #           f'\tlearning_rate:\t\t\t{learning_rate}\n' \
-    #           f'\tpatience:\t\t\t{patience}\n' \
-    #           f'\tepochs:\t\t\t\t{epochs}\n' \
-    #           f'\tbatch_size:\t\t\t{batch_size}\n' \
-    #           f'\tdropout_rate:\t\t\t{dropout_rate}\n' \
-    #           f'\trecurrent_dropout_rate:\t\t{recurrent_dropout_rate}\n'
-    # logger.info(summary)
 
 
 
@@ -439,13 +416,15 @@ if __name__ == "__main__":
 
     vocab_size = len(t.word_index)+1
 
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss',
-                                  restore_best_weights=True)
+    reduce_lr = ReduceLROnPlateau(monitor = 'val_loss',
+                                  restore_best_weights = True,
+                                  verbose = 1,
+                                  patience = 2)
 
-    early_stop = EarlyStopping(monitor='val_loss',
-                               patience=patience,
-                               verbose=1,
-                               restore_best_weights=True)
+    early_stop = EarlyStopping(monitor = 'val_loss',
+                               patience = patience,
+                               verbose = 1,
+                               restore_best_weights = True)
 
     logger.debug(f'y_train: {y_train[:5]} ratings {ratings[:5]}')
     weights = compute_class_weight('balanced', np.arange(1, 6), ratings)
@@ -479,7 +458,8 @@ if __name__ == "__main__":
                             # checkpoint location - move later
                             batch_size = batch_size, # batch size - ModelWrapper
                             model_version= model_version, # model version - ModelWrapper
-                            save_dir = output_dir # where to save outputs - ModelWrapper
+                            save_dir = output_dir, # where to save outputs - ModelWrapper
+                            load_model_file= resume_training_file # load model from file - ModelWrapper
     )
 
     mw.add("environment", "paperspace")

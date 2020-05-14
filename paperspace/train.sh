@@ -48,10 +48,11 @@ train_embeddings_opt=
 dropout_rate=0.0 && dropout_rate_opt="-d ${dropout_rate} "
 recurrent_dropout_rate=0.0 && recurrent_dropout_rate_opt="-r ${recurrent_dropout_rate} "
 learning_rate=0.001 && learning_rate_opt="-a ${learning_rate} "
+resume_model_file_opt=
 version=1
 version_opt="-v ${version} "
 
-while getopts :a:b:c:d:e:l:np:r:t:uv: o
+while getopts :a:b:c:d:e:l:np:r:s:t:uv: o
    do
      case $o in
         a) learning_rate="$OPTARG" ; learning_rate_opt="-a ${learning_rate} " ;;
@@ -64,6 +65,7 @@ while getopts :a:b:c:d:e:l:np:r:t:uv: o
         m) train_embeddings_opt="-m" ;;
         p) patience="$OPTARG" ;;
         r) recurrent_dropout_rate="$OPTARG" && recurrent_dropout_rate_opt="-r ${recurrent_dropout_rate} " ;;
+        s) resume_model_file="$OPTARG" && resume_model_file_opt="-s ${resume_model_file} " ;;
         t) machine_type="$OPTARG" ;;
         u) unbalance_class_weights_opt="-u" && balance_name="" ;;
         v) version="$OPTARG " && version_opt="-v ${version}" ;;
@@ -136,7 +138,7 @@ model_basename="${model_basename}review_body-"
 model_basename="${model_basename}v${version}"
 
 echo "Running python with following command"
-echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${version_opt} ${sample_size}"
+echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
 echo "basename: ${model_basename}"
 
 gradient experiments run singlenode \
@@ -144,7 +146,7 @@ gradient experiments run singlenode \
     --projectId pr1cl53bg \
     --machineType ${machine_type} \
     --container vtluk/paperspace-tf-gpu:1.0 \
-    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${version_opt} ${sample_size}" \
+    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
     --workspace . \
     --modelType Tensorflow \
     --modelPath "/artifacts/models/${model_basename}"

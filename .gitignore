@@ -57,3 +57,4 @@ white_papers
 
 # paperspace - ignore util since we are copying from /util directory
 paperspace/train/util
+paperspace/models/*

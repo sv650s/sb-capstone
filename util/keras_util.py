@@ -22,6 +22,9 @@ import logging
 import os
 from datetime import datetime
 import pickle
+from functools import singledispatch
+
+
 
 from util.metric_util import calculate_roc_auc
 
@@ -231,13 +234,53 @@ class ModelWrapper(object):
         mw_copy.model_file = mw.model_file
         mw_copy.checkpoint_file = mw.checkpoint_file
         mw_copy.model_json_file = mw.model_json_file
-        mw_copy.network_history_file = mw.network_history_file
+        # mw_copy.network_history_file = mw.network_history_file
         mw_copy.weights_file = mw.weights_file
         mw_copy.report_file = mw.report_file
         mw_copy.tokenizer_file = mw.tokenizer_file
         mw_copy.saved_model_dir = mw.saved_model_dir
 
         return mw_copy
+
+    def _load_model(self):
+        """
+        load model from file and set it in self.model
+
+        :param load_model_file: path to model file
+        :return:
+        """
+        if not os.path.exists(self.load_model_file):
+            raise FileNotFoundError(f"{self.load_model_file} not found")
+
+        print(f"Loaded model from: {self.load_model_file}")
+        self.model = tf.keras.models.load_model(self.load_model_file)
+        print(self.model.summary())
+
+    def _set_output_files(self):
+        basename = self._get_saved_file_basename()
+        models_dir = f'{self.save_dir}/{ModelWrapper.models_dir}/{basename}'
+        reports_dir = f'{self.save_dir}/{ModelWrapper.reports_dir}'
+        log.debug(f"basename: {basename}")
+
+        # model files
+        self.model_file = f"{models_dir}/{basename}-model.h5"
+        self.checkpoint_file = f"{models_dir}/checkpoints"
+        self.model_json_file = f"{models_dir}/{basename}-model.json"
+        self.weights_file = f"{models_dir}/{basename}-weights.h5"
+        self.tokenizer_file = f'{models_dir}/{basename}-tokenizer.pkl'
+        self.saved_model_dir = f"{models_dir}/{self.model_version}"
+
+        # reports
+        # self.network_history_file = f"{reports_dir}/{basename}-history.json"
+        self.report_file = ModelWrapper.get_report_file_name(reports_dir)
+
+
+        if not os.path.exists(self.saved_model_dir):
+            log.info(f'Creating {self.saved_model_dir}')
+            os.makedirs(f'{self.saved_model_dir}', exist_ok = True)
+        if not os.path.exists(reports_dir):
+            log.info(f'Creating {reports_dir}')
+            os.makedirs(f'{reports_dir}', exist_ok = True)
 
 
     def __init__(self,
@@ -257,11 +300,12 @@ class ModelWrapper(object):
                  learning_rate = None,
                  batch_size = 32,
                  model_version = 1,
-                 save_dir = "drive/My Drive/Springboard/capstone"):
+                 save_dir = "drive/My Drive/Springboard/capstone",
+                 load_model_file = None):
         """
         Constructor
 
-        :param model:  keras model
+        :param model:  keras model to train. Pass None and set load_model_file if you want to resume training
         :param model_name:  string name of model
         :param architecture:  architecture of model
         :param feature_set_name: feature set name
@@ -274,6 +318,12 @@ class ModelWrapper(object):
         :param save_weights: whether we should save weights for the model or not. Default is true to make old notebooks
             backwards compatible. However, for newer notebooks that use ModelCheckpoints,
             you should set this to false because ModelCheckpoint should already save the best model weights for you
+        :param optimizer_name: name of optimizer to create -ie Adam
+        :param learning_rate: learning rate for optimizer
+        :param batch_size: batch size for training - default 32
+        :param model_version: version for the model being trained - default 1
+        :param save_dir: directory to save models and reports to - default drive/My Drive/Springboard/capstone
+        :param load_model_file: if not None, wrapper will load the model from file instead of creating a new one
         """
         log.debug(f"Contructor ModelWrapper")
 
@@ -294,6 +344,9 @@ class ModelWrapper(object):
         self.learning_rate = learning_rate
         self.model_version = model_version
         self.save_dir = save_dir
+        self.load_model_file = load_model_file
+
+
         self.tokenizer_file = None
         self.train_time_min = 0
         self.test_predict_time_min = 0
@@ -309,29 +362,14 @@ class ModelWrapper(object):
         self.X_test = None
         self.y_test = None
 
-        basename = self._get_saved_file_basename()
-        models_dir = f'{save_dir}/{ModelWrapper.models_dir}/{basename}'
-        reports_dir = f'{save_dir}/{ModelWrapper.reports_dir}'
-        log.debug(f"basename: {basename}")
+        self._set_output_files()
 
-        # model files
-        self.model_file = f"{models_dir}/{basename}-model.h5"
-        self.checkpoint_file = f"{models_dir}/checkpoints"
-        self.model_json_file = f"{models_dir}/{basename}-model.json"
-        self.weights_file = f"{models_dir}/{basename}-weights.h5"
-        self.tokenizer_file = f'{models_dir}/{basename}-tokenizer.pkl'
-        self.saved_model_dir = f"{models_dir}/{self.model_version}"
+        if self.load_model_file is not None:
+            # load model from path
+            self._load_model()
 
-        # reports
-        self.network_history_file = f"{reports_dir}/{basename}-history.pkl"
-        self.report_file = ModelWrapper.get_report_file_name(reports_dir)
 
-        if not os.path.exists(self.saved_model_dir):
-            log.info(f'Creating {self.saved_model_dir}')
-            os.makedirs(f'{self.saved_model_dir}', exist_ok = True)
-        if not os.path.exists(reports_dir):
-            log.info(f'Creating {reports_dir}')
-            os.makedirs(f'{reports_dir}', exist_ok = True)
+
 
 
         log.debug(f"Summary: {self}")
@@ -364,7 +402,8 @@ class ModelWrapper(object):
                     f"\tlearning_rate:\t\t\t{self.learning_rate}\n" \
                     f"\tversion:\t\t\t{self.model_version}\n" \
                     f"\tsave_dir:\t\t\t{self.save_dir}\n" \
-                    f"\n\tModel Output:\n" \
+                f"\tload_model_file:\t\t\t{self.load_model_file}\n" \
+                f"\n\tModel Output:\n" \
                     f"\t\tmodel_file:\t\t\t{self.model_file}\n" \
                     f"\t\tcheckpoint_file:\t\t{self.checkpoint_file}\n" \
                     f"\t\tmodel_json_file:\t\t{self.model_json_file}\n" \
@@ -372,8 +411,8 @@ class ModelWrapper(object):
                     f"\t\tsaved_model_dir:\t\t{self.saved_model_dir}\n" \
                     f"\t\ttokenizer_file:\t\t\t{self.tokenizer_file}\n" \
                     f"\n\tReport Output:\n" \
-                    f"\t\tnetwork_history_file:\t\t{self.network_history_file}\n" \
-                    f"\t\treport_file:\t\t\t{self.report_file}\n"
+                f"\t\treport_file:\t\t\t{self.report_file}\n"
+                    # f"\t\tnetwork_history_file:\t\t{self.network_history_file}\n" \
 
         return summary
 
@@ -569,15 +608,6 @@ class ModelWrapper(object):
         return description
 
 
-    # def get_saved_model_dir(self, models_dir: str):
-    #     """
-    #     gets the path for where SavedModels should be saved
-    #     :param models_dir: base directory to save models
-    #     :return:
-    #     """
-    #     basename = self._get_saved_file_basename()
-    #     return f'{models_dir}/{basename}/{self.model_version}'
-
     def save(self, save_format=None, append_report=True):
         """
         Save the following information based on our trained model:
@@ -591,18 +621,7 @@ class ModelWrapper(object):
         :param append_report: if existing report, True to append or False to overwrite. Default True
         :return:
         """
-
-        # if save_dir is not None:
-        #     self.save_dir = save_dir
-
-        # models_dir = f'{self.save_dir}/{ModelWrapper.models_dir}'
-        # reports_dir = f'{self.save_dir}/{ModelWrapper.reports_dir}'
-        # if not os.path.exists(models_dir):
-        #     log.info(f'Creating {models_dir}')
-        #     os.mkdir(f'{models_dir}')
-        # if not os.path.exists(reports_dir):
-        #     log.info(f'Creating {reports_dir}')
-        #     os.mkdir(f'{reports_dir}')
+        self._set_output_files()
 
         print(f"Saving to report file: {self.report_file}")
         report = self.get_report()
@@ -619,11 +638,12 @@ class ModelWrapper(object):
             self.model.save_weights(self.weights_file,
                                     save_format=save_format)
 
-        # TODO: should probably save this as json instead
-        if self.network_history is not None:
-            print(f"Saving history file: {self.network_history_file}")
-            with open(self.network_history_file, 'wb') as file:
-                pickle.dump(self.network_history.history, file)
+        # if self.network_history is not None:
+        #     print(f"Saving history file: {self.network_history_file}")
+        #     with open(self.network_history_file, 'w') as file:
+        #         json.dump(self.network_history.history,
+        #                     file,
+        #                     default=to_serializable)
 
         print(f"Saving model file: {self.model_file}")
         self.model.save(self.model_file, save_format=save_format)
@@ -662,7 +682,8 @@ class ModelWrapper(object):
         report.add("learning_rate", self.learning_rate)
         report.add("version", self.model_version)
         report.add("save_dir", self.save_dir)
-        report.add("network_history_file", self.network_history_file)
+        report.add("history", self.network_history.history)
+        # report.add("network_history_file", self.network_history_file)
         # report.add("history", self.network_history.history)
         report.add("tokenizer_file", self.tokenizer_file)
         report.add("batch_size", self.batch_size)
@@ -715,10 +736,6 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         """
         return NotImplemented
 
-    def compute_class_weights(self):
-        # TODO: implement this instead of calculating from notebook
-        pass
-
     def __init__(self,
                  vocab_size,
                  max_sequence_length = 100,
@@ -745,7 +762,8 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         # pass None to super constructor since we haven't built it yet
         super().__init__(None, *args, **kwargs)
 
-        self.model = self.build_model()
+        if self.load_model_file is None:
+            self.model = self.build_model()
 
 
 
@@ -791,8 +809,6 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         self.dropout_rate = dropout_rate
         self.recurrent_dropout_rate = recurrent_dropout_rate
 
-
-        # return super(LSTM1LayerModelWrapper, self).__init__(*args, **kwargs)
         super().__init__(*args, **kwargs)
 
 
@@ -876,6 +892,29 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         return report
 
 
+
+# define functions to be used for json serialization for float32
+# is was causing and error when converting network history to json format
+#
+# Traceback (most recent call last):
+#   File "<stdin>", line 1, in <module>
+# NameError: name 'np' is not defined
+# >>> import numpy as np
+# >>> @to_serializable.register(np.float32)
+# ... def ts_float32(val):
+# ...     """Used if *val* is an instance of numpy.float32."""
+# ...     return np.float64(val)
+@singledispatch
+def to_serializable(val):
+    """Used by default."""
+    return str(val)
+
+@to_serializable.register(np.float32)
+def ts_float32(val):
+    """Used if *val* is an instance of numpy.float32."""
+    return np.float64(val)
+
+
 class ModelReport(object):
     """
     dict wrapper that represents a report from model execution
@@ -927,8 +966,8 @@ class ModelReport(object):
             elif isinstance(value, dict):
                 log.debug(f"converting to dict to json: {value}")
                 dict_converted = {str(k): value[k] for k in value.keys()}
-                log.debug(f'json dumps results {json.dumps(dict_converted)}')
-                self.report[key] = json.dumps(dict_converted)
+                log.debug(f'json dumps results {json.dumps(dict_converted, default=to_serializable)}')
+                self.report[key] = json.dumps(dict_converted, default=to_serializable)
                 log.debug("done converting dict to json")
             elif isinstance(value, np.ndarray):
                 log.debug(f"converting ndarray to json: {value}")
