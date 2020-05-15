@@ -904,6 +904,7 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
 # ... def ts_float32(val):
 # ...     """Used if *val* is an instance of numpy.float32."""
 # ...     return np.float64(val)
+# Solution: https://ellisvalentiner.com/post/serializing-numpyfloat32-json/
 @singledispatch
 def to_serializable(val):
     """Used by default."""

@@ -307,7 +307,7 @@ if __name__ == "__main__":
     batch_size = int(args.batch_size)
     patience = int(args.patience)
     learning_rate = float(args.learning_rate)
-    model_version = int(args.model_version)
+    model_version = args.model_version
 
     dropout_rate = float(args.dropout_rate)
     recurrent_dropout_rate = float(args.recurrent_dropout_rate)
