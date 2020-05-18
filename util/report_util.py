@@ -175,6 +175,18 @@ def _preprocess_dnn_report_file(report: pd.DataFrame):
         report["display_name"] = report["model_name"] + " (" + report["architecture"] + ")"
     else:
         report["display_name"] = report["model_name"]
+
+
+    # some versions of reports have history vs network_history
+    # convert them here
+    # TODO: remove this once we fix all google colab reports
+    if "history" in report.columns:
+        log.info("Filling in network_history based on network")
+        report["network_history"] = \
+            report.apply(lambda x: x.history if pd.notnull(x.history) else x.network_history, axis=1)
+
+
+
     return report
 
 def convert_dnn_report_format(report:pd.DataFrame):

@@ -270,8 +270,6 @@ class ModelWrapper(object):
         self.tokenizer_file = f'{models_dir}/{basename}-tokenizer.pkl'
         self.saved_model_dir = f"{models_dir}/{self.model_version}"
 
-        # reports
-        # self.network_history_file = f"{reports_dir}/{basename}-history.json"
         self.report_file = ModelWrapper.get_report_file_name(reports_dir)
 
 
@@ -471,7 +469,8 @@ class ModelWrapper(object):
         # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint
         # https://www.tensorflow.org/tutorials/keras/save_and_load#checkpoint_callback_options
         if save_checkpoints:
-            log.info("Adding checkpoint callback...")
+            log.info(f'Callbacks before adding checkpoints: {callbacks}')
+            log.info(f"Adding {self.checkpoint_file} checkpoint callback...")
             checkpoint = tf.keras.callbacks.ModelCheckpoint(
                 filepath = self.checkpoint_file,
                 verbose = 1,
@@ -481,9 +480,6 @@ class ModelWrapper(object):
                 save_best_only = True)
 
             callbacks.append(checkpoint)
-            log.debug(f"callbacks after all checkpoint: {callbacks}")
-        else:
-            new_callbacks = callbacks
 
         start_time = datetime.now()
         log.info(f'model: {self.model}')
@@ -682,9 +678,7 @@ class ModelWrapper(object):
         report.add("learning_rate", self.learning_rate)
         report.add("version", self.model_version)
         report.add("save_dir", self.save_dir)
-        report.add("history", self.network_history.history)
-        # report.add("network_history_file", self.network_history_file)
-        # report.add("history", self.network_history.history)
+        report.add("network_history", self.network_history.history)
         report.add("tokenizer_file", self.tokenizer_file)
         report.add("batch_size", self.batch_size)
         report.add("epochs", self.epochs)

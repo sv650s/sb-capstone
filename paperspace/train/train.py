@@ -227,6 +227,8 @@ def preprocess_data(feature_train, feature_test, embedding_file: str, missing_wo
 
     # save missing words into a file so we can analyze it later
     missing_words_df = pd.DataFrame(missing_words)
+    # sort missing words so the output is always the same
+    missing_words_df = missing_words_df.sort_values("0")
     logger.info("Saving missing words file...")
     missing_words_df.to_csv(missing_words_file, index=False)
 
@@ -406,6 +408,10 @@ if __name__ == "__main__":
         logger.error(f'ERROR: {output_dir} does not exist')
         exit(1)
 
+    if not os.path.exists("/storage"):
+        logger.error(f'ERROR: /storage does not exist')
+        exit(1)
+
 
     reviews_train, reviews_test, y_train, y_test, ratings = load_data(data_file, feature_column, label_column)
 
@@ -416,15 +422,6 @@ if __name__ == "__main__":
 
     vocab_size = len(t.word_index)+1
 
-    reduce_lr = ReduceLROnPlateau(monitor = 'val_loss',
-                                  restore_best_weights = True,
-                                  verbose = 1,
-                                  patience = 2)
-
-    early_stop = EarlyStopping(monitor = 'val_loss',
-                               patience = patience,
-                               verbose = 1,
-                               restore_best_weights = True)
 
     logger.debug(f'y_train: {y_train[:5]} ratings {ratings[:5]}')
     weights = compute_class_weight('balanced', np.arange(1, 6), ratings)
@@ -465,6 +462,31 @@ if __name__ == "__main__":
     mw.add("environment", "paperspace")
     mw.add("patience", patience)
 
+    reduce_lr = ReduceLROnPlateau(monitor = 'val_loss',
+                                  restore_best_weights = True,
+                                  verbose = 1,
+                                  patience = 2)
+
+    early_stop = EarlyStopping(monitor = 'val_loss',
+                               patience = patience,
+                               verbose = 1,
+                               restore_best_weights = True)
+
+    checkpoints = [early_stop, reduce_lr]
+
+    if os.path.exists("/storage"):
+        storage_model_filepath = f'/storage/{ku.ModelWrapper.models_dir}/{mw._get_saved_file_basename()}'
+        logger.info(f"Adding {storage_model_filepath} checkpoint callback...")
+        checkpoint_storage = tf.keras.callbacks.ModelCheckpoint(
+            filepath = storage_model_filepath,
+            verbose = 1,
+            save_weights_only = False,
+            monitor = 'val_loss',
+            save_freq = 'epoch',
+            save_best_only = True)
+        checkpoints.append(checkpoint_storage)
+
+
 
     network_history = mw.fit(X_train,
                              y_train,
@@ -472,14 +494,11 @@ if __name__ == "__main__":
                              verbose=1,
                              validation_split=0.2,
                              balance_class_weights=balance_class_weights,
-                             callbacks=[early_stop, reduce_lr])
+                             callbacks=checkpoints)
 
     mw.evaluate(X_test, y_test)
     logger.info("Train Accuracy: %.2f%%" % (mw.train_scores[1]*100))
     logger.info("Test Accuracy: %.2f%%" % (mw.test_scores[1]*100))
-
-    # pu.plot_network_history(mw.network_history, "categorical_accuracy", "val_categorical_accuracy")
-    # plt.show()
 
     logger.info("\nConfusion Matrix")
     logger.info(mw.test_confusion_matrix)
@@ -487,15 +506,30 @@ if __name__ == "__main__":
     logger.info("\nClassification Report")
     logger.info(mw.test_classification_report)
 
-    # fig = plt.figure(figsize=(5,5))
-    # pu.plot_roc_auc(mw.model_name, mw.roc_auc, mw.fpr, mw.tpr)
-
     custom_score = ru.calculate_metric(mw.test_crd)
     logger.info(f'Custom Score: {custom_score}')
 
     """**Save off various files**"""
 
     mw.save(append_report=True)
+
+
+    ###############################################
+    # Save models in /storage on paperspace so we can access the models later
+    ###############################################
+    # TODO: implement storing model to paperspace
+    if os.path.exists("/storage"):
+        storage_model_filepath_with_version = f"{storage_model_filepath}/{model_version}"
+        if not os.path.exists(storage_model_filepath_with_version):
+            os.makedirs(storage_model_filepath_with_version, exist_ok= True)
+        logger.info(f"Saving model to {storage_model_filepath_with_version}")
+        mw.model.save(storage_model_filepath_with_version)
+
+        files = os.listdir(storage_model_filepath_with_version)
+        logger.info(f"Files in {storage_model_filepath_with_version}:\n{files}")
+    else:
+        logger.error("/storage not found")
+
 
     """# Test That Our Models Saved Correctly"""
 

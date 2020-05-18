@@ -49,8 +49,8 @@ rsync -rauv ${DEBUG_FLAG} --exclude=*test* --exclude=bak* ~/Google\ Drive/Spring
 
 # actually this is not a good idea - google colab notebooks are slightly different format
 #echo "syncing colab notebooks to git..."
-#rsync -rauv --exclude 5.0-deep-learning-summary.ipynb ~/Google\ Drive/Colab\ Notebooks/amazon-review/*.ipynb ../notebooks/deep_learning
+#rsync -rauv --exclude 5.0-deep-learning-prototype-summary.ipynb ~/Google\ Drive/Colab\ Notebooks/amazon-review/*.ipynb ../notebooks/deep_learning
 #echo "syncing deep learning summary notebook to git..."
-#rsync -rauv -n ~/Google\ Drive/Colab\ Notebooks/amazon-review/5.0-deep-learning-summary.ipynb ../notebooks/
+#rsync -rauv -n ~/Google\ Drive/Colab\ Notebooks/amazon-review/5.0-deep-learning-prototype-summary.ipynb ../notebooks/
 
 

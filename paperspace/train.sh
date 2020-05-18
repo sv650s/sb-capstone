@@ -140,6 +140,7 @@ model_basename="${model_basename}v${version}"
 echo "Running python with following command"
 echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
 echo "basename: ${model_basename}"
+echo "modelPath: /artifacts/models/${model_basename}"
 
 gradient experiments run singlenode \
     --name ${model_basename} \
@@ -151,5 +152,10 @@ gradient experiments run singlenode \
     --modelType Tensorflow \
     --modelPath "/artifacts/models/${model_basename}"
 #    --modelPath "/artifacts/models/"
+
+
+echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
+echo "basename: ${model_basename}"
+echo "modelPath: /artifacts/models/${model_basename}"
 
 
