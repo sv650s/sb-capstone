@@ -1,0 +1,20 @@
+version: "3.7"
+services:
+    reviews:
+        build:
+            context: ./
+            dockerfile: Dockerfile-flask
+            args:
+                - version=1.0
+                - project_id=${PROJECT_ID}
+                - google_application_credentials=/home/reviews/credentials/gcp-key.json
+                - gcp_bucket_name=sb-capstone-bucket
+                - model_builder_class=util.model_util.GCPModelBuilder
+                - db_ip=${DB_IP}
+        ports:
+            - "5000:5000"
+        volumes:
+            # bind mount current directory
+            - ./:/home/reviews
+        image: capstone-service:latest
+

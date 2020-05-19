@@ -3,16 +3,15 @@ import logging
 import nltk
 from nltk.stem import PorterStemmer
 from bs4 import BeautifulSoup
-from util.contraction_map import CONTRACTION_MAP
+from .contraction_map import CONTRACTION_MAP
 import unicodedata
 import sys
 import traceback
+from nltk.stem import WordNetLemmatizer
+
 
 # set up logger
 logger = logging.getLogger(__name__)
-
-# download stopwords if we haven't already
-nltk.download('stopwords')
 
 # global variables
 wpt = nltk.WordPunctTokenizer()
@@ -27,20 +26,31 @@ FILE_DATE_FORMAT = '%Y-%m-%d-%H'
 def remove_stop_words_from_list(words: list):
     for word in words:
         if word in stop_words:
-            logger.info(f"Removing the following from stop words: {word}")
             stop_words.remove(word)
+    logger.info(f"Stop words list: {words}")
 
 
 def stem_text(text: str) -> str:
+    logger.debug(f'Before stem: {text}')
     stemmed_words = []
     for word in text.split():
         stemmed_words.append(ps.stem(word))
+    logger.debug(f'After stem: {" ".join(stemmed_words)}')
     return ' '.join(stemmed_words)
 
 def lemmatize_text(text: str) -> str:
-    # TODO: implement this - currently points to stem_words
-    assert False, "Lemmatization is not yet implemented"
-    return stem_text(text)
+    """
+    lemmatize work
+    :param text:
+    :return:
+    """
+
+    logger.debug(f'Before lemmatizing text: {text}')
+    lemmatizer = WordNetLemmatizer()
+    word_list = nltk.word_tokenize(text)
+    lemmatized_output = ' '.join([lemmatizer.lemmatize(w) for w in word_list])
+    logger.debug(f'After lemmatizing text: {lemmatized_output}')
+    return lemmatized_output
 
 
 def remove_html_tags(text: str) -> str:
@@ -49,11 +59,14 @@ def remove_html_tags(text: str) -> str:
     :param text: original text
     :return: stripped text
     """
+    logger.debug(f"Before remove html tags: {text}")
     soup = BeautifulSoup(text, "html.parser")
+    logger.debug(f"After remove html tags: {soup.get_text()}")
     return soup.get_text()
 
 
 def expand_contractions(text: str, contraction_mapping=CONTRACTION_MAP) -> str:
+    logger.debug(f"Before expand contractions: {text}")
 
     contractions_pattern = re.compile('({})'.format('|'.join(contraction_mapping.keys())),
                                       flags=re.IGNORECASE | re.DOTALL)
@@ -69,6 +82,7 @@ def expand_contractions(text: str, contraction_mapping=CONTRACTION_MAP) -> str:
 
     expanded_text = contractions_pattern.sub(expand_match, text)
     expanded_text = re.sub("'", "", expanded_text)
+    logger.debug(f"After expand contractions: {expanded_text}")
     return expanded_text
 
 

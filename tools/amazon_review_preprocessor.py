@@ -9,6 +9,7 @@ import argparse
 import pandas as pd
 import logging
 from util.TextPreprocessor import TextPreprocessor
+import util.AmazonTextNormalizer as atn
 import re
 import util.file_util as fu
 from datetime import datetime
@@ -55,7 +56,8 @@ def post_processor_replace_numbers_with_words(text: str) -> str:
     :return:
     """
     # TODO: implement this
-    text = re.sub(r'\[\[.*?\]\]', ' ', text, re.I | re.A)
+    # text = re.sub(r'\[\[.*?\]\]', ' ', text, re.I | re.A)
+    return text
 
 def remove_http_links(text: str) -> str:
     """
@@ -114,7 +116,7 @@ def main():
                           columns_to_drop=['marketplace', 'vine', 'verified_purchase', 'customer_id', 'review_id', 'product_id', 'product_parent', 'product_title', 'product_category'],
                           stop_word_remove_list=STOP_WORDS_TO_REMOVE,
                           retain_original_columns=args.retain_original,
-                          custom_preprocessor=[remove_amazon_tags, remove_http_links],
+                          custom_preprocessor=[atn.remove_amazon_tags, atn.remove_http_links],
                           remove_stop_words=not args.no_stop,
                           lemmatize_text=not args.no_lemmatize)
     df = tp.preprocess_data(df)

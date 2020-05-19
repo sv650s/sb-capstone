@@ -1,0 +1,6 @@
+{
+  "status": "{{ status }}",
+  "timestamp": "{{ timestamp }}",
+  "size": {{ size }},
+  "models": {{ model_names }}
+}

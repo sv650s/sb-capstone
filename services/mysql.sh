@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# connect to mysql DB on gcp
+#
 
 source gcp_vars.sh
 
