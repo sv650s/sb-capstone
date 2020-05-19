@@ -6,7 +6,7 @@
 FROM_DIR=../util
 TO_DIR=util
 
-files="__init__.py model_builder.py python_util.py AmazonTextNormalizer.py text_util.py"
+files="__init__.py model_builder.py python_util.py amazon_util.py text_util.py tf2_util.py"
 
 if [ ! -d ${TO_DIR} ]; then
     mkdir ${TO_DIR}
@@ -16,7 +16,9 @@ fi
     cd ${TO_DIR}
 
     for file in ${files}; do
-        ln ${FROM_DIR}/${file}
+        rsync -auv ../${FROM_DIR}/${file} .
+#        echo "Linking ${file}"
+#        ln ../${FROM_DIR}/${file}
     done
 
 )

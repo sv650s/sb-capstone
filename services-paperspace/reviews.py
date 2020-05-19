@@ -45,6 +45,10 @@ dictConfig({
 })
 
 
+# TODO: remove this section
+import os
+print(f'SQLALCHEMY_DATABASE_URI {Config.SQLALCHEMY_DATABASE_URI}')
+print(f'DB_IP: {os.environ.get("DB_IP")}')
 
 # Create the application instance
 # app = Flask(__name__, template_folder="templates")
@@ -57,10 +61,10 @@ db = SQLAlchemy(app)
 logging.basicConfig(level=logging.DEBUG)
 
 for logger in (
-    logging.getLogger('util.AmazonTextNormalizer'),
+    logging.getLogger('util.amazon_util'),
     logging.getLogger('util.gcp_file_util'),
-    logging.getLogger('util.model_util'),
-    logging.getLogger('util.preprocessor'),
+    logging.getLogger('util.model_builder'),
+    logging.getLogger('util.service_preprocessor'),
     logging.getLogger('util.python_util'),
     logging.getLogger('util.text_util'),
     logging.getLogger('util.tf2_util')

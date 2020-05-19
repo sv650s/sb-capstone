@@ -40,6 +40,4 @@ USER reviews
 # TODO: update this script to run wgsi server instead for Production
 EXPOSE 5000
 # run flask server and bind to 0.0.0.0 so port can be mapped
-# TODO: change this to run flask directly
-#ENTRYPOINT ["/usr/local/bin/flask run --host 0.0.0.0"]
 ENTRYPOINT ["./run_service.sh"]

@@ -1,12 +1,23 @@
 FROM tensorflow/tensorflow:2.0.0b1-py3
 
+# create user and add to sudoers
+RUN adduser --disabled-password reviews
+WORKDIR /home/reviews
+
 # TODO: upgrade python 3.6 to 3.7
 # TODO: make mysql run on startup - systemctl ?
 # TODO: update-alternatives: using /etc/mysql/mysql.cnf to provide /etc/mysql/my.cnf (my.cnf) in auto mode
-RUN apt-get update && apt-get install --yes tree libhdf5-dev python3-all-dev mysql-server && \
-    update-rc.d mysql defaults && \
-    pip3 install --upgrade pip setuptools && \
-    pip3 install -r requirements.txt
+# re-install gcc for our pip install
+RUN apt-get update && \
+    apt-get install --yes tree libhdf5-dev python3-all-dev mysql-server vim less && \
+    update-rc.d mysql defaults
+
+
+COPY requirements.txt ./
+RUN pip3 install --upgrade pip setuptools && \
+    pip3 install -r ./requirements.txt
+
+# TODO: and nltk download
 
 # get argument from docker compose file
 ARG version
@@ -19,18 +30,12 @@ ENV VERSION $version
 ENV MODEL_BUILDER_CLASS $model_builder_class
 ENV DB_IP $db_ip
 
-RUN adduser --disabled-password reviews
 
-# TODO: put this back in when we figure out how to start mysql automatically
-#WORKDIR /home/reviews
-
+RUN chown -R reviews:reviews ./ && usermod -aG sudo reviews
 # TODO: put these back when we figure out how to start mysql automatically
-# RUN chown -R reviews:reviews ./
 # USER reviews
 
-# re-install gcc for our pip install
-COPY requirements.txt ./
 
 # TODO: update this script to run wgsi server instead for Production
 EXPOSE 5000
-ENTRYPOINT ["/etc/init.d/mysql start && ./run_service.sh"]
+ENTRYPOINT ["./run_service.sh"]

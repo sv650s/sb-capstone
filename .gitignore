@@ -54,13 +54,13 @@ report/*99-histogram.csv
 # white papers
 white_papers
 
-# servicec -gcp
-services/util/*
+# services-gcp
+services/util
 
 # paperspace - ignore util since we are copying from /util directory
 paperspace/train/util/*
 paperspace/models/*
 
 # service on paperspace
-services-paperspace/util/*
+services-paperspace/util
 services-paperspace/models

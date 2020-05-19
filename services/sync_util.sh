@@ -4,7 +4,7 @@
 #
 
 
-files="__init__.py model_builder.py python_util.py AmazonTextNormalizer.py text_util.py tf2_util.py gcp_file_util.py"
+files="__init__.py model_builder.py python_util.py amazon_util.py text_util.py tf2_util.py gcp_file_util.py"
 
 if [ ! -d util ]; then
     mkdir util

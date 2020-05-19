@@ -3,20 +3,21 @@
 #
 version: "3.7"
 services:
-    reviews:
-        build:
-            context: ./
-            dockerfile: Dockerfile-flask-local
-            args:
-                - version=1.0
-                - db_ip=127.0.0.1 # IP address of MySQL database
-                - model_dir=models # where models will be loaded
-        ports:
-            - "5000:5000"
-        volumes:
-            # bind mount current directory
-            - ./:/home/reviews
-            - ./models:/models
-        image: capstone-service:latest
-        command: -c "/etc/init.d/mysql start && sleep 1d"  # keep the container running for debugging
+  reviews:
+    build:
+      context: ./
+      dockerfile: Dockerfile-flask-local
+      args:
+        - version=1.0
+        - db_ip=localhost # IP address of MySQL database
+        - model_dir=models # where models will be loaded
+    ports:
+      - "5000:5000"
+      - "3306:3306"
+    volumes:
+      # bind mount current directory
+      - ./:/home/reviews
+      - ./models:/models
+    image: capstone-service:latest
+    command: -c "sleep 1d"  # keep the container running for debugging
 

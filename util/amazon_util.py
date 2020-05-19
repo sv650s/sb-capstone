@@ -70,7 +70,7 @@ class AmazonTextNormalizer:
                  stem_text=False,
                  lemmatize_text=False,
                  remove_alphanumeric_words=True,
-                 remove_stop_words=True):
+                 remove_stop_words=False):
         """
 
         :param text_columns: list of columns to process. required
