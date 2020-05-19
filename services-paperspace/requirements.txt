@@ -1,12 +1,13 @@
 beautifulsoup4
-flask-restplus
-Flask-SQLAlchemy
+Flask==1.1.2
+flask-restplus==0.13.0
+Flask-SQLAlchemy==2.4.1
 mysql-connector
 nltk==3.4.1
 numpy==1.18.1
 pandas==1.0.1
 pymysql
 scikit-learn
-tensorflow==2.0.0
+# tensorflow==2.0.0
 traceback2
 Werkzeug

@@ -1,7 +1,8 @@
 import os
 
 
-# TOOD: read these from environment variable
+# configuration for our flask application
+# environment variables are set up in the Docker container
 class Config(object):
     LOCAL_MODEL_DIR = 'models'
     MODEL_CACHE_DIR = '/tmp' # this is where GCPModelBuilder will store configuration files

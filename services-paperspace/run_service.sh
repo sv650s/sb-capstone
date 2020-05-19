@@ -1,8 +1,5 @@
 #!/bin/bash
 
-if [[ `hostname | awk -F. '{print $2}'` == "local" ]]; then
-    source gcp_vars.sh
-fi
 
 debug="false"
 

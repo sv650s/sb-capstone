@@ -24,15 +24,12 @@ ARG db_ip
 ENV FLASK_APP reviews.py
 ENV VERSION $version
 ENV PROJECT_ID $gcp_project_id
-ENV BUCKET_NAME $gcp_bucket_name
-ENV GOOGLE_APPLICATION_CREDENTIALS $google_application_credentials
 ENV MODEL_BUILDER_CLASS $model_builder_class
 ENV DB_IP $db_ip
 
 
 COPY util ./util
 COPY templates ./templates
-COPY credentials ./credentials
 COPY reviews.py config.py run_service.sh ./
 RUN chmod +x run_service.sh
 

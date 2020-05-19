@@ -65,9 +65,6 @@ python3.7 -m pip install pip
 sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 
-# install virtual env
-sudo apt-get install python3.7-venv
-
 # install Docker
 sudo apt-get install \
     apt-transport-https \
@@ -144,3 +141,24 @@ This runs on port 80 so you don't have to specify port. You can get get the exte
 # References
 [Paperspace Machine User Guide](https://docs.paperspace.com/gradient/machines/using-machines)
 [Paperspace Startup Script Guide](https://github.com/Paperspace/paperspace-node/blob/master/scripts.md)
+[MySql setup on ubuntu](https://support.rackspace.com/how-to/install-mysql-server-on-the-ubuntu-operating-system/)
+
+
+# Notes
+
+start mysql /etc/init.d/mysql start
+
+/usr/sbin/mysqld --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --log-error=/var/log/mysql/error.log --pid-file=/var/run/mysqld/mysqld.pid --socket=/var/run/mysqld/mysqld.sock --port=3306 --log-syslog=1 --log-syslog-facility=daemon --log-syslog-tag=
+
+
+# MySql Commands
+
+Connect to database
+```bash
+mysql -h <db ip> -u <username> -p <password>
+```
+
+Show databases
+```sql
+show databases;
+```
