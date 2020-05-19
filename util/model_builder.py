@@ -12,9 +12,11 @@ import json
 from pprint import pprint
 import util.python_util as pu
 import util.tf2_util as t2
+import util.service_preprocessor as sp
 
 
 # TODO: figure out why logging doens't work without app.app.logger
+logger = logging.getLogger(__name__)
 # app.logger = logging.getLogger(__name__)
 
 
@@ -95,40 +97,84 @@ class ModelBuilder(ABC):
         return ret_d
 
 
-class LocalModelBuilder(ModelBuilder):
+# class GCPLocalModelBuilder(ModelBuilder):
+#
+#     # TODO: make loaders ignositic of flask app - somehow pass in the model dir dynamically
+#     def __init__(self, name, version):
+#         super().__init__(name, version)
+#         self.model_dir = app.config["LOCAL_MODEL_DIR"]
+#         self.config_dir = app.config["MODEL_CONFIG_DIR"]
+#
+#     def load_tokenizer(self, tokenizer_file: str):
+#         app.logger.info(f"loading tokenizer from {tokenizer_file}")
+#         with open(f'{self.model_dir}/{tokenizer_file}', 'rb') as file:
+#             tokenizer = pickle.load(file)
+#         return tokenizer
+#
+#     def load_model(self, model_file: str, weights_file: str = None, custom_objects=None):
+#         app.logger.info(f"loading model from {model_file}")
+#         with open(f'{self.model_dir}/{model_file}') as json_file:
+#             json_config = json_file.read()
+#         model = keras.models.model_from_json(json_config,
+#                                              custom_objects=custom_objects)
+#         app.logger.info(f"loading model weights from {weights_file}")
+#         model.load_weights(f'{self.model_dir}/{weights_file}')
+#
+#         return model
+#
+#     def load_encoder(self, encoder: str):
+#         pass
+#
+#     def get_json_config_filepath(self):
+#         json_file = f'{self.config_dir}/{self.get_config_filename()}'
+#         app.logger.debug(f"config json_file {json_file}")
+#         return json_file
 
-    # TODO: make loaders ignositic of flask app - somehow pass in the model dir dynamically
-    def __init__(self, name, version):
-        super().__init__(name, version)
-        self.model_dir = app.config["LOCAL_MODEL_DIR"]
-        self.config_dir = app.config["MODEL_CONFIG_DIR"]
 
-    def load_tokenizer(self, tokenizer_file: str):
+class PaperspaceLocalModelBuilder(object):
+    """
+
+    """
+    def __init__(self, model_name, version):
+        self.model_name = model_name
+        self.version = version
+
+    def build(self):
+        model = None
+
+        file_dir = app.config["LOCAL_MODEL_DIR"]
+
+        model_path = f'{file_dir}/{self.model_name}'
+        model_file = f'{model_path}/{self.model_name}-model.json'
+        weights_file = f'{model_path}/{self.model_name}-weights.h5'
+        app.logger.info(f"Atempting to load model from: {model_path}")
+
+        if path.exists(model_path):
+            # model = keras.models.load_model(f'{model_path}/{self.version}')
+
+            app.logger.info(f"loading model from {model_file}")
+            with open(model_file) as json_file:
+                json_config = json_file.read()
+            model = keras.models.model_from_json(json_config)
+            app.logger.info(f"loading model weights from {weights_file}")
+            model.load_weights(weights_file)
+        else:
+            raise FileNotFoundError(model_path)
+
+        # load tokenizer
+        tokenizer_file = f'{model_path}/{self.model_name}-tokenizer.pkl'
         app.logger.info(f"loading tokenizer from {tokenizer_file}")
-        with open(f'{self.model_dir}/{tokenizer_file}', 'rb') as file:
+        with open(tokenizer_file, 'rb') as file:
             tokenizer = pickle.load(file)
-        return tokenizer
-
-    def load_model(self, model_file: str, weights_file: str = None, custom_objects=None):
-        app.logger.info(f"loading model from {model_file}")
-        with open(f'{self.model_dir}/{model_file}') as json_file:
-            json_config = json_file.read()
-        model = keras.models.model_from_json(json_config,
-                                             custom_objects=custom_objects)
-        app.logger.info(f"loading model weights from {weights_file}")
-        model.load_weights(f'{self.model_dir}/{weights_file}')
-
-        return model
-
-    def load_encoder(self, encoder: str):
-        pass
-
-    def get_json_config_filepath(self):
-        json_file = f'{self.config_dir}/{self.get_config_filename()}'
-        app.logger.debug(f"config json_file {json_file}")
-        return json_file
 
 
+        preprocessor = sp.TokenizedPreprocessor()
+        preprocessor.tokenizer = tokenizer
+        preprocessor.max_features = app.config['MAX_FEATURES']
+
+        classifier = Classifier(self.model_name, self.version, model, preprocessor)
+
+        return classifier
 
 
 
@@ -159,7 +205,7 @@ class Classifier(object):
         :param preprocessor:
         :param max_features:
         :param feature_encoder:
-        :param label_encoder:
+        :param label_encoder: must implement unencode function
         """
         self.name = name
         self.version = version
@@ -244,6 +290,10 @@ class ModelCache(object):
 
 
 class ModelFactory(object):
+    """
+    Use this class to reconstruct the model
+    """
+
     # map that stores all models and associated files
     _model_cache = ModelCache()
 
@@ -271,7 +321,9 @@ class ModelFactory(object):
                 builder_classpath = app.config["MODEL_BUILDER_CLASS"]
                 app.logger.info(f"Creating builder from {builder_classpath}")
 
-                builder = pu.load_instance(builder_classpath, name, version)
+                # TODO: dynamically generate this class based on config
+                # builder = pu.load_instance(builder_classpath, name, version)
+                builder = PaperspaceLocalModelBuilder(name, version)
                 app.logger.debug(f"created builder {builder}")
 
                 model = builder.build()

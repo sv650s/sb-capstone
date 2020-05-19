@@ -1,9 +1,9 @@
 #!/bin/bash
 
+# TODO: uncomment this when mysql is implemented
 /etc/init.d/mysql start
-
-echo "sleeping for 10s"
-sleep 10
+echo "sleeping for 5s"
+#sleep 5
 
 debug="true"
 

@@ -20,6 +20,9 @@ import traceback2 as traceback
 from flask_restplus import abort
 from flask.logging import default_handler
 import logging
+import sqlite3
+from flask import g
+
 
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 
@@ -44,11 +47,21 @@ dictConfig({
     }
 })
 
+def get_db():
+    """
+    Get db context for the application. Default will be sqlite
+    :return:
+    """
+    if app.config["DB_TYPE"] == "mysql":
+        db = SQLAlchemy(app)
+    else:
+        database = f'{app.config["SQLITE_DIR"]}/database.db'
+        db = getattr(g, '_database', None)
+        if db is None:
+            db = g._database = sqlite3.connect(database)
+    return db
 
-# TODO: remove this section
-import os
-print(f'SQLALCHEMY_DATABASE_URI {Config.SQLALCHEMY_DATABASE_URI}')
-print(f'DB_IP: {os.environ.get("DB_IP")}')
+
 
 # Create the application instance
 # app = Flask(__name__, template_folder="templates")
@@ -56,7 +69,9 @@ app = Flask(__name__)
 app.config.from_object(Config)
 api = Api(app, version=app.config['VERSION'], title="Vince's Amazon Review Classifier",
           description='Predict product rating based on user review input')
-db = SQLAlchemy(app)
+# do this to avoid applicaiton context error
+with app.app_context():
+    db = get_db()
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -131,7 +146,7 @@ class Prediction(db.Model):
         return value
 
 
-app.logger.info("creating database...")
+app.logger.info(f'creating database...')
 db.create_all()
 db.session.commit()
 app.logger.info("finished creating database...")

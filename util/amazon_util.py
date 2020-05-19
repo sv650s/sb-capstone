@@ -55,6 +55,14 @@ def remove_http_links(text: str) -> str:
     text = re.sub(r'(http[s]{0,1}:\S+)', '', text, re.I | re.A)
     return text
 
+def expand_star_ratings(text:str):
+    """
+
+    :param text:
+    :return:
+    """
+    # TODO: implement this
+    return text
 
 
 class AmazonTextNormalizer:
@@ -146,7 +154,7 @@ class AmazonTextNormalizer:
             if self.lemmatize_text:
                 text = tu.lemmatize_text(text)
 
-            text = self.expand_star_ratings(text)
+            text = expand_star_ratings(text)
 
         logger.info(f'finished normalizing text: {text}')
         return text

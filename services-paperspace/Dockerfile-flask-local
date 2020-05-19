@@ -23,11 +23,13 @@ RUN pip3 install --upgrade pip setuptools && \
 ARG version
 ARG db_ip
 ARG model_dir
-ARG model_builder_class
+ARG sqlite_dir
+ARG db_type
 
 ENV FLASK_APP reviews.py
 ENV VERSION $version
-ENV MODEL_BUILDER_CLASS $model_builder_class
+ENV SQLITE_DIR $sqlite_dir
+ENV DB_TYPE $db_type
 ENV DB_IP $db_ip
 
 

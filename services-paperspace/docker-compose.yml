@@ -11,6 +11,8 @@ services:
         - version=1.0
         - db_ip=localhost # IP address of MySQL database
         - model_dir=models # where models will be loaded
+        - sqlite_dir=/tmp # set this to /storage/<experiment name> for paperspace
+        - db_type=mysql
     ports:
       - "5000:5000"
       - "3306:3306"

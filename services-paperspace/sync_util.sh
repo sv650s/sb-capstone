@@ -6,7 +6,7 @@
 FROM_DIR=../util
 TO_DIR=util
 
-files="__init__.py model_builder.py python_util.py amazon_util.py text_util.py tf2_util.py"
+files="__init__.py model_builder.py python_util.py amazon_util.py text_util.py tf2_util.py service_preprocessor.py contraction_map.py"
 
 if [ ! -d ${TO_DIR} ]; then
     mkdir ${TO_DIR}

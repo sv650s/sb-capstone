@@ -3,12 +3,14 @@ import logging
 import nltk
 from nltk.stem import PorterStemmer
 from bs4 import BeautifulSoup
-from .contraction_map import CONTRACTION_MAP
+from util.contraction_map import CONTRACTION_MAP
 import unicodedata
 import sys
 import traceback
 from nltk.stem import WordNetLemmatizer
 
+# download stopwords
+nltk.download('stopwords')
 
 # set up logger
 logger = logging.getLogger(__name__)
