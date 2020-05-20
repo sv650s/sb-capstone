@@ -32,6 +32,7 @@ from datetime import datetime
 import os
 import logging
 import argparse
+import json
 
 
 import util.keras_util as ku
@@ -52,6 +53,21 @@ MAX_SEQUENCE_LENGTH = 100
 
 # used to fix seeds
 RANDOM_SEED = 1
+
+
+# TODO: set this to True and finish debugging. Currently getting  the following error
+# 2020-05-20 03:19:29,495 INFO    __main__.<module> [573] - loaded json model:
+# {json_loaded}
+#
+# Traceback (most recent call last):
+#   File "train/train.py", line 574, in <module>
+#     model_json_loaded = tf.keras.models.load_model(json_loaded)
+#   File "/Users/vinceluk/anaconda3/envs/capstone/lib/python3.7/site-packages/tensorflow_core/python/keras/saving/save.py", line 145, in load_model
+#     isinstance(filepath, h5py.File) or h5py.is_hdf5(filepath))):
+#   File "/Users/vinceluk/anaconda3/envs/capstone/lib/python3.7/site-packages/h5py/_hl/base.py", line 41, in is_hdf5
+#     fname = os.path.abspath(fspath(fname))
+# TypeError: expected str, bytes or os.PathLike object, not dict
+SAVE_JSON_FORMAT = False
 
 
 # set up logging
@@ -228,7 +244,8 @@ def preprocess_data(feature_train, feature_test, embedding_file: str, missing_wo
     # save missing words into a file so we can analyze it later
     missing_words_df = pd.DataFrame(missing_words)
     # sort missing words so the output is always the same
-    missing_words_df = missing_words_df.sort_values("0")
+    print(missing_words_df.columns)
+    missing_words_df = missing_words_df.sort_values(0)
     logger.info("Saving missing words file...")
     missing_words_df.to_csv(missing_words_file, index=False)
 
@@ -372,11 +389,18 @@ if __name__ == "__main__":
         f"{feature_column}-" \
             "report.csv"
 
+    STORAGE_DIR = "/storage"
     if debug:
       data_file = f'{data_dir}/amazon_reviews_us_Wireless_v1_00-test-with_stop_nonlemmatized-preprocessed.csv'
       model_name = f'test-{model_name}'
       MISSING_WORDS_FILE = f'{reports_dir}/glove_embedding-missing_words-test.csv'
       ku.ModelWrapper.set_report_filename(f'test-{REPORT_FILE}')
+
+      # for local testing only
+      STORAGE_DIR = "./storage"
+      if not os.path.exists(STORAGE_DIR):
+          logger.info(f"Creating {STORAGE_DIR}")
+          os.mkdir(STORAGE_DIR)
     else:
       data_file = f"{data_dir}/amazon_reviews_us_Wireless_v1_00-{sample_size}-with_stop_nonlemmatized-preprocessed.csv"
       MISSING_WORDS_FILE = f'{reports_dir}/glove_embedding-missing_words-{sample_size}.csv'
@@ -408,9 +432,8 @@ if __name__ == "__main__":
         logger.error(f'ERROR: {output_dir} does not exist')
         exit(1)
 
-    if not os.path.exists("/storage"):
-        logger.error(f'ERROR: /storage does not exist')
-        exit(1)
+    if not os.path.exists(STORAGE_DIR):
+        logger.warning(f'WARNING: {STORAGE_DIR} does not exist')
 
 
     reviews_train, reviews_test, y_train, y_test, ratings = load_data(data_file, feature_column, label_column)
@@ -474,8 +497,8 @@ if __name__ == "__main__":
 
     checkpoints = [early_stop, reduce_lr]
 
-    if os.path.exists("/storage"):
-        storage_model_filepath = f'/storage/{ku.ModelWrapper.models_dir}/{mw._get_saved_file_basename()}'
+    if os.path.exists(STORAGE_DIR):
+        storage_model_filepath = f'{STORAGE_DIR}/{ku.ModelWrapper.models_dir}/{mw._get_saved_file_basename()}'
         logger.info(f"Adding {storage_model_filepath} checkpoint callback...")
         checkpoint_storage = tf.keras.callbacks.ModelCheckpoint(
             filepath = storage_model_filepath,
@@ -518,26 +541,75 @@ if __name__ == "__main__":
     # Save models in /storage on paperspace so we can access the models later
     ###############################################
     # TODO: implement storing model to paperspace
-    if os.path.exists("/storage"):
+    if os.path.exists(STORAGE_DIR):
+
         storage_model_filepath_with_version = f"{storage_model_filepath}/{model_version}"
         if not os.path.exists(storage_model_filepath_with_version):
             os.makedirs(storage_model_filepath_with_version, exist_ok= True)
-        logger.info(f"Saving model to {storage_model_filepath_with_version}")
+        logger.info(f"Saving model to SavedModel format {storage_model_filepath_with_version}")
         mw.model.save(storage_model_filepath_with_version)
 
-        files = os.listdir(storage_model_filepath_with_version)
-        logger.info(f"Files in {storage_model_filepath_with_version}:\n{files}")
+        if SAVE_JSON_FORMAT:
+
+            model_json_filepath = f"{storage_model_filepath}/{os.path.basename(mw.model_json_file)}"
+            print(f"Saving json config file: {model_json_filepath}")
+            model_json = mw.model.to_json()
+            with open(model_json_filepath, 'w') as json_file:
+                json_file.write(model_json)
+
+            with open(model_json_filepath, 'r') as file:
+                logger.info(f'loaded model json:\n{json.load(file)}')
+
+            weights_json_filepath = f"{storage_model_filepath}/{os.path.basename(mw.weights_file)}"
+            print(f"Saving weights file: {weights_json_filepath}")
+            mw.model.save_weights(weights_json_filepath,
+                                    save_format=None)
+
+            files = os.listdir(storage_model_filepath_with_version)
+            logger.info(f"Files in {storage_model_filepath_with_version}:\n{files}")
+
+
     else:
-        logger.error("/storage not found")
+        logger.error(f"{STORAGE_DIR} not found")
 
 
     """# Test That Our Models Saved Correctly"""
 
-    logger.info("Reloading model for testing...")
+    logger.info("\nReloading model for testing...")
     model_loaded = load_model(mw.model_file)
     scores = model_loaded.evaluate(X_test, y_test, verbose=1)
     accuracy = scores[1] * 100
-    logger.info("Accuracy: %.2f%%" % (accuracy))
+    logger.info("Loaded Model Accuracy: %.2f%%" % (accuracy))
+
+
+    if SAVE_JSON_FORMAT:
+        # Loading model from json files
+        logger.info("\bReloading model from JSON for testing...")
+        logger.info(f"json model file: {mw.model_json_file}")
+        with open(mw.model_json_file) as file:
+            json_loaded = json.load(file)
+            logger.info(f"loaded json model:\n{json_loaded}\n")
+            model_json_loaded = tf.keras.models.load_model(json_loaded)
+            logger.info(f"Loaded SavedMode:\n{model_json_loaded.summary()}")
+        # model_json_loaded = tf.keras.models.load_model(mw.model_json_file)
+
+        logger.info(f"json weights file: {mw.weights_file}")
+        model_json_loaded.load_weights(mw.weights_file)
+        scores_json = model_json_loaded.evaluate(X_test, y_test, verbose=1)
+        accuracy_json = scores_json[1] * 100
+        logger.info("Loaded JSON Model Accuracy: %.2f%%" % (accuracy_json))
+
+    # Loading model from SavedModel format
+    logger.info("\nReloading model for testing...")
+    savedmodel_dir = f'{os.path.dirname(mw.model_file)}/{model_version}'
+    logger.info(f"SavedModel dir: {savedmodel_dir}")
+    loaded_savedmodel = tf.keras.models.load_model(savedmodel_dir)
+    logger.info(f"Loaded SavedModel:\n{loaded_savedmodel.summary()}")
+
+    scores_savedmodel = loaded_savedmodel.evaluate(X_test, y_test, verbose=1)
+    accuracy_savedmodel = scores_savedmodel[1] * 100
+    logger.info("Loaded SavedModel Accuracy: %.2f%%" % (accuracy_savedmodel))
+
 
     # this takes too long for real models
     if debug == True:
