@@ -79,7 +79,7 @@ def _plot_score_histograms_v1(df: pd.DataFrame):
                 a[index].set_xlim(0, 1.0)
             index += 1
 
-def _plot_score_histograms_v2(df: pd.DataFrame, args = None):
+def _plot_score_histograms_v2(df: pd.DataFrame, args, **kwargs):
     """
     You should not call this function directly but use plot_score_historgrams and specify version = 2
 
@@ -90,39 +90,46 @@ def _plot_score_histograms_v2(df: pd.DataFrame, args = None):
     You can overwrite this behavior by passing in groupby and label
 
     :param df:
-    :param args: dictionary with arugments - supports groupby and label
+    :param args: dictionary with arugments - supports: groupby, label, title, training_data
     :return:
     """
     # default values
     label = "feature_summary"
     groupby = None
+    title = None
     if args is not None and len(args.keys()) > 0:
         if "label" in args.keys():
             label = args["label"]
         if "groupby" in args.keys():
             groupby = args["groupby"]
+        if "title" in args.keys():
+            title = args["title"]
 
     # models = df[[label_column]].unique()
     if groupby is not None:
         log.info(f"Grouping by {groupby}")
         for group in df[groupby].unique():
-            model_report = df[df[groupby] == group]
-            _plot_score_histogram_group(model_report, label, group)
+            model_report = df[df[groupby] == groupby]
+            _plot_score_histogram_group(model_report, label = label, group= groupby, title= title)
     else:
-        _plot_score_histogram_group(df, label)
+        _plot_score_histogram_group(df, label = label, title = title)
 
 
-def _plot_score_histogram_group(report:pd.DataFrame, label:str, group:str = None):
+def _plot_score_histogram_group(report:pd.DataFrame, label:str, title: str = None, group:str = None, is_training_data = False):
     """
     Plots one grouping of score/histograms
-    :param report:
+    :param report: model report df
+    :param label: column name to use as labels on the left
+    :param group: column name to group histograms
     :return:
     """
-    f1_cols, precision_cols, recall_cols = get_score_columns(report)
+    f1_cols, precision_cols, recall_cols = get_score_columns(report, is_training_data)
 
     pos = list(range(len(report)))
     width = 0.15
     f, a = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(20, len(report) * 1))
+    if title is not None:
+        _ = plt.suptitle(title)
     column_dict = {"F1": f1_cols, "Precision": precision_cols, "Recall": recall_cols}
 
     # sort the report in reverse order so we see the models top down
@@ -199,21 +206,30 @@ def plot_macro_data(df: pd.DataFrame, cv=False):
 
 
 # function that we will use later
-def get_score_columns(df: pd.DataFrame) -> (list, list, list):
+def get_score_columns(df: pd.DataFrame, is_training_data = False) -> (list, list, list):
     """
     Gets the different score columns from a results DF
     :param df:
     :return:
     """
-    CLASS_F1_COLS = [col for col in df.columns if len(re.findall(r'^(\d.+score)', col)) > 0]
+    if is_training_data:
+        CLASS_F1_COLS = [col for col in df.columns if len(re.findall(r'^(train_\d.+score)', col)) > 0]
+    else:
+        CLASS_F1_COLS = [col for col in df.columns if len(re.findall(r'^(\d.+score)', col)) > 0]
     CLASS_F1_COLS.append("label")
     #     print(CLASS_F1_COLS)
 
-    CLASS_PRECISION_COLS = [col for col in df.columns if len(re.findall(r'^(\d+_precision)', col)) > 0]
+    if is_training_data:
+        CLASS_PRECISION_COLS = [col for col in df.columns if len(re.findall(r'^(train_\d+_precision)', col)) > 0]
+    else:
+        CLASS_PRECISION_COLS = [col for col in df.columns if len(re.findall(r'^(\d+_precision)', col)) > 0]
     CLASS_PRECISION_COLS.append("label")
     #     print(CLASS_PRECISION_COLS)
 
-    CLASS_RECALL_COLS = [col for col in df.columns if len(re.findall(r'^(\d+_recall)', col)) > 0]
+    if is_training_data:
+        CLASS_RECALL_COLS = [col for col in df.columns if len(re.findall(r'^(train_\d+_recall)', col)) > 0]
+    else:
+        CLASS_RECALL_COLS = [col for col in df.columns if len(re.findall(r'^(\d+_recall)', col)) > 0]
     CLASS_RECALL_COLS.append("label")
     #     print(CLASS_RECALL_COLS)
 

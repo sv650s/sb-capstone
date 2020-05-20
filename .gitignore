@@ -37,6 +37,7 @@ syncTo*.sh
 
 reports/*test.csv
 reports/test*
+reports/pre-network-history/*
 
 # don't track these template reports
 reports/template-feature_generator-report.csv
