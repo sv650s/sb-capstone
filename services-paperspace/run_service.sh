@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# TODO: uncomment this when mysql is implemented
+# TODO: uncomment this when we get mysql to startup using Dockerfile
 /etc/init.d/mysql start
 echo "sleeping for 5s"
-#sleep 5
+sleep 5
 
 debug="true"
 

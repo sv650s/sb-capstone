@@ -1,32 +1,30 @@
 FROM tensorflow/tensorflow:2.0.0b1-py3
 
 RUN adduser --disabled-password reviews
-
 WORKDIR /home/reviews
 
 # re-install gcc for our pip install
-COPY requirements.txt ./
 RUN apt-get update && \
-    apt-get install  --yes libhdf5-dev python3-all-dev python-mysqldb libmysqlclient-dev && \
-    pip3 install --upgrade pip setuptools && \
-    pip3 install virtualenv && \
-    pip3 install -r requirements.txt && \
-    mkdir models
+    apt-get install --yes tree libhdf5-dev python3-all-dev mysql-server vim less && \
+    update-rc.d mysql defaults
+
+COPY requirements.txt ./
+RUN pip3 install --upgrade pip setuptools && \
+    pip3 install -r ./requirements.txt
+
 
 # get argument from docker compose file
 ARG version
-ARG gcp_project_id
-ARG gcp_bucket_name
-ARG model_builder_class
-ARG google_application_credentials
 ARG db_ip
+ARG model_dir
+ARG sqlite_dir
+ARG db_type
 
 ENV FLASK_APP reviews.py
 ENV VERSION $version
-ENV PROJECT_ID $gcp_project_id
-ENV MODEL_BUILDER_CLASS $model_builder_class
+ENV SQLITE_DIR $sqlite_dir
+ENV DB_TYPE $db_type
 ENV DB_IP $db_ip
-
 
 COPY util ./util
 COPY templates ./templates

@@ -7,7 +7,7 @@ import logging
 from flask import current_app as app
 import tensorflow.keras as keras
 import pickle
-from os import path
+import os
 import json
 from pprint import pprint
 import util.python_util as pu
@@ -15,10 +15,7 @@ import util.tf2_util as t2
 import util.service_preprocessor as sp
 
 
-# TODO: figure out why logging doens't work without app.app.logger
 logger = logging.getLogger(__name__)
-# app.logger = logging.getLogger(__name__)
-
 
 class ModelBuilder(ABC):
 
@@ -55,7 +52,7 @@ class ModelBuilder(ABC):
         json_file = self.get_json_config_filepath()
         classifier = None
 
-        if path.exists(json_file):
+        if os.path.exists(json_file):
             with open(json_file, 'r') as file:
                 config_str = file.read()
                 app.logger.debug(f'config_str {config_str}')
@@ -97,6 +94,7 @@ class ModelBuilder(ABC):
         return ret_d
 
 
+# TODO: uncomment and merge this with PaperspaceLocalModelBuilder
 # class GCPLocalModelBuilder(ModelBuilder):
 #
 #     # TODO: make loaders ignositic of flask app - somehow pass in the model dir dynamically
@@ -131,46 +129,83 @@ class ModelBuilder(ABC):
 #         return json_file
 
 
+# TODO: extend from ModelBuilder
 class PaperspaceLocalModelBuilder(object):
     """
-
+    Loads a model in paperspace machine VM and returns a model object when build() is called
     """
-    def __init__(self, model_name, version):
+    def __init__(self, model_name, version, model_dir):
+        """
+
+        :param model_name:  name of model to load
+        :param version: version of model to load
+        :param model_dir: directory where model files are saved
+        """
         self.model_name = model_name
         self.version = version
+        self.model_dir = model_dir
 
-    def build(self):
+    def build(self, max_features, load_format):
+        """
+        Load the model from file
+        :param max_features: max number of features per sample
+        :param load_format: format to load from. Possible values: json, SavedModel, h5
+        :return:
+        """
+        # TODO: remove this
+        print(f'__name__: {__name__}')
+        logger.info(f"loading model from format: {load_format}")
         model = None
 
-        file_dir = app.config["LOCAL_MODEL_DIR"]
+        model_name_with_version = f'{self.model_name}-v{self.version}'
+        model_path = f'{self.model_dir}/{model_name_with_version}'
+        model_h5_file = f'{model_path}/{model_name_with_version}-model.h5'
+        model_json_file = f'{model_path}/{model_name_with_version}-model.json'
+        weights_file = f'{model_path}/{model_name_with_version}-weights.h5'
+        logger.info(f"Atempting to load model from: {model_path}")
 
-        model_path = f'{file_dir}/{self.model_name}'
-        model_file = f'{model_path}/{self.model_name}-model.json'
-        weights_file = f'{model_path}/{self.model_name}-weights.h5'
-        app.logger.info(f"Atempting to load model from: {model_path}")
+        if os.path.exists(model_path):
+            if load_format == "SavedModel":
+                logger.info("loading model from SavedModel format")
+                # TODO: loading from SavedModel doesn't work because of architecture
+                # model = keras.models.load_model(f'{model_path}/{self.version}')
+                pass
 
-        if path.exists(model_path):
-            # model = keras.models.load_model(f'{model_path}/{self.version}')
+            elif load_format == "json":
+                logger.info("loading model from json format")
+                # load from JSON file
+                logger.info(f"loading model from {model_json_file}")
+                with open(model_json_file) as json_file:
+                    json_config = json_file.read()
+                model = keras.models.model_from_json(json_config)
+                logger.info(f"loading model weights from {weights_file}")
+                model.load_weights(weights_file)
 
-            app.logger.info(f"loading model from {model_file}")
-            with open(model_file) as json_file:
-                json_config = json_file.read()
-            model = keras.models.model_from_json(json_config)
-            app.logger.info(f"loading model weights from {weights_file}")
-            model.load_weights(weights_file)
+
+            elif load_format == "h5":
+                logger.info("loading model from h5 format")
+                # TODO: loading h5 doesn't seem to work
+                # app.logger.info(f'Loading model from: {model_h5_file}')
+                # model = keras.models.load_model(model_h5_file)
+                pass
+
+            else:
+                raise Exception(f"Unknown format for loading: {load_format}")
+
+
         else:
             raise FileNotFoundError(model_path)
 
         # load tokenizer
-        tokenizer_file = f'{model_path}/{self.model_name}-tokenizer.pkl'
-        app.logger.info(f"loading tokenizer from {tokenizer_file}")
+        tokenizer_file = f'{model_path}/{self.model_name}-v{self.version}-tokenizer.pkl'
+        logger.info(f"loading tokenizer from {tokenizer_file}")
         with open(tokenizer_file, 'rb') as file:
             tokenizer = pickle.load(file)
 
 
         preprocessor = sp.TokenizedPreprocessor()
         preprocessor.tokenizer = tokenizer
-        preprocessor.max_features = app.config['MAX_FEATURES']
+        preprocessor.max_features = max_features
 
         classifier = Classifier(self.model_name, self.version, model, preprocessor)
 
@@ -188,7 +223,7 @@ class Classifier(object):
 
     @staticmethod
     def get_key(name: str, version: str):
-        return f'{name}_{version}'
+        return f'{name}-v{version}'
 
     # TODO: make feature_encoder required
     def __init__(self, name: str,
@@ -205,7 +240,7 @@ class Classifier(object):
         :param preprocessor:
         :param max_features:
         :param feature_encoder:
-        :param label_encoder: must implement unencode function
+        :param label_encoder: fn to Unencodes the raw results back to numeric classes. Must implement unencode function
         """
         self.name = name
         self.version = version
@@ -227,13 +262,17 @@ class Classifier(object):
         :return:
         """
         text_preprocessed, text_sequence, sequence_padded = self.preprocessor.preprocess(text)
+        logger.debug(f"text_preprocessed [{text_preprocessed}]")
+        logger.debug(f"text_sequence [{text_sequence}]")
+        logger.debug(f"sequence_padded [{sequence_padded}]")
+        logger.debug(f"reversed sequence [{self.preprocessor.tokenizer.sequences_to_texts(text_sequence)}]")
 
         y_raw = self.model.predict(sequence_padded)
-        app.logger.debug(f"y_raw [{y_raw}]")
+        logger.debug(f"y_raw [{y_raw}]")
 
         # dynamically load unencoder
         y_unencoded = self.label_encoder.unencode(y_raw)[0]
-        app.logger.debug(f"y_unencoded [{y_unencoded}]")
+        logger.debug(f"y_unencoded [{y_unencoded}]")
 
         return y_unencoded, y_raw, text_preprocessed, text_sequence
 
@@ -291,62 +330,97 @@ class ModelCache(object):
 
 class ModelFactory(object):
     """
-    Use this class to reconstruct the model
+    Factory class to load and store models
     """
-
-    # map that stores all models and associated files
-    _model_cache = ModelCache()
+    _instance = None
+    _model_location = None
+    _max_features = None
+    _load_format = None
 
     @staticmethod
-    def get_model(name: str, version='latest'):
+    def init_factory(model_location:str, max_features:int, load_format:str):
+        if not os.path.exists(model_location):
+            raise FileNotFoundError(model_location)
+        ModelFactory._model_location = model_location
+        ModelFactory._max_features = max_features
+        ModelFactory._load_format = load_format
+
+
+    @staticmethod
+    def get_instance():
+        if ModelFactory._instance is None:
+            ModelFactory._instance = ModelFactory(ModelFactory._model_location,
+                                                  ModelFactory._max_features,
+                                                  ModelFactory._load_format)
+        return ModelFactory._instance
+
+
+    def __init__(self,
+                 model_location,
+                 max_features = 100,
+                 load_format = "json"):
+        """
+
+        :param model_location: location to load model from
+        :param max_features: maximum number of features in a sample. Default 100
+        :param load_format: format to load models from. possible values: json, SavedModel, h5. Default json
+        """
+        self._model_location = model_location
+        self.max_features = max_features
+        self.load_format = load_format
+        # map that stores all models and associated files
+        self._model_cache = ModelCache()
+
+
+    def get_model(self, name: str, version):
         """
         Checks to see if it's in the cache, if not, try to load it
         :param name:
         :param version:
         :return:
         """
-        app.logger.info(f"Getting model name: {name} version: {version}")
+        logger.info(f"Getting model name: {name} version: {version}")
         model = None
         try:
-            model = ModelFactory._model_cache.get(name, version)
-            app.logger.info(f"got {Classifier.get_key(name, version)} from cache")
+            model = self._model_cache.get(name, version)
+            logger.info(f"got {Classifier.get_key(name, version)} from cache")
         except Exception as e:
-            app.logger.info(str(e))
+            logger.info(str(e))
         finally:
             if not model:
                 # TOOD: figure out how to change behavior using some type of inheritance
-                app.logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
+                logger.info(f"{Classifier.get_key(name, version)} not in cache. loading...")
 
-                # dynamically create builder based configuration
-                builder_classpath = app.config["MODEL_BUILDER_CLASS"]
-                app.logger.info(f"Creating builder from {builder_classpath}")
 
                 # TODO: dynamically generate this class based on config
+                # dynamically create builder based configuration
+                # builder_classpath = app.config["MODEL_BUILDER_CLASS"]
+                # logger.info(f"Creating builder from {builder_classpath}")
                 # builder = pu.load_instance(builder_classpath, name, version)
-                builder = PaperspaceLocalModelBuilder(name, version)
-                app.logger.debug(f"created builder {builder}")
+                # TODO: change PaperspaceLocalModelBuilder to a factory - factory should be
+                # saved as an instance in ModelFactory and will be reused to build all models
+                # ModelBuilder can be instantiated in the main flask app to be more clear
+                builder = PaperspaceLocalModelBuilder(name, version, self._model_location)
+                logger.debug(f"created builder {builder}")
 
-                model = builder.build()
-                app.logger.debug(f'Finished loading model {model}')
-                if model:
-                    ModelFactory._model_cache.put(model)
+                model = builder.build(self.max_features, self.load_format)
+                logger.debug(f'Finished loading model {model}')
+                if model is not None:
+                    self._model_cache.put(model)
 
         return model
 
-    @staticmethod
-    def put(model: Classifier):
-        ModelFactory._model_cache.put(model)
+    def put(self, model: Classifier):
+        self._model_cache.put(model)
 
-    @staticmethod
-    def clear():
-        app.logger.info("clearning model cache")
-        ModelFactory._model_cache.clear()
-        app.logger.info(f"cache size after clearing :{ModelFactory._model_cache.size()}")
+    def clear(self):
+        logger.info("clearning model cache")
+        self._model_cache.clear()
+        logger.info(f"cache size after clearing :{self._model_cache.size()}")
 
-    @staticmethod
-    def model_list():
+    def model_list(self):
         """
         returns a list of keys stored in the cache
         :return:
         """
-        return list(ModelFactory._model_cache.keys())
+        return list(self._model_cache.keys())

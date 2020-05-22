@@ -47,12 +47,14 @@ dictConfig({
     }
 })
 
-def get_db():
+def get_db(app):
     """
     Get db context for the application. Default will be sqlite
     :return:
     """
-    if app.config["DB_TYPE"] == "mysql":
+    db_type = app.config["DB_TYPE"]
+    app.logger.info(f"Creating db type: {db_type}")
+    if db_type:
         db = SQLAlchemy(app)
     else:
         database = f'{app.config["SQLITE_DIR"]}/database.db'
@@ -61,33 +63,66 @@ def get_db():
             db = g._database = sqlite3.connect(database)
     return db
 
+# Add default hander to utility classes so they can all log to the same stream
+# do this before creating the app
+for logger in (
+        logging.getLogger('util.amazon_util'),
+        logging.getLogger('util.gcp_file_util'),
+        logging.getLogger('util.model_builder'),
+        logging.getLogger('util.service_preprocessor'),
+        logging.getLogger('util.python_util'),
+        logging.getLogger('util.text_util'),
+        logging.getLogger('tf2_util'),
+        logging.getLogger('amazon_util'),
+        logging.getLogger('gcp_file_util'),
+        logging.getLogger('model_builder'),
+        logging.getLogger('service_preprocessor'),
+        logging.getLogger('python_util'),
+        logging.getLogger('text_util'),
+        logging.getLogger('tf2_util')
+):
+    logger.addHandler(default_handler)
+
+# https://flask.palletsprojects.com/en/1.1.x/logging/
+# configure logger before creating app object
+logging.basicConfig(level=logging.DEBUG)
+
 
 
 # Create the application instance
 # app = Flask(__name__, template_folder="templates")
 app = Flask(__name__)
 app.config.from_object(Config)
-api = Api(app, version=app.config['VERSION'], title="Vince's Amazon Review Classifier",
+api = Api(app,
+          version=app.config['VERSION'],
+          title="Vince's Amazon Review Classifier",
           description='Predict product rating based on user review input')
 # do this to avoid applicaiton context error
 with app.app_context():
-    db = get_db()
+    app.logger.info(f'getting db...')
+    db = get_db(app)
 
-logging.basicConfig(level=logging.DEBUG)
 
-for logger in (
-    logging.getLogger('util.amazon_util'),
-    logging.getLogger('util.gcp_file_util'),
-    logging.getLogger('util.model_builder'),
-    logging.getLogger('util.service_preprocessor'),
-    logging.getLogger('util.python_util'),
-    logging.getLogger('util.text_util'),
-    logging.getLogger('util.tf2_util')
-):
-    logger.addHandler(default_handler)
+def get_factory():
+    return ModelFactory.get_instance()
 
+def get_model_cache_json():
+    model_names = get_factory().model_list()
+    json_reponse = render_template('response-cache.json',
+                                   status="SUCCESS",
+                                   timestamp=datetime.now().strftime(TIMESTAMP),
+                                   size=len(model_names),
+                                   model_names=json.dumps(model_names))
+    app.logger.info(f'json_response: {json_reponse}')
+    app.logger.info(f'json.loads: {json.loads(json_reponse)}')
+    return json.loads(json_reponse)
 
 class Prediction(db.Model):
+    """
+    This class encapsulates the input and output of a prediction.
+
+    Each instance of this object will be written as a row to the mysql database
+    """
 
     # set to 63535 later - this is equivalent to TEXT type in mysql, the rest willl be TINYTEXT type
     MAX_REVIEW_LENGTH = 63535
@@ -146,24 +181,22 @@ class Prediction(db.Model):
         return value
 
 
+
+
+# also, this needs to be under the model class
 app.logger.info(f'creating database...')
 db.create_all()
 db.session.commit()
 app.logger.info("finished creating database...")
 
 
-def get_factory():
-    return ModelFactory
 
 
-def get_model_cache_json():
-    model_names = get_factory().model_list()
-    json_reponse = render_template('response-cache.json',
-                                   status="SUCCESS",
-                                   timestamp=datetime.now().strftime(TIMESTAMP),
-                                   size=len(model_names),
-                                   model_names=json.dumps(model_names))
-    return json.loads(json_reponse)
+
+# initalize ModelFactory
+ModelFactory.init_factory(app.config['MODEL_DIR'],
+                          app.config['MAX_FEATURES'],
+                          app.config['MODEL_FORMAT'])
 
 
 @api.route('/model/cache', endpoint='model')
@@ -172,7 +205,8 @@ class ModelCache(Resource):
     @api.response(200, 'Success')
     @api.doc(description="Clear our model cache")
     def delete(self):
-        return json.loads(clear_model_cache()), 200
+        clear_model_cache()
+        return get_model_cache_json()
 
     @api.response(200, 'Success')
     @api.doc(description="List all models in the cache")
@@ -220,7 +254,6 @@ def clear_model_cache():
     :return:
     """
     get_factory().clear()
-    return get_model_cache_json()
 
 
 def predict_reviews(model_name, version, text, truth):
@@ -237,7 +270,8 @@ def predict_reviews(model_name, version, text, truth):
     app.logger.info(f'Tensorflow version: {tf.__version__}')
 
     # TODO: un-hard code this - get this from the URL
-    classifier = get_factory().get_model(model_name, version)
+    classifier = get_factory().get_model(model_name,
+                                         version)
     # json_response = None
     prediction = None
     if classifier:

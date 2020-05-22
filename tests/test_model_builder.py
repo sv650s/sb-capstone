@@ -1,10 +1,10 @@
 import pytest
-from util.model_util import Loader, ModelCache
+from util.model_builder import ModelBuilder, ModelCache
 from util.tf2_util import AttentionLayer
 import inspect
 
 
-class TestLoader(object):
+class TestModelBuilder(object):
 
     @pytest.fixture(scope="class")
     def custom_object_dict(self):
@@ -19,7 +19,7 @@ class TestLoader(object):
         :param custom_object_dict:
         :return:
         """
-        ret = Loader.get_custom_objects(custom_object_dict)
+        ret = ModelBuilder.get_custom_objects(custom_object_dict)
 
         key = "AttentionLayer"
         assert list(ret.keys())[0] == key, f"key should be {key}"

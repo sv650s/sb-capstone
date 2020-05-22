@@ -16,7 +16,7 @@ fi
     cd ${TO_DIR}
 
     for file in ${files}; do
-        rsync -auv ../${FROM_DIR}/${file} .
+        rsync -auq ../${FROM_DIR}/${file} .
 #        echo "Linking ${file}"
 #        ln ../${FROM_DIR}/${file}
     done

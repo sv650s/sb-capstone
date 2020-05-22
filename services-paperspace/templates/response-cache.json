@@ -1,6 +1,7 @@
 {
   "status": "{{ status }}",
   "timestamp": "{{ timestamp }}",
-  "size": {{ size }},
+  "size": {{ size }}{% if size > 0 %},
   "models": {{ model_names }}
+{% endif %}
 }
