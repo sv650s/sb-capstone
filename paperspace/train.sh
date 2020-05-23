@@ -114,6 +114,7 @@ fi
 #fi
 
 
+tf_version=`grep FROM.*tensorflow Dockerfile  | awk -F: '{print $2}' | awk -F- '{print $1}'`
 UTIL_ORIG="../util"
 UTIL_DEST="train/util"
 echo "Syncing util..."
@@ -141,12 +142,13 @@ echo "Running python with following command"
 echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
 echo "basename: ${model_basename}"
 echo "modelPath: /artifacts/models/${model_basename}"
+echo "tf_version: ${tf_version}"
 
 gradient experiments run singlenode \
     --name ${model_basename} \
     --projectId pr1cl53bg \
     --machineType ${machine_type} \
-    --container vtluk/paperspace-tf-gpu:1.0 \
+    --container vtluk/paperspace-tf-gpu:${tf_version} \
     --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
     --workspace . \
     --modelType Tensorflow \
