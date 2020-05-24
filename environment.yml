@@ -31,6 +31,7 @@ dependencies:
   - pandas=1.0.1
   - pandas-datareader=0.8.1
   - pip
+  - protobuf=3.8 # get sphinx working
   - psutil # used for paperspace training
   - pydot
   - pyldavis
@@ -44,6 +45,7 @@ dependencies:
   - scikit-learn=0.22.1
   - scipy=1.4.1
   - spacy # LSTMVis
+  - sphinx
   - seaborn
   - traceback2
   - tensorflow==2.0.0
