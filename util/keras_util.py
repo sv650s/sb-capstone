@@ -209,6 +209,7 @@ class ModelWrapper(object):
                                mw.model_version,
                                mw.save_dir)
 
+        mw_copy.tf_version = mw.tf_version
         mw_copy.tokenizer_file = mw.tokenizer_file
         mw_copy.train_time_min = mw.train_time_min
         mw_copy.test_predict_time_min = mw.predict_time_min
@@ -345,6 +346,7 @@ class ModelWrapper(object):
         self.load_model_file = load_model_file
 
 
+        self.tf_version = tf.__version__
         self.tokenizer_file = None
         self.train_time_min = 0
         self.test_predict_time_min = 0
@@ -384,6 +386,7 @@ class ModelWrapper(object):
         log.debug("ModelWrapper.__str__")
         summary = \
             f"\nModelWrapper parameters:\n" \
+                f"\ttf_version:\t\t\t{self.tf_version}\n" \
                 f"\tmodel_name:\t\t\t{self.model_name}\n" \
                     f"\tdescription:\t\t\t{self.description}\n" \
                     f"\tarchitecture:\t\t\t{self.architecture}\n" \
@@ -586,19 +589,21 @@ class ModelWrapper(object):
         """
         if self.sample_size_str is not None:
             description = f"{self.model_name}-" \
-                    f"{self.architecture}-" \
-                    f"{self.feature_set_name}-" \
-                    f"sampling_{self.sampling_type}-" \
-                    f"{self.sample_size_str}-" \
-                    f"{self.feature_column}-" \
-                    f"v{self.model_version}"
+                f"{self.architecture}-" \
+                f"{self.feature_set_name}-" \
+                f"sampling_{self.sampling_type}-" \
+                f"{self.sample_size_str}-" \
+                f"{self.feature_column}-" \
+                f"tf{self.tf_version}-" \
+                f"v{self.model_version}"
         else:
             description = f"{self.model_name}-" \
-                    f"{self.architecture}-" \
-                    f"{self.feature_set_name}-" \
-                    f"sampling_{self.sampling_type}-" \
-                    f"{self.feature_column}-" \
-                    f"v{self.model_version}"
+                f"{self.architecture}-" \
+                f"{self.feature_set_name}-" \
+                f"sampling_{self.sampling_type}-" \
+                f"{self.feature_column}-" \
+                f"tf{self.tf_version}-" \
+                f"v{self.model_version}"
 
         log.info(f"saved file basename: {description}")
         return description
@@ -694,6 +699,7 @@ class ModelWrapper(object):
         report.add("saved_model_dir", self.saved_model_dir)
         report.add("test_examples", self.X_test.shape[0])
         report.add("test_features", self.X_test.shape[1])
+        report.add("tf_version", self.tf_version)
         report.add("train_examples", self.X_train.shape[0])
         report.add("train_features", self.X_train.shape[1])
         report.add("train_time_min", self.train_time_min)
@@ -842,16 +848,17 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         """
         if self.sample_size_str is not None:
             description = f"{self.model_name}-" \
-                    f"{self.architecture}-" \
-                    f"dr{get_decimal_str(self.dropout_rate)}-" \
-                    f"rdr{get_decimal_str(self.recurrent_dropout_rate)}-" \
-                    f"batch{self.batch_size}-" \
-                    f"lr{get_decimal_str(self.learning_rate)}-" \
-                    f"{self.feature_set_name}-" \
-                    f"sampling_{self.sampling_type}-" \
-                    f"{self.sample_size_str}-" \
-                    f"{self.feature_column}-" \
-                    f"v{self.model_version}"
+                f"{self.architecture}-" \
+                f"dr{get_decimal_str(self.dropout_rate)}-" \
+                f"rdr{get_decimal_str(self.recurrent_dropout_rate)}-" \
+                f"batch{self.batch_size}-" \
+                f"lr{get_decimal_str(self.learning_rate)}-" \
+                f"{self.feature_set_name}-" \
+                f"sampling_{self.sampling_type}-" \
+                f"{self.sample_size_str}-" \
+                f"{self.feature_column}-" \
+                f"tf{self.tf_version}-" \
+                f"v{self.model_version}"
         else:
             description = f"{self.model_name}-" \
                 f"{self.architecture}-" \
@@ -862,6 +869,7 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
                 f"{self.feature_set_name}-" \
                 f"sampling_{self.sampling_type}-" \
                 f"{self.feature_column}" \
+                f"tf{self.tf_version}-" \
                 f"v{self.model_version}"
         return description
 
