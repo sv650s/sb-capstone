@@ -74,3 +74,4 @@ services-paperspace/models
 
 # sphinx
 docs/source/_*
+docs/build/*
