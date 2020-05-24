@@ -183,7 +183,8 @@ class Prediction(db.Model):
 
 
 
-# also, this needs to be under the model class
+# create has to be done after declaration of Prediction
+# do not move
 app.logger.info(f'creating database...')
 db.create_all()
 db.session.commit()

@@ -1,17 +1,30 @@
+# TODO: change this to TF 2.0.1
+# Getting the following error when starting flask though:
+# reviews_1  | Traceback (most recent call last):
+# reviews_1  |   File "/usr/local/lib/python3.6/dist-packages/flask/cli.py", line 240, in locate_app
+# reviews_1  |     __import__(module_name)
+# reviews_1  |   File "/home/reviews/reviews.py", line 11, in <module>
+# reviews_1  |     from flask_restplus import Api, Resource, fields
+# reviews_1  |   File "/usr/local/lib/python3.6/dist-packages/flask_restplus/__init__.py", line 4, in <module>
+# reviews_1  |     from . import fields, reqparse, apidoc, inputs, cors
+# reviews_1  |   File "/usr/local/lib/python3.6/dist-packages/flask_restplus/fields.py", line 17, in <module>
+# reviews_1  |     from werkzeug import cached_property
+# reviews_1  | ImportError: cannot import name 'cached_property'
 FROM tensorflow/tensorflow:2.0.0b1-py3
 
-RUN adduser --disabled-password reviews
-WORKDIR /home/reviews
-
+# TODO: upgrade python 3.6 to 3.7
+# TODO: make mysql run on startup - systemctl ?
+# TODO: update-alternatives: using /etc/mysql/mysql.cnf to provide /etc/mysql/my.cnf (my.cnf) in auto mode
 # re-install gcc for our pip install
 RUN apt-get update && \
-    apt-get install --yes tree libhdf5-dev python3-all-dev mysql-server vim less && \
+    apt-get install --yes tree libhdf5-dev python3-all-dev mysql-server vim less sudo && \
+    apt-get clean && \
     update-rc.d mysql defaults
+
 
 COPY requirements.txt ./
 RUN pip3 install --upgrade pip setuptools && \
     pip3 install -r ./requirements.txt
-
 
 # get argument from docker compose file
 ARG version
@@ -25,17 +38,23 @@ ENV VERSION $version
 ENV SQLITE_DIR $sqlite_dir
 ENV DB_TYPE $db_type
 ENV DB_IP $db_ip
+ENV MODEL_DIR $model_dir
 
+
+# create user and add to sudoers
+RUN adduser --disabled-password reviews
+WORKDIR /home/reviews
+
+# copy files from local to image
+COPY reviews.py run_service.sh config.py ./
 COPY util ./util
 COPY templates ./templates
-COPY reviews.py config.py run_service.sh ./
-RUN chmod +x run_service.sh
 
-RUN chown -R reviews:reviews ./
 
-USER reviews
+RUN chown -R reviews:reviews ./ && usermod -aG sudo reviews
+# TODO: can't sudo for this user for some reason. commenting for now
+#USER reviews
 
 # TODO: update this script to run wgsi server instead for Production
 EXPOSE 5000
-# run flask server and bind to 0.0.0.0 so port can be mapped
 ENTRYPOINT ["./run_service.sh"]

@@ -73,21 +73,17 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io
 sudo docker run hello-world
 ```
 
-# MySql Set
+## MySql Setup
 
-In order for the flask application to work properly, you must create the database in MySql before.
+In order for the flask application to work properly, you must create the database in MySql before. This is a one-time setup per container
 
 The first time you run your docker container. Run the following commands
 
-## From Paperspace Machine
-
-Start interactive shell into Docker container
+From Paperspace VM Machine, start interactive shell into Docker container
 
 ```bash
 > docker exec -it <container id> /bin/bash
 ```
-
-## Inside Docker Container
 
 Connect to MySql database
 
@@ -98,9 +94,7 @@ sudo su -
 mysql
 ```
 
-## MySql shell
-
-Create capstonedb database
+Create reviews user and capstonedb database
 
 ```sql
 GRANT ALL PRIVILEGES ON *.* TO 'reviews'@'%' IDENTIFIED BY 'password';
@@ -108,18 +102,16 @@ CREATE DATABASE capstonedb;
 FLUSH PRIVILEGES;
 ```
 
-## docker-compose
-
-scp docker-compose file from this directory to Paperspace VM Machine
-
+Restart Docker container (in a separate shell)
 ```bash
-scp docker-compose-paperspace.yml paperspace@<machine ip>:/home/paperspace/
+docker stop <container id>
+docker start -ia <container id>
 ```
 
-# Running Service
+## Running Service
 
 
-## Run service locally
+### Run service locally
 
 ```bash
 ./sync_util.sh
@@ -127,23 +119,67 @@ docker-compose build
 docker-compose up
 ```
 
-### Local service URL
+#### Local service URL
 
+```log
 http://localhost:5000
+```
 
+### Paperspace
 
-## Run service on Paperspace
+#### Copying models to Paperspace
+
+Flask application the following file/directory structure to load models:
+```bash
+├── <model name 1>-v<model version 1>
+│   ├── <model name 1>-v<model version 1>-model.json
+│   ├── <model name 1>-v<model version 1>-weights.h5
+│   ├── <model name 1>-v<model version 1>-tokenizer.pkl
+│   └── <model name 1>-v<model version 1>-tokenizer.pkl
+├── <model name 2>-v<model version 2>
+│   ├── <model name 2>-v<model version 2>-model.json
+│   ├── <model name 2>-v<model version 2>-weights.h5
+│   ├── <model name 2>-v<model version 2>-tokenizer.pkl
+```
+
+The following directory structure/files should be copied to the ~/models directory on the paperspace VM machine
 
 ```bash
+rsync -rauvh --progress . paperspace@<machine public ip>:~/models/
+```
+
+### Run service on Paperspace
+
+Building and running Flask server 
+```bash
+# copy docker-compose file to machine
+scp docker-compose-paperspace.yml paperspace@<machine public ip>:~/docker-compose.yml
+# ssh to machine
 ssh paperspace@<machine public ip>
 docker-compose build
 docker-compose up
 ```
 
-### Local service URL
+#### Paperspace URL
 
+```log
 http://<machine public ip>:5000
+```
 
+
+# References
+[Paperspace Machine User Guide](https://docs.paperspace.com/gradient/machines/using-machines)
+[Paperspace Startup Script Guide](https://github.com/Paperspace/paperspace-node/blob/master/scripts.md)
+[MySql setup on ubuntu](https://support.rackspace.com/how-to/install-mysql-server-on-the-ubuntu-operating-system/)
+
+
+# TODO's
+
+* database one-time manual setup steps to Dockerfile
+* mysql is not starting up using init.d properly. We get around this by starting it in our startup script
+* move database password out of config.py
+* split out reviews.py into various python files
+* update docker image to use TF 2.0.1 (same as google Colab)
 
 # Common Docker Commands
 
@@ -177,18 +213,15 @@ Look at docker logs
 docker logs -a <container id>
 ```
 
+Clear out non-running docker containers
+```bash
+docker container prune -f
+```
 
-# References
-[Paperspace Machine User Guide](https://docs.paperspace.com/gradient/machines/using-machines)
-[Paperspace Startup Script Guide](https://github.com/Paperspace/paperspace-node/blob/master/scripts.md)
-[MySql setup on ubuntu](https://support.rackspace.com/how-to/install-mysql-server-on-the-ubuntu-operating-system/)
-
-
-# Notes
-
-start mysql /etc/init.d/mysql start
-
-/usr/sbin/mysqld --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --log-error=/var/log/mysql/error.log --pid-file=/var/run/mysqld/mysqld.pid --socket=/var/run/mysqld/mysqld.sock --port=3306 --log-syslog=1 --log-syslog-facility=daemon --log-syslog-tag=
+Clear out docker images without containers
+```bash
+docker image prune -a
+```
 
 
 # MySql Commands
@@ -198,7 +231,12 @@ Connect to database
 mysql -h <db ip> -u <username> -p <password>
 ```
 
-Show databases
+Show available databases
 ```sql
 show databases;
+```
+
+Use database
+```sql
+use <database name>;
 ```

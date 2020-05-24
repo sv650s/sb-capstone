@@ -1,25 +1,27 @@
 #
 # docker compose to build docker image to host API service locally
+# this is a local development version of the container and will use volume mount
+# with local directories so code is automatically updated on the server
 #
 version: "3.7"
 services:
   reviews:
     build:
       context: ./
-      dockerfile: Dockerfile-flask-local
+      dockerfile: Dockerfile-flask
       args:
         - version=1.0
         - db_ip=localhost # IP address of MySQL database
-        - model_dir=models # where models will be loaded
-        - sqlite_dir=/tmp # set this to /storage/<experiment name> for paperspace
+        # where models will be loaded - this can be relative path from /home/reviews or absolute path
+        - model_dir=models
+#        - sqlite_dir=/tmp # set this to /storage/<experiment name> for paperspace
         - db_type=mysql
     ports:
       - "5000:5000"
       - "3306:3306"
     volumes:
-      # bind mount current directory
-      - ./:/home/reviews
-      - ./models:/models
-    image: capstone-service:latest
-#    command: -c "sleep 1d"  # keep the container running for debugging
+#      bind mount current directory
+#      - ./:/home/reviews
+      - ./models:/home/reviews/models
+    image: vtluk/capstone-paperspace:latest
 
