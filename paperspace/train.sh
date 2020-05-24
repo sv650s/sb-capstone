@@ -114,7 +114,7 @@ fi
 #fi
 
 
-tf_version=`grep FROM.*tensorflow Dockerfile  | awk -F: '{print $2}' | awk -F- '{print $1}'`
+tf_version=`grep FROM.*tensorflow Dockerfile  | awk -F: '{print $2}'`
 UTIL_ORIG="../util"
 UTIL_DEST="train/util"
 echo "Syncing util..."
@@ -148,7 +148,7 @@ gradient experiments run singlenode \
     --name ${model_basename} \
     --projectId pr1cl53bg \
     --machineType ${machine_type} \
-    --container vtluk/paperspace-tf-gpu:${tf_version} \
+    --container vtluk/paperspace-experiment:${tf_version} \
     --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
     --workspace . \
     --modelType Tensorflow \
