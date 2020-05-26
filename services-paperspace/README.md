@@ -104,8 +104,8 @@ FLUSH PRIVILEGES;
 
 Restart Docker container (in a separate shell)
 ```bash
-docker stop <container id>
-docker start -ia <container id>
+docker container stop <container id>
+docker container start -ia <container id>
 ```
 
 ## Running Service
@@ -127,19 +127,18 @@ http://localhost:5000
 
 ### Paperspace
 
-#### Copying models to Paperspace
+#### Copying Models On Paperspace
 
 Flask application the following file/directory structure to load models:
 ```bash
 ├── <model name 1>-v<model version 1>
 │   ├── <model name 1>-v<model version 1>-model.json
 │   ├── <model name 1>-v<model version 1>-weights.h5
-│   ├── <model name 1>-v<model version 1>-tokenizer.pkl
 │   └── <model name 1>-v<model version 1>-tokenizer.pkl
 ├── <model name 2>-v<model version 2>
 │   ├── <model name 2>-v<model version 2>-model.json
 │   ├── <model name 2>-v<model version 2>-weights.h5
-│   ├── <model name 2>-v<model version 2>-tokenizer.pkl
+│   └── <model name 2>-v<model version 2>-tokenizer.pkl
 ```
 
 The following directory structure/files should be copied to the ~/models directory on the paperspace VM machine
@@ -147,6 +146,10 @@ The following directory structure/files should be copied to the ~/models directo
 ```bash
 rsync -rauvh --progress . paperspace@<machine public ip>:~/models/
 ```
+
+##### For Local Development
+
+Create a 'models' directory in this folder and create the same directory structure as above. When running local version of docker container, a volume mount will be created to map the folder into Docker container
 
 ### Run service on Paperspace
 

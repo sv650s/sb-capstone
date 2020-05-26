@@ -10,8 +10,10 @@ services:
       context: ./
       dockerfile: Dockerfile-flask
       args:
+        # API version number
         - version=1.0
-        - db_ip=localhost # IP address of MySQL database
+        # IP address of MySQL database
+        - db_ip=localhost
         # where models will be loaded - this can be relative path from /home/reviews or absolute path
         - model_dir=models
 #        - sqlite_dir=/tmp # set this to /storage/<experiment name> for paperspace
@@ -21,7 +23,8 @@ services:
       - "3306:3306"
     volumes:
 #      bind mount current directory
-#      - ./:/home/reviews
-      - ./models:/home/reviews/models
-    image: vtluk/capstone-paperspace:latest
+      - ./:/home/reviews
+    # tag should match base tf image
+    image: vtluk/capstone-paperspace:2.2.0rc2-py3
+
 

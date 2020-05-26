@@ -463,7 +463,8 @@ if __name__ == "__main__":
                              max_sequence_length = MAX_SEQUENCE_LENGTH, # max sequence length - EmbeddingModelWrapper
                              embed_size = EMBED_SIZE, # embed size - EmbeddingModelWrapper
                             train_embeddings  =  train_embeddings, # trainable embedding - EmbeddingModelWrapper
-                            model_name = model_name, # model name - ModelWrapper
+        embedding_matrix=embedding_matrix,  # pre-trained embedding matrix - EmbeddingModelWrapper
+        model_name = model_name, # model name - ModelWrapper
                             architecture = architecture, # architecture - ModelWrapper
                             feature_set_name = FEATURE_SET_NAME, # feature_set_name - ModelWrapper
                             label_column = label_column, # label_column - ModelWrapper

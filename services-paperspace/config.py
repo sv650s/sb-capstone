@@ -5,7 +5,7 @@ import os
 class Config(object):
 
     # location to load models from
-    MODEL_DIR = '/models' # location where models are saved
+    MODEL_DIR = os.environ.get('MODEL_DIR', default="/models")  # location where models are saved
     # maximum number of features inputed into model - ie, padded sequence
     MAX_FEATURES = 100
     # Type of database to use. Option: mysql, sqlite

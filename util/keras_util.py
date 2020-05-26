@@ -11,6 +11,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.layers import Layer
 from tensorflow.keras import backend as K
+from tensorflow.keras.initializers import Constant
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
@@ -735,6 +736,7 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
                  max_sequence_length = 100,
                  embed_size = 300,
                  train_embeddings = False,
+                 embedding_matrix = None,
                  *args,
                  **kwargs):
         """
@@ -743,6 +745,7 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         :param max_sequence_length: max length of padded sequence. default 100
         :param embed_size: vector length of embedding. default 300
         :param train_embeddings: if set to True then the first embedding layer is not trainable. default False
+        :param embedding_matrix: embedding matrix if embedding is pretrained. Default None
         :param args:
         :param kwargs:
         """
@@ -752,9 +755,21 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         self.embed_size = embed_size
         self.max_sequence_length = max_sequence_length
         self.train_embeddings = train_embeddings
+        self.embedding_matrix = embedding_matrix
 
         # pass None to super constructor since we haven't built it yet
         super().__init__(None, *args, **kwargs)
+
+        # create embedding layer
+        if embedding_matrix is not None:
+            embedding_matrix_param = Constant(self.embedding_matrix)
+        else:
+            embedding_matrix_param = 'uniform'
+        self.embedding_layer = Embedding(input_dim=self.vocab_size,
+                            output_dim=self.embed_size,
+                            embeddings_initializer = embedding_matrix_param,
+                            input_length=self.max_sequence_length,
+                            trainable = self.train_embeddings)
 
         if self.load_model_file is None:
             self.model = self.build_model()
@@ -770,6 +785,11 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
             f"\tembed_size:\t\t\t{self.embed_size}\n" \
             f"\tmax_sequence_length:\t\t{self.max_sequence_length}\n" \
             f"\ttrain_embeddings:\t\t{self.train_embeddings}\n"
+        if self.embedding_matrix is not None:
+            summary = f"{summary}\tembedding_matrix_shape:\t\t{np.shape(self.embedding_matrix)}\n"
+        else:
+            summary = f"{summary}\tembedding_matrix_shape:\t\t{self.embedding_matrix}\n"
+
         return summary
 
     def get_report(self):
@@ -796,6 +816,16 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
                  bidirectional = False,
                  *args,
                  **kwargs):
+        """
+        Model wrapper for LSTM networks
+
+        :param lstm_dim:  Number of LSTM cells in the network
+        :param dropout_rate: dropout rate
+        :param recurrent_dropout_rate:  recurrent dropout rate
+        :param bidirectional:  whether network should be bi-directional
+        :param args:
+        :param kwargs:
+        """
         log.debug(f'Constructor LSTM1LayerModelWrapper')
 
         self.lstm_dim = lstm_dim
@@ -814,10 +844,7 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         log.debug(f'Building Model: {self}')
 
         model = Sequential()
-        model.add(Embedding(input_dim=self.vocab_size,
-                            output_dim=self.embed_size,
-                            input_length=self.max_sequence_length,
-                            trainable = self.train_embeddings))
+        model.add(self.embedding_layer)
         if self.bidirectional:
             model.add(Bidirectional(LSTM(self.lstm_dim,
                                          dropout = self.dropout_rate,

@@ -21,9 +21,10 @@ conda env create --file environments.yml
 ├── notebooks - jupyter notebooks
 ├── reports - reports from python programs
 ├── services - final Flask API 
-├── tests - pytest
+├── tests - pytests and coverage report
 ├── tools - python programs
 ├── util - utility classes and modules
+└── runUnitTests.sh - run unit tests and create coverage report
 ```
 
 

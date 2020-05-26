@@ -119,6 +119,8 @@ UTIL_DEST="train/util"
 echo "Syncing util..."
 rsync -rauv --delete --exclude="__pycache__" ${UTIL_ORIG}/*.py ${UTIL_DEST}/
 
+tf_version=`grep ^FROM Dockerfile | awk -F: '{print $2}'`
+
 # test-LSTMB16-1x16-dr0-rdr0-batch0-lr01-glove_with_stop_nonlemmatized-sampling_none-test-review_body
 
 if [ ${sample_size} == "test" ]; then
@@ -146,7 +148,7 @@ gradient experiments run singlenode \
     --name ${model_basename} \
     --projectId pr1cl53bg \
     --machineType ${machine_type} \
-    --container vtluk/paperspace-tf-gpu:1.0 \
+    --container vtluk/paperspace-experiment:${tf_version} \
     --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
     --workspace . \
     --modelType Tensorflow \

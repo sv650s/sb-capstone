@@ -27,9 +27,9 @@ if __name__ == "__main__":
 
     models = [
         "GRU16-1x16-random_embedding-sampling_none-199538-100-review_body",
-        # "LSTMB128-1x128-dr0-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-500k-review_body-v1",
-        # "LSTMB128-1x128-dr0-rdr0-batch32-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-v1",
-        # "LSTMB128-1x128-dr0-rdr0-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-v1",
+        # "LSTMB128-1x128-dr0-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-500k-review_body",
+        # "LSTMB128-1x128-dr0-rdr0-batch32-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body",
+        # "LSTMB128-1x128-dr0-rdr0-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body",
         "LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body"
               ]
 
