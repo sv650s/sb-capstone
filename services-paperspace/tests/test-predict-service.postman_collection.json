@@ -1,0 +1,258 @@
+{
+	"info": {
+		"_postman_id": "8392d2d2-fe93-4ac9-a080-35dde5061b0d",
+		"name": "Capstone (Paperspace)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "predict-GRU-3-star",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "7883ab2a-867f-4698-990e-e3f4c7fd5ccc",
+						"exec": [
+							"pm.environment.set(\"review\", \"This product is just ok. I wish it worked better\");",
+							"pm.environment.set(\"product_rating\", 3);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3cacffcf-a246-4057-96d0-77f2482ee8ce",
+						"exec": [
+							"pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+							"pm.test(\"Predicted rating should be 3\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.prediction.star_rating).to.eql(3);",
+							"})",
+							"pm.test(\"Softmax output for 3 should be 0.29538614\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.prediction.raw[\"3\"]).to.eql(\"0.29538614\");",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"review\": \"This product is just ok. I wish it worked better\",\n    \"product_rating\": 3\n}"
+				},
+				"url": {
+					"raw": "marmoset:5000/predict/GRU16-1x16-random_embedding-sampling_none-199538-100-review_body/1",
+					"host": [
+						"marmoset"
+					],
+					"port": "5000",
+					"path": [
+						"predict",
+						"GRU16-1x16-random_embedding-sampling_none-199538-100-review_body",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "predict-GRU-4-star",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "7883ab2a-867f-4698-990e-e3f4c7fd5ccc",
+						"exec": [
+							"pm.environment.set(\"review\", \"This product is just ok. I wish it worked better\");",
+							"pm.environment.set(\"product_rating\", 3);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3cacffcf-a246-4057-96d0-77f2482ee8ce",
+						"exec": [
+							"pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+							"pm.test(\"Predicted rating should be 4\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.prediction.star_rating).to.eql(4);",
+							"})",
+							"pm.test(\"Softmax output for 4 should be 0.29875132\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.prediction.raw[\"4\"]).to.eql(\"0.29875132\");",
+							"})",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"review\": \"This is the most amazing product. Must buy\",\n    \"product_rating\": 4\n}"
+				},
+				"url": {
+					"raw": "marmoset:5000/predict/GRU16-1x16-random_embedding-sampling_none-199538-100-review_body/1",
+					"host": [
+						"marmoset"
+					],
+					"port": "5000",
+					"path": [
+						"predict",
+						"GRU16-1x16-random_embedding-sampling_none-199538-100-review_body",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "predict-LSTM-3-star",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "7883ab2a-867f-4698-990e-e3f4c7fd5ccc",
+						"exec": [
+							"pm.environment.set(\"review\", \"This product is just ok. I wish it worked better\");",
+							"pm.environment.set(\"product_rating\", 3);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3cacffcf-a246-4057-96d0-77f2482ee8ce",
+						"exec": [
+							"pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+							"pm.test(\"Predicted rating should be 5\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.prediction.star_rating).to.eql(5);",
+							"})",
+							"pm.test(\"Softmax output for 5 should be 0.29894924\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.prediction.raw[\"5\"]).to.eql(\"0.29894924\");",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"review\": \"great case. great customer service\",\n    \"product_rating\": 5\n}"
+				},
+				"url": {
+					"raw": "marmoset:5000/predict/LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body/1",
+					"host": [
+						"marmoset"
+					],
+					"port": "5000",
+					"path": [
+						"predict",
+						"LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "predict-LSTM-1-star",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "7883ab2a-867f-4698-990e-e3f4c7fd5ccc",
+						"exec": [
+							"pm.environment.set(\"review\", \"This product is just ok. I wish it worked better\");",
+							"pm.environment.set(\"product_rating\", 3);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3cacffcf-a246-4057-96d0-77f2482ee8ce",
+						"exec": [
+							"pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+							"pm.test(\"Predicted rating should be 1\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.prediction.star_rating).to.eql(1);",
+							"})",
+							"pm.test(\"Softmax output for 3 should be 0.9595421\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.prediction.raw[\"1\"]).to.eql(\"0.9595421\");",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"review\": \"This didn't work at all. Do not buy\",\n    \"product_rating\": 1\n}"
+				},
+				"url": {
+					"raw": "marmoset:5000/predict/LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body/1",
+					"host": [
+						"marmoset"
+					],
+					"port": "5000",
+					"path": [
+						"predict",
+						"LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

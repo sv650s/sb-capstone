@@ -265,7 +265,8 @@ class ModelWrapper(object):
         log.debug(f"basename: {basename}")
 
         # model files
-        self.model_file = f"{models_dir}/{basename}-model.h5"
+        self.model_file = None
+        # self.model_file = f"{models_dir}/{basename}-model.h5"
         self.checkpoint_file = f"{models_dir}/checkpoints"
         self.model_json_file = f"{models_dir}/{basename}-model.json"
         self.weights_file = f"{models_dir}/{basename}-weights.h5"
@@ -440,7 +441,10 @@ class ModelWrapper(object):
             verbose = 1,
             callbacks = None,
             balance_class_weights = True,
-            save_checkpoints = True):
+            # TODO: turn checkpoint back on
+            # for larger models, we are getting the following errors:
+            # ValueError: Message tensorflow.SavedModel exceeds maximum protobuf size of 2GB: 2966578365
+            save_checkpoints = False):
         """
         Calls model.fit and record metrics
 
@@ -475,10 +479,11 @@ class ModelWrapper(object):
         if save_checkpoints:
             log.info(f'Callbacks before adding checkpoints: {callbacks}')
             log.info(f"Adding {self.checkpoint_file} checkpoint callback...")
+            # TODO: make checkpoint save entire model - getting the following error when we do ValueError: Message tensorflow.SavedModel exceeds maximum protobuf size of 2GB: 2171737442
             checkpoint = tf.keras.callbacks.ModelCheckpoint(
                 filepath = self.checkpoint_file,
                 verbose = 1,
-                save_weights_only = False,
+                save_weights_only = True,
                 monitor = 'val_loss',
                save_freq = 'epoch',
                 save_best_only = True)
@@ -486,6 +491,7 @@ class ModelWrapper(object):
             callbacks.append(checkpoint)
 
         start_time = datetime.now()
+        log.info(f'Starting training:\n{self.__str__()}')
         log.info(f'model: {self.model}')
         self.network_history = self.model.fit(X_train,
                                               y_train,
@@ -640,22 +646,16 @@ class ModelWrapper(object):
             self.model.save_weights(self.weights_file,
                                     save_format=save_format)
 
-        # if self.network_history is not None:
-        #     print(f"Saving history file: {self.network_history_file}")
-        #     with open(self.network_history_file, 'w') as file:
-        #         json.dump(self.network_history.history,
-        #                     file,
-        #                     default=to_serializable)
-
-        print(f"Saving model file: {self.model_file}")
-        self.model.save(self.model_file, save_format=save_format)
-
-        print(f"Saving SavedModel to: {self.saved_model_dir}")
-        tf.saved_model.save(self.model, self.saved_model_dir)
-
         if self.tokenizer is not None:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
             pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
+
+        # TODO: these gets an error beyone 2m samples - ValueError: Message tensorflow.SavedModel exceeds maximum protobuf size of 2GB: 2172012129
+        # print(f"Saving model file: {self.model_file}")
+        # self.model.save(self.model_file, save_format=save_format)
+        # print(f"Saving SavedModel to: {self.saved_model_dir}")
+        # tf.saved_model.save(self.model, self.saved_model_dir)
+
 
 
 
@@ -693,7 +693,7 @@ class ModelWrapper(object):
             report.add("class_weight", self.class_weight)
         report.add("sample_size_str", self.sample_size_str)
         report.add("sampling_type", self.sampling_type)
-        report.add("model_file", self.model_file)
+        # report.add("model_file", self.model_file)
         report.add("checkpoint_dir", self.checkpoint_file)
         report.add("model_json_file", self.model_json_file)
         report.add("weights_file", self.weights_file)

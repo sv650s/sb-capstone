@@ -513,7 +513,7 @@ if __name__ == "__main__":
                                verbose = 1,
                                restore_best_weights = True)
 
-    checkpoints = [early_stop, reduce_lr]
+    callbacks = [early_stop, reduce_lr]
 
     if os.path.exists(STORAGE_DIR):
         storage_model_filepath = f'{STORAGE_DIR}/{ku.ModelWrapper.models_dir}/{mw._get_saved_file_basename()}'
@@ -521,11 +521,11 @@ if __name__ == "__main__":
         checkpoint_storage = tf.keras.callbacks.ModelCheckpoint(
             filepath = storage_model_filepath,
             verbose = 1,
-            save_weights_only = False,
+            save_weights_only = True,
             monitor = 'val_loss',
             save_freq = 'epoch',
             save_best_only = True)
-        checkpoints.append(checkpoint_storage)
+        callbacks.append(checkpoint_storage)
 
 
 
@@ -535,7 +535,7 @@ if __name__ == "__main__":
                              verbose=1,
                              validation_split=0.2,
                              balance_class_weights=balance_class_weights,
-                             callbacks=checkpoints)
+                             callbacks=callbacks)
 
     mw.evaluate(X_test, y_test)
     logger.info("Train Accuracy: %.2f%%" % (mw.train_scores[1]*100))
