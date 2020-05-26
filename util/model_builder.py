@@ -45,7 +45,7 @@ class ModelBuilder(ABC):
         :return:
         """
         filename = f'{self.model_name}-{self.version}.json'
-        app.logger.debug(f"got filename: {filename}")
+        logger.debug(f"got filename: {filename}")
         return filename
 
     def build(self):
@@ -55,11 +55,11 @@ class ModelBuilder(ABC):
         if os.path.exists(json_file):
             with open(json_file, 'r') as file:
                 config_str = file.read()
-                app.logger.debug(f'config_str {config_str}')
+                logger.debug(f'config_str {config_str}')
 
             config = json.loads(config_str)
 
-            app.logger.debug(f"json_config {pprint(config)}")
+            logger.debug(f"json_config {pprint(config)}")
 
             name = config["name"]
             version = config["version"]
@@ -104,18 +104,18 @@ class ModelBuilder(ABC):
 #         self.config_dir = app.config["MODEL_CONFIG_DIR"]
 #
 #     def load_tokenizer(self, tokenizer_file: str):
-#         app.logger.info(f"loading tokenizer from {tokenizer_file}")
+#         logger.info(f"loading tokenizer from {tokenizer_file}")
 #         with open(f'{self.model_dir}/{tokenizer_file}', 'rb') as file:
 #             tokenizer = pickle.load(file)
 #         return tokenizer
 #
 #     def load_model(self, model_file: str, weights_file: str = None, custom_objects=None):
-#         app.logger.info(f"loading model from {model_file}")
+#         logger.info(f"loading model from {model_file}")
 #         with open(f'{self.model_dir}/{model_file}') as json_file:
 #             json_config = json_file.read()
 #         model = keras.models.model_from_json(json_config,
 #                                              custom_objects=custom_objects)
-#         app.logger.info(f"loading model weights from {weights_file}")
+#         logger.info(f"loading model weights from {weights_file}")
 #         model.load_weights(f'{self.model_dir}/{weights_file}')
 #
 #         return model
@@ -125,7 +125,7 @@ class ModelBuilder(ABC):
 #
 #     def get_json_config_filepath(self):
 #         json_file = f'{self.config_dir}/{self.get_config_filename()}'
-#         app.logger.debug(f"config json_file {json_file}")
+#         logger.debug(f"config json_file {json_file}")
 #         return json_file
 
 
@@ -185,7 +185,7 @@ class PaperspaceLocalModelBuilder(object):
             elif load_format == "h5":
                 logger.info("loading model from h5 format")
                 # TODO: loading h5 doesn't seem to work
-                # app.logger.info(f'Loading model from: {model_h5_file}')
+                # logger.info(f'Loading model from: {model_h5_file}')
                 # model = keras.models.load_model(model_h5_file)
                 pass
 
@@ -339,6 +339,18 @@ class ModelFactory(object):
 
     @staticmethod
     def init_factory(model_location:str, max_features:int, load_format:str):
+        """
+        Initialize the factory so it knows how to load models
+
+        :param model_location: filepath to models
+        :param max_features: max features per sample (ie, padded sequence)
+        :param load_format: format to load model from - possible values: json, h5
+        :return:
+        """
+        logger.info(f'Initializing ModelFactory with:\n' \
+                    f'\tmodel_location: {model_location}' \
+                        f'\tmax_features: {max_features}' \
+                        f'\tload_format: {load_format}' )
         if not os.path.exists(model_location):
             raise FileNotFoundError(model_location)
         ModelFactory._model_location = model_location

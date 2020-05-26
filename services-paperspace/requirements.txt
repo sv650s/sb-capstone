@@ -10,4 +10,6 @@ pymysql
 scikit-learn
 # tensorflow==2.0.0
 traceback2
-Werkzeug
+# Fix werkzeug because of the following
+# https://github.com/jarus/flask-testing/issues/143
+Werkzeug==0.16.1

@@ -480,7 +480,8 @@ if __name__ == "__main__":
                              max_sequence_length = MAX_SEQUENCE_LENGTH, # max sequence length - EmbeddingModelWrapper
                              embed_size = EMBED_SIZE, # embed size - EmbeddingModelWrapper
                             train_embeddings  =  train_embeddings, # trainable embedding - EmbeddingModelWrapper
-                            model_name = model_name, # model name - ModelWrapper
+        embedding_matrix=embedding_matrix,  # pre-trained embedding matrix - EmbeddingModelWrapper
+        model_name = model_name, # model name - ModelWrapper
                             architecture = architecture, # architecture - ModelWrapper
                             feature_set_name = FEATURE_SET_NAME, # feature_set_name - ModelWrapper
                             label_column = label_column, # label_column - ModelWrapper
@@ -512,7 +513,7 @@ if __name__ == "__main__":
                                verbose = 1,
                                restore_best_weights = True)
 
-    checkpoints = [early_stop, reduce_lr]
+    callbacks = [early_stop, reduce_lr]
 
     if os.path.exists(STORAGE_DIR):
         storage_model_filepath = f'{STORAGE_DIR}/{ku.ModelWrapper.models_dir}/{mw._get_saved_file_basename()}'
@@ -520,11 +521,11 @@ if __name__ == "__main__":
         checkpoint_storage = tf.keras.callbacks.ModelCheckpoint(
             filepath = storage_model_filepath,
             verbose = 1,
-            save_weights_only = False,
+            save_weights_only = True,
             monitor = 'val_loss',
             save_freq = 'epoch',
             save_best_only = True)
-        checkpoints.append(checkpoint_storage)
+        callbacks.append(checkpoint_storage)
 
 
 
@@ -534,7 +535,7 @@ if __name__ == "__main__":
                              verbose=1,
                              validation_split=0.2,
                              balance_class_weights=balance_class_weights,
-                             callbacks=checkpoints)
+                             callbacks=callbacks)
 
     mw.evaluate(X_test, y_test)
     logger.info("Train Accuracy: %.2f%%" % (mw.train_scores[1]*100))

@@ -11,6 +11,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.layers import Layer
 from tensorflow.keras import backend as K
+from tensorflow.keras.initializers import Constant
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
@@ -264,7 +265,8 @@ class ModelWrapper(object):
         log.debug(f"basename: {basename}")
 
         # model files
-        self.model_file = f"{models_dir}/{basename}-model.h5"
+        self.model_file = None
+        # self.model_file = f"{models_dir}/{basename}-model.h5"
         self.checkpoint_file = f"{models_dir}/checkpoints"
         self.model_json_file = f"{models_dir}/{basename}-model.json"
         self.weights_file = f"{models_dir}/{basename}-weights.h5"
@@ -439,7 +441,10 @@ class ModelWrapper(object):
             verbose = 1,
             callbacks = None,
             balance_class_weights = True,
-            save_checkpoints = True):
+            # TODO: turn checkpoint back on
+            # for larger models, we are getting the following errors:
+            # ValueError: Message tensorflow.SavedModel exceeds maximum protobuf size of 2GB: 2966578365
+            save_checkpoints = False):
         """
         Calls model.fit and record metrics
 
@@ -474,10 +479,11 @@ class ModelWrapper(object):
         if save_checkpoints:
             log.info(f'Callbacks before adding checkpoints: {callbacks}')
             log.info(f"Adding {self.checkpoint_file} checkpoint callback...")
+            # TODO: make checkpoint save entire model - getting the following error when we do ValueError: Message tensorflow.SavedModel exceeds maximum protobuf size of 2GB: 2171737442
             checkpoint = tf.keras.callbacks.ModelCheckpoint(
                 filepath = self.checkpoint_file,
                 verbose = 1,
-                save_weights_only = False,
+                save_weights_only = True,
                 monitor = 'val_loss',
                save_freq = 'epoch',
                 save_best_only = True)
@@ -485,6 +491,7 @@ class ModelWrapper(object):
             callbacks.append(checkpoint)
 
         start_time = datetime.now()
+        log.info(f'Starting training:\n{self.__str__()}')
         log.info(f'model: {self.model}')
         self.network_history = self.model.fit(X_train,
                                               y_train,
@@ -639,22 +646,16 @@ class ModelWrapper(object):
             self.model.save_weights(self.weights_file,
                                     save_format=save_format)
 
-        # if self.network_history is not None:
-        #     print(f"Saving history file: {self.network_history_file}")
-        #     with open(self.network_history_file, 'w') as file:
-        #         json.dump(self.network_history.history,
-        #                     file,
-        #                     default=to_serializable)
-
-        print(f"Saving model file: {self.model_file}")
-        self.model.save(self.model_file, save_format=save_format)
-
-        print(f"Saving SavedModel to: {self.saved_model_dir}")
-        tf.saved_model.save(self.model, self.saved_model_dir)
-
         if self.tokenizer is not None:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
             pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
+
+        # TODO: these gets an error beyone 2m samples - ValueError: Message tensorflow.SavedModel exceeds maximum protobuf size of 2GB: 2172012129
+        # print(f"Saving model file: {self.model_file}")
+        # self.model.save(self.model_file, save_format=save_format)
+        # print(f"Saving SavedModel to: {self.saved_model_dir}")
+        # tf.saved_model.save(self.model, self.saved_model_dir)
+
 
 
 
@@ -692,7 +693,7 @@ class ModelWrapper(object):
             report.add("class_weight", self.class_weight)
         report.add("sample_size_str", self.sample_size_str)
         report.add("sampling_type", self.sampling_type)
-        report.add("model_file", self.model_file)
+        # report.add("model_file", self.model_file)
         report.add("checkpoint_dir", self.checkpoint_file)
         report.add("model_json_file", self.model_json_file)
         report.add("weights_file", self.weights_file)
@@ -741,6 +742,7 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
                  max_sequence_length = 100,
                  embed_size = 300,
                  train_embeddings = False,
+                 embedding_matrix = None,
                  *args,
                  **kwargs):
         """
@@ -749,6 +751,7 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         :param max_sequence_length: max length of padded sequence. default 100
         :param embed_size: vector length of embedding. default 300
         :param train_embeddings: if set to True then the first embedding layer is not trainable. default False
+        :param embedding_matrix: embedding matrix if embedding is pretrained. Default None
         :param args:
         :param kwargs:
         """
@@ -758,9 +761,21 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         self.embed_size = embed_size
         self.max_sequence_length = max_sequence_length
         self.train_embeddings = train_embeddings
+        self.embedding_matrix = embedding_matrix
 
         # pass None to super constructor since we haven't built it yet
         super().__init__(None, *args, **kwargs)
+
+        # create embedding layer
+        if embedding_matrix is not None:
+            embedding_matrix_param = Constant(self.embedding_matrix)
+        else:
+            embedding_matrix_param = 'uniform'
+        self.embedding_layer = Embedding(input_dim=self.vocab_size,
+                            output_dim=self.embed_size,
+                            embeddings_initializer = embedding_matrix_param,
+                            input_length=self.max_sequence_length,
+                            trainable = self.train_embeddings)
 
         if self.load_model_file is None:
             self.model = self.build_model()
@@ -776,6 +791,11 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
             f"\tembed_size:\t\t\t{self.embed_size}\n" \
             f"\tmax_sequence_length:\t\t{self.max_sequence_length}\n" \
             f"\ttrain_embeddings:\t\t{self.train_embeddings}\n"
+        if self.embedding_matrix is not None:
+            summary = f"{summary}\tembedding_matrix_shape:\t\t{np.shape(self.embedding_matrix)}\n"
+        else:
+            summary = f"{summary}\tembedding_matrix_shape:\t\t{self.embedding_matrix}\n"
+
         return summary
 
     def get_report(self):
@@ -802,6 +822,16 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
                  bidirectional = False,
                  *args,
                  **kwargs):
+        """
+        Model wrapper for LSTM networks
+
+        :param lstm_dim:  Number of LSTM cells in the network
+        :param dropout_rate: dropout rate
+        :param recurrent_dropout_rate:  recurrent dropout rate
+        :param bidirectional:  whether network should be bi-directional
+        :param args:
+        :param kwargs:
+        """
         log.debug(f'Constructor LSTM1LayerModelWrapper')
 
         self.lstm_dim = lstm_dim
@@ -820,10 +850,7 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         log.debug(f'Building Model: {self}')
 
         model = Sequential()
-        model.add(Embedding(input_dim=self.vocab_size,
-                            output_dim=self.embed_size,
-                            input_length=self.max_sequence_length,
-                            trainable = self.train_embeddings))
+        model.add(self.embedding_layer)
         if self.bidirectional:
             model.add(Bidirectional(LSTM(self.lstm_dim,
                                          dropout = self.dropout_rate,

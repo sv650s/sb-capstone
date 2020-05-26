@@ -11,6 +11,7 @@ from util.time_util import TimedReport, TIME_FORMAT, TRUE_LIST, LOG_FORMAT
 from util.constants import Keys, Status
 import traceback2
 import sys
+import os
 
 
 CV_TIME_MIN = "cv_time_min"
@@ -135,7 +136,7 @@ class ConfigFileBasedProgram(object):
         self.report_dir = None
 
     def get_report_file_name(self):
-        _, config_basename = fu.get_dir_basename(self.config_file)
+        config_basename = os.path.basename(self.config_file)
         reportfile = f'{self.report_dir}/{config_basename}-report.csv'
         log.debug(f'Report file: {reportfile}')
         return reportfile

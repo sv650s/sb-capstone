@@ -1,17 +1,21 @@
-FROM tensorflow/tensorflow:2.0.0b1-py3
+#
+# Docker image to serve our REST API to predict star ratings based on Amazon Reviews
+#
+FROM tensorflow/tensorflow:2.2.0rc2-py3
 
-RUN adduser --disabled-password reviews
-WORKDIR /home/reviews
-
+# TODO: upgrade python 3.6 to 3.7
+# TODO: make mysql run on startup - systemctl ?
+# TODO: update-alternatives: using /etc/mysql/mysql.cnf to provide /etc/mysql/my.cnf (my.cnf) in auto mode
 # re-install gcc for our pip install
 RUN apt-get update && \
-    apt-get install --yes tree libhdf5-dev python3-all-dev mysql-server vim less && \
+    apt-get install --yes tree libhdf5-dev python3-all-dev mysql-server vim less sudo && \
+    apt-get clean && \
     update-rc.d mysql defaults
+
 
 COPY requirements.txt ./
 RUN pip3 install --upgrade pip setuptools && \
     pip3 install -r ./requirements.txt
-
 
 # get argument from docker compose file
 ARG version
@@ -25,17 +29,23 @@ ENV VERSION $version
 ENV SQLITE_DIR $sqlite_dir
 ENV DB_TYPE $db_type
 ENV DB_IP $db_ip
+ENV MODEL_DIR $model_dir
 
+
+# create user and add to sudoers
+RUN adduser --disabled-password reviews
+WORKDIR /home/reviews
+
+# copy files from local to image
+COPY reviews.py run_service.sh config.py ./
 COPY util ./util
 COPY templates ./templates
-COPY reviews.py config.py run_service.sh ./
-RUN chmod +x run_service.sh
 
-RUN chown -R reviews:reviews ./
 
-USER reviews
+RUN chown -R reviews:reviews ./ && usermod -aG sudo reviews
+# TODO: can't sudo for this user for some reason. commenting for now
+#USER reviews
 
 # TODO: update this script to run wgsi server instead for Production
 EXPOSE 5000
-# run flask server and bind to 0.0.0.0 so port can be mapped
 ENTRYPOINT ["./run_service.sh"]
