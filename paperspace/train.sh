@@ -114,12 +114,11 @@ fi
 #fi
 
 
+tf_version=`grep FROM.*tensorflow Dockerfile  | awk -F: '{print $2}'`
 UTIL_ORIG="../util"
 UTIL_DEST="train/util"
 echo "Syncing util..."
 rsync -rauv --delete --exclude="__pycache__" ${UTIL_ORIG}/*.py ${UTIL_DEST}/
-
-tf_version=`grep ^FROM Dockerfile | awk -F: '{print $2}'`
 
 # test-LSTMB16-1x16-dr0-rdr0-batch0-lr01-glove_with_stop_nonlemmatized-sampling_none-test-review_body
 
@@ -143,6 +142,7 @@ echo "Running python with following command"
 echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
 echo "basename: ${model_basename}"
 echo "modelPath: /artifacts/models/${model_basename}"
+echo "tf_version: ${tf_version}"
 
 gradient experiments run singlenode \
     --name ${model_basename} \

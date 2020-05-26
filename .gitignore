@@ -49,6 +49,12 @@ report/2019-07*.csv
 report/2019-08*.csv
 report/*99-histogram.csv
 
+# don't track log files
+tools/log*
+
+# don't track notes
+notes*
+
 # generally don't track pkl files
 *.pkl
 
@@ -65,3 +71,7 @@ paperspace/models/*
 # service on paperspace
 services-paperspace/util
 services-paperspace/models
+
+# sphinx
+docs/source/_*
+docs/build/*

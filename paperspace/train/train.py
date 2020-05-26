@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 
 import tensorflow as tf
+from tensorflow.python.client import device_lib
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation, Dropout
 from tensorflow.keras.layers import BatchNormalization
@@ -388,6 +389,22 @@ if __name__ == "__main__":
         f"sampling_none-" \
         f"{feature_column}-" \
             "report.csv"
+
+
+    # print available devices
+    logger.info(f"\n\nAvailable Devices for Tensorflow:\n{device_lib.list_local_devices()}\nEnd Devise List")
+    # number of GPU's available
+    available_gpus = len(tf.config.experimental.list_physical_devices('GPU'))
+    logger.info(f"\nNum GPUs Available: {available_gpus}")
+    # print tensorflow placement - need to create a small model and run to log this
+    # comment out for now - too much logs
+    # tf.debugging.set_log_device_placement(True)
+
+    if not debug and available_gpus < 1:
+        logger.error("Unable to find GPU for training. Exiting")
+        exit(1)
+
+
 
     STORAGE_DIR = "/storage"
     if debug:

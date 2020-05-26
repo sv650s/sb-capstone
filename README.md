@@ -16,6 +16,7 @@ conda env create --file environments.yml
 
 ```buildoutcfg
 ├── config - config files for python programs
+├── docs - sphinx documentation
 ├── dataset - sample dataset files. This is empty
 ├── images - images/diagrams for notebooks and README's
 ├── notebooks - jupyter notebooks
