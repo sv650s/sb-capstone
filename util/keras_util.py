@@ -265,8 +265,7 @@ class ModelWrapper(object):
         log.debug(f"basename: {basename}")
 
         # model files
-        self.model_file = None
-        # self.model_file = f"{models_dir}/{basename}-model.h5"
+        self.model_file = f"{models_dir}/{basename}-model.h5"
         self.checkpoint_file = f"{models_dir}/checkpoints"
         self.model_json_file = f"{models_dir}/{basename}-model.json"
         self.weights_file = f"{models_dir}/{basename}-weights.h5"
@@ -302,7 +301,10 @@ class ModelWrapper(object):
                  batch_size = 32,
                  model_version = 1,
                  save_dir = "drive/My Drive/Springboard/capstone",
-                 load_model_file = None):
+                 load_model_file = None,
+                 save_savedmodel = False,
+                 save_h5 = False,
+                 save_json = True):
         """
         Constructor
 
@@ -325,6 +327,9 @@ class ModelWrapper(object):
         :param model_version: version for the model being trained - default 1
         :param save_dir: directory to save models and reports to - default drive/My Drive/Springboard/capstone
         :param load_model_file: if not None, wrapper will load the model from file instead of creating a new one
+        :param save_savedmodel: save model in SavedModel format. Default False
+        :param save_h5: save model in h5 format. Default False
+        :param save_json: save model in json format. Default True
         """
         log.debug(f"Contructor ModelWrapper")
 
@@ -346,6 +351,9 @@ class ModelWrapper(object):
         self.model_version = model_version
         self.save_dir = save_dir
         self.load_model_file = load_model_file
+        self.save_savedmodel = save_savedmodel
+        self.save_h5 = save_h5
+        self.save_json = save_json
 
 
         self.tf_version = tf.__version__
@@ -406,15 +414,24 @@ class ModelWrapper(object):
                     f"\tversion:\t\t\t{self.model_version}\n" \
                     f"\tsave_dir:\t\t\t{self.save_dir}\n" \
                 f"\tload_model_file:\t\t\t{self.load_model_file}\n" \
+                f"\n\tReport Output:\n" \
+                f"\t\treport_file:\t\t\t{self.report_file}\n" \
                 f"\n\tModel Output:\n" \
-                    f"\t\tmodel_file:\t\t\t{self.model_file}\n" \
-                    f"\t\tcheckpoint_file:\t\t{self.checkpoint_file}\n" \
-                    f"\t\tmodel_json_file:\t\t{self.model_json_file}\n" \
-                    f"\t\tweights_file:\t\t\t{self.weights_file}\n" \
-                    f"\t\tsaved_model_dir:\t\t{self.saved_model_dir}\n" \
-                    f"\t\ttokenizer_file:\t\t\t{self.tokenizer_file}\n" \
-                    f"\n\tReport Output:\n" \
-                f"\t\treport_file:\t\t\t{self.report_file}\n"
+                f"\t\ttokenizer_file:\t\t\t{self.tokenizer_file}\n" \
+                f"\t\tsave_json:\t\t\t{self.save_json}\n" \
+                f"\t\tsave_savedmodel:\t\t\t{self.save_savedmodel}\n" \
+                f"\t\tsave_h5:\t\t\t{self.save_h5}\n" \
+                f"\t\tcheckpoint_file:\t\t{self.checkpoint_file}\n"
+
+        if self.save_h5:
+            summary = f"{summary}\t\tmodel_file:\t\t\t{self.model_file}\n"
+
+        if self.save_json:
+            summary = f"{summary}\t\tmodel_json_file:\t\t{self.model_json_file}\n" \
+                    f"\t\tweights_file:\t\t\t{self.weights_file}\n"
+
+        if self.save_savedmodel:
+            summary = f"{summary}\t\tsaved_model_dir:\t\t{self.saved_model_dir}\n"
                     # f"\t\tnetwork_history_file:\t\t{self.network_history_file}\n" \
 
         return summary
@@ -491,8 +508,7 @@ class ModelWrapper(object):
             callbacks.append(checkpoint)
 
         start_time = datetime.now()
-        log.info(f'Starting training:\n{self.__str__()}')
-        log.info(f'model: {self.model}')
+        print(f'Starting training on model:\n{self.__str__()}')
         self.network_history = self.model.fit(X_train,
                                               y_train,
                                               batch_size=self.batch_size,
@@ -601,7 +617,7 @@ class ModelWrapper(object):
                 f"sampling_{self.sampling_type}-" \
                 f"{self.sample_size_str}-" \
                 f"{self.feature_column}-" \
-                f"tf{self.tf_version}-" \
+                f"tf{self.tf_version.replace('.', '-')}-" \
                 f"v{self.model_version}"
         else:
             description = f"{self.model_name}-" \
@@ -609,14 +625,14 @@ class ModelWrapper(object):
                 f"{self.feature_set_name}-" \
                 f"sampling_{self.sampling_type}-" \
                 f"{self.feature_column}-" \
-                f"tf{self.tf_version}-" \
+                f"tf{self.tf_version.replace('.', '-')}-" \
                 f"v{self.model_version}"
 
         log.info(f"saved file basename: {description}")
         return description
 
 
-    def save(self, save_format=None, append_report=True):
+    def save(self, save_format='h5', append_report=True):
         """
         Save the following information based on our trained model:
         * model file
@@ -636,25 +652,30 @@ class ModelWrapper(object):
         report.save(self.report_file, append=append_report)
 
         print(f"Saving json config file: {self.model_json_file}")
-        if self.model:
-            model_json = self.model.to_json()
-            with open(self.model_json_file, 'w') as json_file:
-                json_file.write(model_json)
+        if self.save_json:
+            if self.model:
+                model_json = self.model.to_json()
+                with open(self.model_json_file, 'w') as json_file:
+                    json_file.write(model_json)
 
-        print(f"Saving weights file: {self.weights_file}")
-        if self.weights_file is not None and self.save_weights:
-            self.model.save_weights(self.weights_file,
-                                    save_format=save_format)
+            print(f"Saving weights file: {self.weights_file}")
+            if self.weights_file is not None and self.save_weights:
+                self.model.save_weights(self.weights_file,
+                                        save_format=save_format)
+
+        # TODO: these gets an error beyone 2m samples - ValueError: Message tensorflow.SavedModel exceeds maximum protobuf size of 2GB: 2172012129
+        if self.save_h5:
+            print(f"Saving model file: {self.model_file}")
+            self.model.save(self.model_file, save_format=save_format)
+        if self.save_savedmodel:
+            print(f"Saving SavedModel to: {self.saved_model_dir}")
+            tf.saved_model.save(self.model, self.saved_model_dir)
+
 
         if self.tokenizer is not None:
             log.info(f"Saving tokenizer file: {self.tokenizer_file}")
             pickle.dump(self.tokenizer, open(self.tokenizer_file, 'wb'))
 
-        # TODO: these gets an error beyone 2m samples - ValueError: Message tensorflow.SavedModel exceeds maximum protobuf size of 2GB: 2172012129
-        # print(f"Saving model file: {self.model_file}")
-        # self.model.save(self.model_file, save_format=save_format)
-        # print(f"Saving SavedModel to: {self.saved_model_dir}")
-        # tf.saved_model.save(self.model, self.saved_model_dir)
 
 
 
@@ -693,11 +714,14 @@ class ModelWrapper(object):
             report.add("class_weight", self.class_weight)
         report.add("sample_size_str", self.sample_size_str)
         report.add("sampling_type", self.sampling_type)
-        # report.add("model_file", self.model_file)
+        if self.save_h5:
+            report.add("model_file", self.model_file)
         report.add("checkpoint_dir", self.checkpoint_file)
-        report.add("model_json_file", self.model_json_file)
-        report.add("weights_file", self.weights_file)
-        report.add("saved_model_dir", self.saved_model_dir)
+        if self.save_json:
+            report.add("model_json_file", self.model_json_file)
+            report.add("weights_file", self.weights_file)
+        if self.save_savedmodel:
+            report.add("saved_model_dir", self.saved_model_dir)
         report.add("test_examples", self.X_test.shape[0])
         report.add("test_features", self.X_test.shape[1])
         report.add("tf_version", self.tf_version)
@@ -763,6 +787,10 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         self.train_embeddings = train_embeddings
         self.embedding_matrix = embedding_matrix
 
+        if not train_embeddings and embedding_matrix is None:
+            log.error("ERROR: Cannot have non-trainable Embedding layer with no embedding matrix")
+            exit(1)
+
         # pass None to super constructor since we haven't built it yet
         super().__init__(None, *args, **kwargs)
 
@@ -804,6 +832,8 @@ class EmbeddingModelWrapper(ModelWrapper, ABC):
         report.add("vocab_size", self.vocab_size)
         if self.X_train is not None:
             report.add("max_sequence_length", self.X_train.shape[1])
+        if self.embedding_matrix is not None:
+            report.add("embedding_matrix_shape", np.shape(self.embedding_matrix))
         report.add("train_embeddings", self.train_embeddings)
 
         return report
@@ -884,7 +914,7 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
                 f"sampling_{self.sampling_type}-" \
                 f"{self.sample_size_str}-" \
                 f"{self.feature_column}-" \
-                f"tf{self.tf_version}-" \
+                f"tf{self.tf_version.replace('.', '-')}-" \
                 f"v{self.model_version}"
         else:
             description = f"{self.model_name}-" \
@@ -896,7 +926,7 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
                 f"{self.feature_set_name}-" \
                 f"sampling_{self.sampling_type}-" \
                 f"{self.feature_column}" \
-                f"tf{self.tf_version}-" \
+                f"tf{self.tf_version.replace('.', '-')}-" \
                 f"v{self.model_version}"
         return description
 

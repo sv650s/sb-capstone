@@ -5,7 +5,7 @@
 # Push image: docker push vtluk/paperspace-tf-gpu:1.0
 #
 
-FROM tensorflow/tensorflow:2.0.1-gpu-py3
+FROM tensorflow/tensorflow:2.2.0rc2-gpu-py3
 
 
 COPY docker-requirements.txt requirements.txt

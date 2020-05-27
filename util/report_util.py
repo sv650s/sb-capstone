@@ -236,6 +236,8 @@ def load_dnn_report(report_dir: str, report_file = None, convert_format = False)
     report = pd.read_csv(report_file, quotechar="'")
     if convert_format:
         report = convert_dnn_report_format(report)
+        report["report_file"] = os.path.basename(report_file)
+
     report = _preprocess_dnn_report_file(report)
     return report
 

@@ -1,5 +1,10 @@
 """
-Utility program that uses the model_builder to load a model and print out the raw softmax output of the model
+predict.py
+===============================
+Utility program that uses the model_builder to load a model, feed in a bunch of review bodies
+and expected outputs and do model inference and print resutls on review bodies
+
+usage: python predict.py
 """
 import sys
 sys.path.append('../../')
@@ -17,15 +22,15 @@ reviews = {
     "This is the most amazing product. must buy": 5,
     "Great case. Great customer service": 5,
     "Works great": 5,
+    "I really love it. Only thing I don't like is the color": 4,
     "This is just ok. Wish it worked better": 3,
     "I like it but wish it worked better": 3,
-    "This didn't work at all. Do not buy": 1,
-    "Cheap quality. Did not work": 1
+    "didn't work well but I liked the color": 2,
+    "This didn't work at all. Do not buy": 1
 }
 
 models = [
     "GRU16-1x16-random_embedding-sampling_none-199538-100-review_body",
-    "LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body",
     "LSTMB128-1x128-dr2-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-tf2.2.0"
 ]
 

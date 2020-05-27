@@ -6,6 +6,41 @@
 	},
 	"item": [
 		{
+			"name": "delete-cache",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c4ddc45e-a2e3-4395-a750-dfa747703f17",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+							"pm.test(\"Length of cache should be 0\", function () {",
+							"    var response = pm.response.json();",
+							"    pm.expect(response.size).to.eql(0);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "marmoset:5000/model/cache",
+					"host": [
+						"marmoset"
+					],
+					"port": "5000",
+					"path": [
+						"model",
+						"cache"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "predict-GRU-3-star",
 			"event": [
 				{
@@ -29,10 +64,10 @@
 							"    var jsonData = pm.response.json();",
 							"    pm.expect(jsonData.prediction.star_rating).to.eql(3);",
 							"})",
-							"pm.test(\"Softmax output for 3 should be 0.29538614\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.prediction.raw[\"3\"]).to.eql(\"0.29538614\");",
-							"})"
+							"// pm.test(\"Softmax output for 3 should be 0.29538614\", function () {",
+							"//     var jsonData = pm.response.json();",
+							"//     pm.expect(jsonData.prediction.raw[\"3\"]).to.eql(\"0.29538614\");",
+							"// })"
 						],
 						"type": "text/javascript"
 					}
@@ -91,10 +126,10 @@
 							"    var jsonData = pm.response.json();",
 							"    pm.expect(jsonData.prediction.star_rating).to.eql(4);",
 							"})",
-							"pm.test(\"Softmax output for 4 should be 0.29875132\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.prediction.raw[\"4\"]).to.eql(\"0.29875132\");",
-							"})",
+							"// pm.test(\"Softmax output for 4 should be 0.29875132\", function () {",
+							"//     var jsonData = pm.response.json();",
+							"//     pm.expect(jsonData.prediction.raw[\"4\"]).to.eql(\"0.29875132\");",
+							"// })",
 							""
 						],
 						"type": "text/javascript"
@@ -131,7 +166,7 @@
 			"response": []
 		},
 		{
-			"name": "predict-LSTM-3-star",
+			"name": "predict-3-star-LSTMB128-1x128-dr2-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-tf2.2.0",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -154,10 +189,10 @@
 							"    var jsonData = pm.response.json();",
 							"    pm.expect(jsonData.prediction.star_rating).to.eql(5);",
 							"})",
-							"pm.test(\"Softmax output for 5 should be 0.29894924\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.prediction.raw[\"5\"]).to.eql(\"0.29894924\");",
-							"})"
+							"// pm.test(\"Softmax output for 5 should be 0.29894924\", function () {",
+							"//     var jsonData = pm.response.json();",
+							"//     pm.expect(jsonData.prediction.raw[\"5\"]).to.eql(\"0.29894924\");",
+							"// })"
 						],
 						"type": "text/javascript"
 					}
@@ -178,14 +213,14 @@
 					"raw": "{\n    \"review\": \"great case. great customer service\",\n    \"product_rating\": 5\n}"
 				},
 				"url": {
-					"raw": "marmoset:5000/predict/LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body/1",
+					"raw": "marmoset:5000/predict/LSTMB128-1x128-dr2-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-tf2.2.0/1",
 					"host": [
 						"marmoset"
 					],
 					"port": "5000",
 					"path": [
 						"predict",
-						"LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body",
+						"LSTMB128-1x128-dr2-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-tf2.2.0",
 						"1"
 					]
 				}
@@ -193,7 +228,7 @@
 			"response": []
 		},
 		{
-			"name": "predict-LSTM-1-star",
+			"name": "predict-2-star-LSTMB128-1x128-dr2-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-tf2.2.0",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -212,14 +247,14 @@
 						"id": "3cacffcf-a246-4057-96d0-77f2482ee8ce",
 						"exec": [
 							"pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
-							"pm.test(\"Predicted rating should be 1\", function () {",
+							"pm.test(\"Predicted rating should be 2\", function () {",
 							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.prediction.star_rating).to.eql(1);",
+							"    pm.expect(jsonData.prediction.star_rating).to.eql(2);",
 							"})",
-							"pm.test(\"Softmax output for 3 should be 0.9595421\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.prediction.raw[\"1\"]).to.eql(\"0.9595421\");",
-							"})"
+							"// pm.test(\"Softmax output for 2 should be 0.46097353\", function () {",
+							"//     var jsonData = pm.response.json();",
+							"//     pm.expect(jsonData.prediction.raw[\"2\"]).to.eql(\"0.46097353\");",
+							"// })"
 						],
 						"type": "text/javascript"
 					}
@@ -237,18 +272,53 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"review\": \"This didn't work at all. Do not buy\",\n    \"product_rating\": 1\n}"
+					"raw": "{\n    \"review\": \"Did not work well, but I liked the color\",\n    \"product_rating\": 2\n}"
 				},
 				"url": {
-					"raw": "marmoset:5000/predict/LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body/1",
+					"raw": "marmoset:5000/predict/LSTMB128-1x128-dr2-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-tf2.2.0/1",
 					"host": [
 						"marmoset"
 					],
 					"port": "5000",
 					"path": [
 						"predict",
-						"LSTMB128-1x128-dr0-rdr2-batch32-lr001-glove_with_stop_nonlemmatized-sampling_none-1m-review_body",
+						"LSTMB128-1x128-dr2-rdr2-batch128-lr01-glove_with_stop_nonlemmatized-sampling_none-1m-review_body-tf2.2.0",
 						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-cache-length",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "3e819c06-d7f6-45c6-8ec6-510f9c179e08",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+							"pm.test(\"Length of cache\", function () {",
+							"    var models = pm.response.json().models;",
+							"    pm.expect(models.length).to.eql(2);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "marmoset:5000/model/cache",
+					"host": [
+						"marmoset"
+					],
+					"port": "5000",
+					"path": [
+						"model",
+						"cache"
 					]
 				}
 			},

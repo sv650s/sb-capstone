@@ -169,6 +169,7 @@ class PaperspaceLocalModelBuilder(object):
                 logger.info("loading model from SavedModel format")
                 # TODO: loading from SavedModel doesn't work because of architecture
                 # model = keras.models.load_model(f'{model_path}/{self.version}')
+                raise NotImplemented("Loading SavedModel not yet implemented")
                 pass
 
             elif load_format == "json":
@@ -187,6 +188,7 @@ class PaperspaceLocalModelBuilder(object):
                 # TODO: loading h5 doesn't seem to work
                 # logger.info(f'Loading model from: {model_h5_file}')
                 # model = keras.models.load_model(model_h5_file)
+                raise NotImplemented("Loading h5 model not yet implemented")
                 pass
 
             else:

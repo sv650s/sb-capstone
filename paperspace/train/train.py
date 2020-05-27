@@ -68,7 +68,7 @@ RANDOM_SEED = 1
 #   File "/Users/vinceluk/anaconda3/envs/capstone/lib/python3.7/site-packages/h5py/_hl/base.py", line 41, in is_hdf5
 #     fname = os.path.abspath(fspath(fname))
 # TypeError: expected str, bytes or os.PathLike object, not dict
-SAVE_JSON_FORMAT = False
+SAVE_JSON_FORMAT = True
 
 
 # set up logging
@@ -398,7 +398,7 @@ if __name__ == "__main__":
     logger.info(f"\nNum GPUs Available: {available_gpus}")
     # print tensorflow placement - need to create a small model and run to log this
     # comment out for now - too much logs
-    # tf.debugging.set_log_device_placement(True)
+    tf.debugging.set_log_device_placement(True)
 
     if not debug and available_gpus < 1:
         logger.error("Unable to find GPU for training. Exiting")
@@ -529,6 +529,8 @@ if __name__ == "__main__":
 
 
 
+    # Turn off GPU logging before training - generating too many logs
+    tf.debugging.set_log_device_placement(False)
     network_history = mw.fit(X_train,
                              y_train,
                              epochs=epochs,
@@ -538,6 +540,10 @@ if __name__ == "__main__":
                              callbacks=callbacks)
 
     mw.evaluate(X_test, y_test)
+
+    # Turn GPU placement back on
+    tf.debugging.set_log_device_placement(True)
+
     logger.info("Train Accuracy: %.2f%%" % (mw.train_scores[1]*100))
     logger.info("Test Accuracy: %.2f%%" % (mw.test_scores[1]*100))
 
@@ -593,57 +599,67 @@ if __name__ == "__main__":
 
     """# Test That Our Models Saved Correctly"""
 
-    logger.info("\nReloading model for testing...")
-    model_loaded = load_model(mw.model_file)
-    scores = model_loaded.evaluate(X_test, y_test, verbose=1)
-    accuracy = scores[1] * 100
-    logger.info("Loaded Model Accuracy: %.2f%%" % (accuracy))
+    # TODO: uncomment this out for future
+    # logger.info("\nReloading model for testing...")
+    # model_loaded = load_model(mw.model_file)
+    # scores = model_loaded.evaluate(X_test, y_test, verbose=1)
+    # accuracy = scores[1] * 100
+    # logger.info("Loaded Model Accuracy: %.2f%%" % (accuracy))
 
 
-    if SAVE_JSON_FORMAT:
-        # Loading model from json files
-        logger.info("\bReloading model from JSON for testing...")
-        logger.info(f"json model file: {mw.model_json_file}")
-        with open(mw.model_json_file) as file:
-            json_loaded = json.load(file)
-            logger.info(f"loaded json model:\n{json_loaded}\n")
-            model_json_loaded = tf.keras.models.load_model(json_loaded)
-            logger.info(f"Loaded SavedMode:\n{model_json_loaded.summary()}")
-        # model_json_loaded = tf.keras.models.load_model(mw.model_json_file)
+    # Loading model from json files
+    logger.info("\bReloading model from JSON for testing...")
+    logger.info(f"json model file: {mw.model_json_file}")
+    with open(mw.model_json_file) as file:
+        # example from model_builder
+        # with open(model_json_file) as json_file:
+        #     json_config = json_file.read()
+        # model = keras.models.model_from_json(json_config)
+        json_loaded = file.read()
+        model_json_loaded = tf.keras.models.model_from_json(json_loaded)
+
+        # didn't work
+        # json_loaded = json.load(file)
+        # model_json_loaded = tf.keras.models.load_model(json_loaded)
+        logger.info(f"Loaded SavedMode:\n{model_json_loaded.summary()}")
 
         logger.info(f"json weights file: {mw.weights_file}")
         model_json_loaded.load_weights(mw.weights_file)
+
+        model_json_loaded.compile(loss="categorical_crossentropy",
+                      optimizer=eval("Adam")(learning_rate = learning_rate),
+                      metrics=["categorical_accuracy"])
+
         scores_json = model_json_loaded.evaluate(X_test, y_test, verbose=1)
         accuracy_json = scores_json[1] * 100
         logger.info("Loaded JSON Model Accuracy: %.2f%%" % (accuracy_json))
 
+        # this takes too long for real models
+        y_predict = model_json_loaded.predict(X_test)
+        y_predict_unencoded = ku.unencode(y_predict)
+        y_test_unencoded = ku.unencode(y_test)
+
+        # classification report
+        logger.info(classification_report(y_test_unencoded, y_predict_unencoded))
+
+        # confusion matrix
+        logger.info(confusion_matrix(y_test_unencoded, y_predict_unencoded))
+
     # Loading model from SavedModel format
-    logger.info("\nReloading model for testing...")
-    savedmodel_dir = f'{os.path.dirname(mw.model_file)}/{model_version}'
-    logger.info(f"SavedModel dir: {savedmodel_dir}")
-    loaded_savedmodel = tf.keras.models.load_model(savedmodel_dir)
-    logger.info(f"Loaded SavedModel:\n{loaded_savedmodel.summary()}")
+    # logger.info("\nReloading model for testing...")
+    # savedmodel_dir = f'{os.path.dirname(mw.model_file)}/{model_version}'
+    # logger.info(f"SavedModel dir: {savedmodel_dir}")
+    # loaded_savedmodel = tf.keras.models.load_model(savedmodel_dir)
+    # logger.info(f"Loaded SavedModel:\n{loaded_savedmodel.summary()}")
 
-    scores_savedmodel = loaded_savedmodel.evaluate(X_test, y_test, verbose=1)
-    accuracy_savedmodel = scores_savedmodel[1] * 100
-    logger.info("Loaded SavedModel Accuracy: %.2f%%" % (accuracy_savedmodel))
+    # scores_savedmodel = loaded_savedmodel.evaluate(X_test, y_test, verbose=1)
+    # accuracy_savedmodel = scores_savedmodel[1] * 100
+    # logger.info("Loaded SavedModel Accuracy: %.2f%%" % (accuracy_savedmodel))
 
-
-    # this takes too long for real models
-    if debug == True:
-      y_predict = model_loaded.predict(X_test)
-      y_predict_unencoded = ku.unencode(y_predict)
-      y_test_unencoded = ku.unencode(y_test)
-
-      # classification report
-      logger.info(classification_report(y_test_unencoded, y_predict_unencoded))
-
-      # confusion matrix
-      logger.info(confusion_matrix(y_test_unencoded, y_predict_unencoded))
 
     end_time = datetime.now()
-    logger.info(f'Finished training {mw}')
-    logger.info("Accuracy: %.2f%%" % (accuracy))
+    logger.info(f'Finished training model:\n{mw}')
+    logger.info("Accuracy: %.2f%%" % (accuracy_json))
     logger.info("Custom Score: %.2f%%" % (custom_score))
     logger.info(f'Star Time: {start_time}')
     logger.info(f'End Time: {end_time}')
