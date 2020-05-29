@@ -473,7 +473,7 @@ if __name__ == "__main__":
 
 
     mw = ku.LSTM1LayerModelWrapper(
-                            lstm_dim = lstm_cells, # LSTM dim - LSTM1LyerModelWrapper
+                            dimension= lstm_cells, # LSTM dim - LSTM1LyerModelWrapper
                              dropout_rate = dropout_rate, # dropout rate - LSTM1LyerModelWrapper
                              recurrent_dropout_rate = recurrent_dropout_rate, # recurrent dropout rate - LSTM1LyerModelWrapper
                              bidirectional = bidirectional, # bidirectional - LSTM1LyerModelWrapper

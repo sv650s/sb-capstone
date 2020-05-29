@@ -858,7 +858,7 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
     # TODO: implement copy static method
 
     def __init__(self,
-                 lstm_dim,
+                 dimension,
                  dropout_rate,
                  recurrent_dropout_rate,
                  bidirectional = False,
@@ -867,16 +867,16 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         """
         Model wrapper for LSTM networks
 
-        :param lstm_dim:  Number of LSTM cells in the network
+        :param dimension:  Number of LSTM cells in the network
         :param dropout_rate: dropout rate
         :param recurrent_dropout_rate:  recurrent dropout rate
         :param bidirectional:  whether network should be bi-directional
         :param args:
         :param kwargs:
         """
-        log.debug(f'Constructor LSTM1LayerModelWrapper')
+        log.debug(f'Constructor {self.__class__.__name__}')
 
-        self.lstm_dim = lstm_dim
+        self.dimension = dimension
         self.bidirectional = bidirectional
         self.dropout_rate = dropout_rate
         self.recurrent_dropout_rate = recurrent_dropout_rate
@@ -894,11 +894,11 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         model = Sequential()
         model.add(self.embedding_layer)
         if self.bidirectional:
-            model.add(Bidirectional(LSTM(self.lstm_dim,
+            model.add(Bidirectional(LSTM(self.dimension,
                                          dropout = self.dropout_rate,
                                          recurrent_dropout = self.recurrent_dropout_rate)))
         else:
-            model.add(LSTM(self.lstm_dim,
+            model.add(LSTM(self.dimension,
                            dropout = self.dropout_rate,
                            recurrent_dropout = self.recurrent_dropout_rate))
         model.add(Dense(5, activation="softmax"))
@@ -943,11 +943,11 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
         return description
 
     def __str__(self):
-        log.debug("LSTM1LayerModelWrapper.__str__")
+        log.debug(f"{self.__class__.__name__}.__str__")
         super_sum = super().__str__()
         summary = f"{super_sum}\n" \
-            f"LSTM1LayerModelWrapper parameters:\n" \
-            f"\tlstm_dim:\t\t\t{self.lstm_dim}\n" \
+            f"{self.__class__.__name__} parameters:\n" \
+            f"\tdimension:\t\t\t{self.dimension}\n" \
             f"\tbidirectional:\t\t\t{self.bidirectional}\n" \
             f"\tdropout_rate:\t\t\t{self.dropout_rate}\n" \
             f"\trecurrent_dropout_rate:\t\t{self.recurrent_dropout_rate}\n"
@@ -955,12 +955,40 @@ class LSTM1LayerModelWrapper(EmbeddingModelWrapper):
 
     def get_report(self):
         report = super().get_report()
-        report.add("lstm_dim", self.lstm_dim)
+        report.add("dimension", self.dimension)
         report.add("bidirectional", self.bidirectional)
         report.add("dropout_rate", self.dropout_rate)
         report.add("recurrent_dropout_rate", self.recurrent_dropout_rate)
 
         return report
+
+class GRU1LayerModelWrapper(LSTM1LayerModelWrapper):
+
+    def build_model(self):
+        """
+        Build a 1 layer GRU network
+        :return: GRU model
+        """
+        log.debug(f'Building Model: {self}')
+
+        model = Sequential()
+        model.add(self.embedding_layer)
+        if self.bidirectional:
+            model.add(Bidirectional(tf.keras.layers.GRU(self.dimension,
+                                         dropout = self.dropout_rate,
+                                         recurrent_dropout = self.recurrent_dropout_rate)))
+        else:
+            model.add(tf.keras.layers.GRU(self.dimension,
+                                           dropout = self.dropout_rate,
+                                           recurrent_dropout = self.recurrent_dropout_rate))
+        model.add(Dense(5, activation="softmax"))
+
+        model.compile(loss="categorical_crossentropy",
+                      optimizer=eval(self.optimizer_name)(learning_rate = self.learning_rate),
+                      metrics=["categorical_accuracy"])
+
+        print(f"Build model:\n{model.summary()}")
+        return model
 
 
 
