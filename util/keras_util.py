@@ -419,7 +419,7 @@ class ModelWrapper(object):
                 f"\n\tModel Output:\n" \
                 f"\t\ttokenizer_file:\t\t\t{self.tokenizer_file}\n" \
                 f"\t\tsave_json:\t\t\t{self.save_json}\n" \
-                f"\t\tsave_savedmodel:\t\t\t{self.save_savedmodel}\n" \
+                f"\t\tsave_savedmodel:\t\t{self.save_savedmodel}\n" \
                 f"\t\tsave_h5:\t\t\t{self.save_h5}\n" \
                 f"\t\tcheckpoint_file:\t\t{self.checkpoint_file}\n"
 
@@ -645,6 +645,18 @@ class ModelWrapper(object):
         :param append_report: if existing report, True to append or False to overwrite. Default True
         :return:
         """
+        if save_format not in ["h5", "tf"]:
+            if os.path.exists(save_format):
+                # for older notebooks the first paramter is save directory
+                # set save_format to "h5" in case there are notebooks where the code
+                # hasn't been converted yet so it doesn't error out
+                log.warning(f'Invalid save_format parameter: {save_format}. Setting save_format to h5')
+                save_format = "h5"
+            else:
+                log.error(f'Invalid save_format: {save_format}')
+                exit(1)
+
+
         self._set_output_files()
 
         print(f"Saving to report file: {self.report_file}")

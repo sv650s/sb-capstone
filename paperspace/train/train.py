@@ -69,7 +69,8 @@ RANDOM_SEED = 1
 #     fname = os.path.abspath(fspath(fname))
 # TypeError: expected str, bytes or os.PathLike object, not dict
 SAVE_JSON_FORMAT = True
-
+# enable reduce LR on plateau callback
+REDUCE_LR_ON_PLATEAU = False
 
 # set up logging
 LOG_FORMAT = "%(asctime)-15s %(levelname)-7s %(name)s.%(funcName)s" \
@@ -502,18 +503,23 @@ if __name__ == "__main__":
 
     mw.add("environment", "paperspace")
     mw.add("patience", patience)
-
-    reduce_lr = ReduceLROnPlateau(monitor = 'val_loss',
-                                  restore_best_weights = True,
-                                  verbose = 1,
-                                  patience = 2)
+    callbacks = []
 
     early_stop = EarlyStopping(monitor = 'val_loss',
                                patience = patience,
                                verbose = 1,
                                restore_best_weights = True)
+    callbacks.append(early_stop)
 
-    callbacks = [early_stop, reduce_lr]
+    if REDUCE_LR_ON_PLATEAU:
+        reduce_lr = ReduceLROnPlateau(monitor = 'val_loss',
+                                      restore_best_weights = True,
+                                      factor = 0.5,
+                                      verbose = 1,
+                                      patience = 2)
+        callbacks.append(reduce_lr)
+
+
 
     if os.path.exists(STORAGE_DIR):
         storage_model_filepath = f'{STORAGE_DIR}/{ku.ModelWrapper.models_dir}/{mw._get_saved_file_basename()}'
@@ -529,8 +535,6 @@ if __name__ == "__main__":
 
 
 
-    # Turn off GPU logging before training - generating too many logs
-    tf.debugging.set_log_device_placement(False)
     network_history = mw.fit(X_train,
                              y_train,
                              epochs=epochs,
@@ -540,9 +544,6 @@ if __name__ == "__main__":
                              callbacks=callbacks)
 
     mw.evaluate(X_test, y_test)
-
-    # Turn GPU placement back on
-    tf.debugging.set_log_device_placement(True)
 
     logger.info("Train Accuracy: %.2f%%" % (mw.train_scores[1]*100))
     logger.info("Test Accuracy: %.2f%%" % (mw.test_scores[1]*100))
@@ -568,10 +569,10 @@ if __name__ == "__main__":
     if os.path.exists(STORAGE_DIR):
 
         storage_model_filepath_with_version = f"{storage_model_filepath}/{model_version}"
-        if not os.path.exists(storage_model_filepath_with_version):
-            os.makedirs(storage_model_filepath_with_version, exist_ok= True)
-        logger.info(f"Saving model to SavedModel format {storage_model_filepath_with_version}")
-        mw.model.save(storage_model_filepath_with_version)
+        # if not os.path.exists(storage_model_filepath_with_version):
+        #     os.makedirs(storage_model_filepath_with_version, exist_ok= True)
+        # logger.info(f"Saving model to SavedModel format {storage_model_filepath_with_version}")
+        # mw.model.save(storage_model_filepath_with_version)
 
         if SAVE_JSON_FORMAT:
 
