@@ -483,6 +483,9 @@ class ModelWrapper(object):
         """
 
         log.info(f'Number of training examples: {len(X_train)}')
+        if not isinstance(balance_class_weights, bool):
+            print("ERROR: balance_class_weights is a boolean. Please update your code")
+            exit(1)
         if balance_class_weights:
             self.class_weight = self.get_class_weight_dict(y_train)
         else:

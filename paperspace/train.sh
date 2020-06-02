@@ -7,7 +7,7 @@
 
 usage() {
     echo "`basename $0`: [-a learning_rate] [-b batch_size] [-c lstm_cells] [-d dropout_rate] [-e epochs] [-l log_level]"
-    echo "               [-m train_embeddings] [-p patience] [-r recurrent_dropout_rate] [-t machine_type] <sample size>"
+    echo "               [-m train_embeddings] [-p patience] [-r recurrent_dropout_rate] [-t machine_type] <network_type> <sample size>"
     echo "Parameter(s):"
     echo "  sample_size:                size of data set to train. available values: test, 50k, 100k, 200k, 500k, 1m, 2m, 4m, all"
     echo "Options:"
@@ -23,12 +23,12 @@ usage() {
     echo "  -r recurrent_dropout_rate:  recurrent dropout rate for LSTM cells. Default 0"
     echo "  -t machine_type:            Gradient machine type. Options C3 (CPU) or P4000 (GPU). Default P4000"
     echo "Example:"
-    echo "  ./train.sh 1m"
-    echo "  ./train.sh -e 40 -d 0.2 1m"
+    echo "  ./train.sh LSTM 1m"
+    echo "  ./train.sh -e 40 -d 0.2 GRU 1m"
 }
 
 if [ $# -lt 1 ]; then
-    echo -e "ERROR: missing required parameter: sample_size"
+    echo -e "ERROR: missing required parameter: <network_type> <sample_size>"
     usage
     exit 1
 fi
@@ -74,7 +74,9 @@ while getopts :a:b:c:d:e:l:np:r:s:t:uv: o
    done
 
 shift $((OPTIND-1))
-sample_size=$1
+network_type=$1
+sample_size=$2
+echo "Network type: ${network_type}"
 echo "Sample size: ${sample_size}"
 
 #if [ "x${lstm_cells}" == "x" ]; then
@@ -139,7 +141,7 @@ model_basename="${model_basename}review_body-"
 model_basename="${model_basename}v${version}"
 
 echo "Running python with following command"
-echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
+echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} -t ${network_type} ${sample_size}"
 echo "basename: ${model_basename}"
 echo "modelPath: /artifacts/models/${model_basename}"
 echo "tf_version: ${tf_version}"
@@ -149,14 +151,14 @@ gradient experiments run singlenode \
     --projectId pr1cl53bg \
     --machineType ${machine_type} \
     --container vtluk/paperspace-experiment:${tf_version} \
-    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
+    --command "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} -t ${network_type} ${sample_size}" \
     --workspace . \
     --modelType Tensorflow \
     --modelPath "/artifacts/models/${model_basename}"
 #    --modelPath "/artifacts/models/"
 
 
-echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} ${sample_size}" \
+echo "python train/train.py -i /storage -o /artifacts ${batch_size_opt}${bidirectional_opt}${lstm_cells_opt}${dropout_rate_opt}${epochs_opt}${log_level_opt}${patience_opt}${recurrent_dropout_rate_opt}${unbalance_class_weights_opt}${train_embeddings_opt}${learning_rate_opt}${resume_model_file_opt}${version_opt} -t ${network_type} ${sample_size}"
 echo "basename: ${model_basename}"
 echo "modelPath: /artifacts/models/${model_basename}"
 

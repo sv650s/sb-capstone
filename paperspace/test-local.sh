@@ -26,5 +26,5 @@ while getopts :a:b:c:d:e:l:np:r:s:t:uv: o
 
 rm -rf /tmp/models
 rm -rf /tmp/reports
-./syncUtil.sh && python train/train.py -i ../dataset -o /tmp -b 128 -c 128 -d 0.0 -r 0.0 -a 0.01 ${epoch_opt} -p 4 -l DEBUG  test
+./syncUtil.sh && python train/train.py -i ../dataset -o /tmp -b 128 -c 128 -d 0.0 -r 0.0 -a 0.01 ${epoch_opt} -p 4 -l DEBUG -t GRU test
 #./syncUtil.sh && python train/train.py -i ../dataset -o /tmp -b 128 -c 128 -d 0.0 -r 0.0 -a 0.01 -e 6 -p 4 -l DEBUG  test

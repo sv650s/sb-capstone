@@ -12,7 +12,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.models import load_model
 from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Embedding, \
-    SpatialDropout1D, Flatten, LSTM
+    SpatialDropout1D, Flatten, LSTM, GRU
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.utils import model_to_dot
@@ -54,6 +54,9 @@ MAX_SEQUENCE_LENGTH = 100
 
 # used to fix seeds
 RANDOM_SEED = 1
+
+LABEL_COLUMN = "star_rating"
+FEATURE_COLUMN = "review_body"
 
 
 # TODO: set this to True and finish debugging. Currently getting  the following error
@@ -266,12 +269,10 @@ if __name__ == "__main__":
 
     parser.add_argument("-a", "--learning_rate", help="Optimizer learning rate. Default = 0.001", default=0.001)
     parser.add_argument("-b", "--batch_size", help="Training batch size. Default = 32", default=32)
-    parser.add_argument("-c", "--lstm_cells", help="Number of LSTM cells. Default = 128", default=128)
+    parser.add_argument("-c", "--cells", help="Number of LSTM cells. Default = 128", default=128)
     parser.add_argument("-d", "--dropout_rate", help="dropout rate. Default 0",
                         default=0)
     parser.add_argument("-e", "--epochs", help="Max number epochs. Default = 20", default=20)
-    parser.add_argument("-f", "--feature_column", help="feature column. Default review_body",
-                        default="review_body")
     parser.add_argument("-i", "--input_dir", help="input directory. Default /storage/data",
                         default="/storage/data")
     parser.add_argument("-l", "--loglevel", help="log level", default="INFO")
@@ -289,9 +290,8 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--recurrent_dropout_rate", help="recurrent dropout rate. NOTE: will not be able to " \
                                                                "cuDNN if this is set. Default 0",
                         default=0)
+    parser.add_argument("-t", "--network_type", help="network type - ie, LSTM or GRU (required)", default = None)
     parser.add_argument("-s", "--resume_training_file", help="path to load model file to resume training", default = None)
-    parser.add_argument("-t", "--truth_label_column", help="label column. Default star_rating",
-                        default="star_rating")
     parser.add_argument("-u", "--unbalanced_class_weights",
                         help="do not balance class weights for training",
                         default=False,
@@ -319,11 +319,18 @@ if __name__ == "__main__":
 
     input_dir = args.input_dir
     output_dir = args.output_dir
-    label_column = args.truth_label_column
-    feature_column = args.feature_column
     sample_size = args.sample_size
+    network_type = args.network_type
 
-    lstm_cells = int(args.lstm_cells)
+
+    if network_type is None:
+        print("ERROR: -t/--network_type is required")
+        exit(1)
+    elif network_type not in ["LSTM", "GRU"]:
+        print("ERROR: network_type must be LSTM or GRU")
+        exit(1)
+
+    cells = int(args.cells)
     epochs  = int(args.epochs)
     batch_size = int(args.batch_size)
     patience = int(args.patience)
@@ -373,9 +380,9 @@ if __name__ == "__main__":
     else:
         balanced_name = ""
 
-    model_name = f"{bidirectional_name}LSTM{balanced_name}{lstm_cells}"
-    DESCRIPTION = f"1 Layer {lstm_cells} {model_name} Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {learning_rate}"
-    architecture = f"1x{lstm_cells}"
+    model_name = f"{bidirectional_name}{network_type}{balanced_name}{cells}"
+    DESCRIPTION = f"1 Layer {cells} {model_name} Units, Dropout {dropout_rate}, Recurrent Dropout {recurrent_dropout_rate}, Batch Size {batch_size}, Learning Rate {learning_rate}"
+    architecture = f"1x{cells}"
     FEATURE_SET_NAME = "glove_with_stop_nonlemmatized"
     # TODO: add in sampling options
 
@@ -388,7 +395,7 @@ if __name__ == "__main__":
         f"lr{ku.get_decimal_str(learning_rate)}-" \
         f"{FEATURE_SET_NAME}-" \
         f"sampling_none-" \
-        f"{feature_column}-" \
+        f"{FEATURE_COLUMN}-" \
             "report.csv"
 
 
@@ -454,7 +461,7 @@ if __name__ == "__main__":
         logger.warning(f'WARNING: {STORAGE_DIR} does not exist')
 
 
-    reviews_train, reviews_test, y_train, y_test, ratings = load_data(data_file, feature_column, label_column)
+    reviews_train, reviews_test, y_train, y_test, ratings = load_data(data_file, FEATURE_COLUMN, LABEL_COLUMN)
 
     X_train, X_test, t, embedding_matrix = preprocess_data(reviews_train,
                                                            reviews_test,
@@ -472,37 +479,69 @@ if __name__ == "__main__":
 
 
 
-    mw = ku.LSTM1LayerModelWrapper(
-                            dimension= lstm_cells, # LSTM dim - LSTM1LyerModelWrapper
-                             dropout_rate = dropout_rate, # dropout rate - LSTM1LyerModelWrapper
-                             recurrent_dropout_rate = recurrent_dropout_rate, # recurrent dropout rate - LSTM1LyerModelWrapper
-                             bidirectional = bidirectional, # bidirectional - LSTM1LyerModelWrapper
-                             vocab_size = vocab_size,       # vocab size - EmbeddingModelWrapper
-                             max_sequence_length = MAX_SEQUENCE_LENGTH, # max sequence length - EmbeddingModelWrapper
-                             embed_size = EMBED_SIZE, # embed size - EmbeddingModelWrapper
-                            train_embeddings  =  train_embeddings, # trainable embedding - EmbeddingModelWrapper
-        embedding_matrix=embedding_matrix,  # pre-trained embedding matrix - EmbeddingModelWrapper
-        model_name = model_name, # model name - ModelWrapper
-                            architecture = architecture, # architecture - ModelWrapper
-                            feature_set_name = FEATURE_SET_NAME, # feature_set_name - ModelWrapper
-                            label_column = label_column, # label_column - ModelWrapper
-                            feature_column = feature_column, # feature_column - ModelWrapper
-                            data_file = data_file, # data file - ModelWrapper
-                            sample_size_str = sample_size, # sample size
-                            tokenizer = t, # tokenizer - ModelWrapper
-                            description = DESCRIPTION, #description - ModelWrapper
-                            optimizer_name = "Adam", # string optimizer name
-                            learning_rate = learning_rate, # learning rate - ModelWrapper
-                            # TODO: this should be in fit instead but need it to define name for the
-                            # checkpoint location - move later
-                            batch_size = batch_size, # batch size - ModelWrapper
-                            model_version= model_version, # model version - ModelWrapper
-                            save_dir = output_dir, # where to save outputs - ModelWrapper
-                            load_model_file= resume_training_file # load model from file - ModelWrapper
-    )
+    if network_type == "LSTM":
+        mw = ku.LSTM1LayerModelWrapper(
+                                dimension= cells, # LSTM dim - LSTM1LyerModelWrapper
+                                 dropout_rate = dropout_rate, # dropout rate - LSTM1LyerModelWrapper
+                                 recurrent_dropout_rate = recurrent_dropout_rate, # recurrent dropout rate - LSTM1LyerModelWrapper
+                                 bidirectional = bidirectional, # bidirectional - LSTM1LyerModelWrapper
+                                 vocab_size = vocab_size,       # vocab size - EmbeddingModelWrapper
+                                 max_sequence_length = MAX_SEQUENCE_LENGTH, # max sequence length - EmbeddingModelWrapper
+                                 embed_size = EMBED_SIZE, # embed size - EmbeddingModelWrapper
+                                train_embeddings  =  train_embeddings, # trainable embedding - EmbeddingModelWrapper
+            embedding_matrix=embedding_matrix,  # pre-trained embedding matrix - EmbeddingModelWrapper
+            model_name = model_name, # model name - ModelWrapper
+                                architecture = architecture, # architecture - ModelWrapper
+                                feature_set_name = FEATURE_SET_NAME, # feature_set_name - ModelWrapper
+                                label_column = LABEL_COLUMN, # label_column - ModelWrapper
+                                feature_column = FEATURE_COLUMN, # feature_column - ModelWrapper
+                                data_file = data_file, # data file - ModelWrapper
+                                sample_size_str = sample_size, # sample size
+                                tokenizer = t, # tokenizer - ModelWrapper
+                                description = DESCRIPTION, #description - ModelWrapper
+                                optimizer_name = "Adam", # string optimizer name
+                                learning_rate = learning_rate, # learning rate - ModelWrapper
+                                # TODO: this should be in fit instead but need it to define name for the
+                                # checkpoint location - move later
+                                batch_size = batch_size, # batch size - ModelWrapper
+                                model_version= model_version, # model version - ModelWrapper
+                                save_dir = output_dir, # where to save outputs - ModelWrapper
+                                load_model_file= resume_training_file # load model from file - ModelWrapper
+        )
+    elif network_type == "GRU":
+        mw = ku.GRU1LayerModelWrapper(
+            dimension= cells, # LSTM dim - LSTM1LyerModelWrapper
+            dropout_rate = dropout_rate, # dropout rate - LSTM1LyerModelWrapper
+            recurrent_dropout_rate = recurrent_dropout_rate, # recurrent dropout rate - LSTM1LyerModelWrapper
+            bidirectional = bidirectional, # bidirectional - LSTM1LyerModelWrapper
+            vocab_size = vocab_size,       # vocab size - EmbeddingModelWrapper
+            max_sequence_length = MAX_SEQUENCE_LENGTH, # max sequence length - EmbeddingModelWrapper
+            embed_size = EMBED_SIZE, # embed size - EmbeddingModelWrapper
+            train_embeddings  =  train_embeddings, # trainable embedding - EmbeddingModelWrapper
+            embedding_matrix=embedding_matrix,  # pre-trained embedding matrix - EmbeddingModelWrapper
+            model_name = model_name, # model name - ModelWrapper
+            architecture = architecture, # architecture - ModelWrapper
+            feature_set_name = FEATURE_SET_NAME, # feature_set_name - ModelWrapper
+            label_column = LABEL_COLUMN, # label_column - ModelWrapper
+            feature_column = FEATURE_COLUMN, # feature_column - ModelWrapper
+            data_file = data_file, # data file - ModelWrapper
+            sample_size_str = sample_size, # sample size
+            tokenizer = t, # tokenizer - ModelWrapper
+            description = DESCRIPTION, #description - ModelWrapper
+            optimizer_name = "Adam", # string optimizer name
+            learning_rate = learning_rate, # learning rate - ModelWrapper
+            # TODO: this should be in fit instead but need it to define name for the
+            # checkpoint location - move later
+            batch_size = batch_size, # batch size - ModelWrapper
+            model_version= model_version, # model version - ModelWrapper
+            save_dir = output_dir, # where to save outputs - ModelWrapper
+            load_model_file= resume_training_file # load model from file - ModelWrapper
+        )
+
 
     mw.add("environment", "paperspace")
     mw.add("patience", patience)
+
     callbacks = []
 
     early_stop = EarlyStopping(monitor = 'val_loss',
@@ -523,6 +562,8 @@ if __name__ == "__main__":
 
     if os.path.exists(STORAGE_DIR):
         storage_model_filepath = f'{STORAGE_DIR}/{ku.ModelWrapper.models_dir}/{mw._get_saved_file_basename()}'
+        if not os.path.exists(storage_model_filepath):
+            os.makedirs(storage_model_filepath, exist_ok = True)
         logger.info(f"Adding {storage_model_filepath} checkpoint callback...")
         checkpoint_storage = tf.keras.callbacks.ModelCheckpoint(
             filepath = storage_model_filepath,
@@ -590,8 +631,8 @@ if __name__ == "__main__":
             mw.model.save_weights(weights_json_filepath,
                                     save_format=None)
 
-            files = os.listdir(storage_model_filepath_with_version)
-            logger.info(f"Files in {storage_model_filepath_with_version}:\n{files}")
+            files = os.listdir(storage_model_filepath)
+            logger.info(f"Files in {storage_model_filepath}:\n{files}")
 
 
     else:

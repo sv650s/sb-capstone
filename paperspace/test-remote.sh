@@ -12,6 +12,6 @@ echo "Syncing util..."
 rsync -rauv --delete --exclude="__pycache__" ${UTIL_ORIG}/*.py ${UTIL_DEST}/
 sleep 2
 
-./train.sh -e 3 -c 16 -a 0.01 -b 128 -d 0.0 -r 0.0 test
+./train.sh -e 3 -c 16 -a 0.01 -b 128 -d 0.0 -r 0.0 -t GRU test
 
 
