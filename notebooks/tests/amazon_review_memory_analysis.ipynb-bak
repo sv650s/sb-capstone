@@ -1,0 +1,132 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Amazon Review Memory Usage Analysis\n",
+    "\n",
+    "I want to use this notebook to explore different datasets that I've created to map out memory consumption for DataFrames created using various size files.\n",
+    "\n",
+    "Reading in large dataframes can take a long time on my laptop, I'm hoping to use this data to see feasibility before I event attempt to process the data on my machine.\n",
+    "\n",
+    "Datasets per preprocessed using [amazon_review_preprocessing.ipynb](amazon_review_preprocessing.ipynb)\n",
+    "\n",
+    "| File | Approx Number of Reviews |\n",
+    "|------|--------------------------|\n",
+    "| amazon_reviews_us_Wireless_v1_00-supertinyout.csv | 1k |\n",
+    "| amazon_reviews_us_Wireless_v1_00-tinyout.csv | 22k |\n",
+    "| amazon_reviews_us_Wireless_v1_00-smallout.csv | 110k |\n",
+    "| amazon_reviews_us_Wireless_v1_00-mediumout.csv |  |\n",
+    "| amazon_reviews_us_Wireless_v1_00-largeout.csv | 900k |\n",
+    "| amazon_reviews_us_Wireless_v1_00-preprocessed.csv |  |\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>filename</th>\n",
+       "      <th>size_mb</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>amazon_reviews_us_Wireless_v1_00-supertinyout.csv</td>\n",
+       "      <td>660.362</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                            filename  size_mb\n",
+       "0  amazon_reviews_us_Wireless_v1_00-supertinyout.csv  660.362"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "import pandas as pd\n",
+    "\n",
+    "FILES = [ \"amazon_reviews_us_Wireless_v1_00-supertinyout.csv\" ]\n",
+    "\n",
+    "# FILES = [ \"amazon_reviews_us_Wireless_v1_00-supertinyout.csv\", \n",
+    "#          \"amazon_reviews_us_Wireless_v1_00-tinyout.csv\",\n",
+    "#          \"amazon_reviews_us_Wireless_v1_00-smallout.csv\",\n",
+    "#          \"amazon_reviews_us_Wireless_v1_00-mediumout.csv\",\n",
+    "#          \"amazon_reviews_us_Wireless_v1_00-largeout.csv\",\n",
+    "#          \"amazon_reviews_us_Wireless_v1_00-preprocessed.csv\" ]\n",
+    "\n",
+    "\n",
+    "results_pd = pd.DataFrame()\n",
+    "for file in FILES:\n",
+    "    pd = pd.read_csv(f'dataset/amazon_reviews/{file}', parse_dates=[\"review_date\"])\n",
+    "#     print(pd.memory_usage(index = True, deep = True))\n",
+    "    results = {\n",
+    "        \"filename\": file,\n",
+    "        \"size_mb\": pd.memory_usage(index = True, deep = True).sum() / 1000\n",
+    "    }\n",
+    "    results_pd = results_pd.append(results, ignore_index=True)\n",
+    "    \n",
+    "results_pd.head()\n",
+    "    \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

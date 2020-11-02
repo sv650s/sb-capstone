@@ -1,0 +1,2 @@
+data_dir,data_file,description,feature_column,class_column,dtype,drop_columns,vectorizers,max_features,lda,smote,knn,rn,lr,lrb,rf,gb,lGBM,xgb,cb,smote,status,status_date
+dataset/amazon_reviews,amazon_reviews_us_Wireless_v1_00-csv-100k-preprocessed.csv,review_body-df_none-ngram13-lda20,review_body,star_rating,,"helpful_votes,total_votes",bow,20000,20,Yes,Yes,No,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,success,6/1/19 17:03

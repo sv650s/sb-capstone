@@ -55,6 +55,9 @@ tools/log*
 # don't track notes
 notes*
 
+# don't track backup files
+*.bak
+
 # generally don't track pkl files
 *.pkl
 
@@ -75,3 +78,7 @@ services-paperspace/models
 # sphinx
 docs/source/_*
 docs/build/*
+
+# tests - these are weird test from pyspark
+notebooks/tests/None/*
+notebooks/tests/pyspark-LogisticRegression-star_rating-pipeline/*
